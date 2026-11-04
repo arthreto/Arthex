@@ -174,16 +174,18 @@ Events go from Rust to the interface.
 - Shell events are declared in `src-tauri/src/app/events.rs` and in `events` in `src/core/api.ts`.
 - Module events are named `<id>://<event>`.
 
-| Event                     | Payload    | Meaning                                           |
-| ------------------------- | ---------- | ------------------------------------------------- |
-| `overlay://shown`         | none       | the overlay was just shown                        |
-| `settings://changed`      | `Settings` | settings changed, from any source                 |
-| `app://navigate`          | target id  | open `hub`, `settings` or a page                  |
-| `app://confirm-uninstall` | none       | the tray asked to uninstall                       |
-| `hotkey://held`           | key names  | modifiers held while recording (Windows)          |
-| `hotkey://recorded`       | key names  | recording finished, `[]` when cancelled (Windows) |
-| `file-index://updated`    | none       | a file index scan finished                        |
-| `clipboard://changed`     | none       | the clipboard history changed (Windows)           |
+| Event                     | Payload                 | Meaning                                                           |
+| ------------------------- | ----------------------- | ----------------------------------------------------------------- |
+| `overlay://shown`         | none                    | the overlay was just shown                                        |
+| `settings://changed`      | `Settings`              | settings changed, from any source                                 |
+| `app://navigate`          | target id               | open `hub`, `settings` or a page                                  |
+| `app://confirm-uninstall` | none                    | the tray asked to uninstall                                       |
+| `hotkey://held`           | key names               | modifiers held while recording (Windows)                          |
+| `hotkey://recorded`       | key names               | recording finished, `[]` when cancelled (Windows)                 |
+| `file-index://updated`    | none                    | a file index scan finished                                        |
+| `clipboard://changed`     | none                    | the clipboard history changed (Windows)                           |
+| `updates://available`     | `{ version }`           | the check at launch found an update it does not install by itself |
+| `updates://progress`      | `{ downloaded, total }` | download progress of an update                                    |
 
 ## Data files
 
@@ -195,6 +197,7 @@ Modules keep their data in JSON files of the app data folder, read and written w
 | `shortcuts.json`   | data       | Home shortcuts                                                 |
 | `recent.json`      | data       | recently used programs (path, name, time; never window titles) |
 | `notes.json`       | data       | notes (id, title, Markdown text, time)                         |
+| `whats-new.json`   | data       | notes of an update being installed, shown once after it        |
 | `file-search.json` | config     | folders added to the file index and the exclusions             |
 | `index.bin`        | local data | the file index cache, rebuilt from the drives when missing     |
 
@@ -260,11 +263,32 @@ The language appears in Settings and in the tray at the next build. No code chan
 
 ## Releasing
 
-1. Set the same version in `package.json`, `src-tauri/Cargo.toml` and `src-tauri/tauri.conf.json`.
-2. Tag `vX.Y.Z` on `main` and push the tag.
-3. The release workflow builds and signs the installers, then publishes the GitHub Release with `latest.json`.
+Once, before the first release, create the update signing key on your own computer:
 
-The **Release description is the changelog and is mandatory**. It becomes the `notes` of `latest.json`. At the first launch after an update, the app shows the section of the active language in **What's new**.
+```bash
+npx tauri signer generate -w ~/.tauri/arthex.key
+```
+
+- Put the content of `arthex.key.pub` in `plugins.updater.pubkey` of `src-tauri/tauri.conf.json`. Until then, builds never look for updates and the release workflow refuses to run.
+- In GitHub → Settings → Secrets and variables → Actions, add `TAURI_SIGNING_PRIVATE_KEY` (the content of `arthex.key`) and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`.
+- Keep the private key safe and never commit it. Without it, installed copies can no longer be updated.
+
+Then, for each release:
+
+1. Set the same version in `package.json`, `src-tauri/Cargo.toml` and `src-tauri/tauri.conf.json`.
+2. Write the changelog (format below) as the message of an annotated tag on `main`, then push the tag:
+
+   ```bash
+   git tag -a vX.Y.Z
+   ```
+
+   ```bash
+   git push origin vX.Y.Z
+   ```
+
+3. The release workflow checks the versions and the changelog, builds and signs the installer, then publishes the GitHub Release with `latest.json`.
+
+The **changelog is mandatory**. It becomes the Release description and the `notes` of `latest.json`. Updates are installed by the app (automatically at launch, or from Settings → Updates) only when their signature matches the public key; their notes are kept in `whats-new.json`, and at the next launch the app shows the section of the active language in **What's new**.
 
 It holds two sections, in this order, with the same items:
 

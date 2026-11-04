@@ -11,6 +11,8 @@
   import FeaturesSettings from './FeaturesSettings.svelte';
   import GeneralSettings from './GeneralSettings.svelte';
   import HotkeySettings from './HotkeySettings.svelte';
+  import UpdatesSettings from './UpdatesSettings.svelte';
+  import { updates } from '../updates.svelte';
 
   type Loaded = { default: Component };
 
@@ -21,7 +23,7 @@
     /** Shell sections are bundled; a module section loads the first time it opens. */
     body: { component: Component } | { load: () => Promise<Loaded> | null };
     /** A button next to the section title. */
-    action?: { label: string; run: () => unknown };
+    action?: { label: string; run: () => unknown; disabled?: boolean };
   }
 
   const sections = $derived<Section[]>([
@@ -54,6 +56,13 @@
         action: action && { label: action.label(), run: action.run },
       };
     }),
+    {
+      id: 'updates',
+      title: t('settings.sections.updates'),
+      icon: { name: 'refresh' },
+      body: { component: UpdatesSettings },
+      action: { label: t('settings.updates.check'), run: () => updates.check(), disabled: updates.busy },
+    },
   ]);
 
   let currentId = $state('general');
@@ -80,7 +89,7 @@
         <h3>{current.title}</h3>
         {#if current.action}
           {@const action = current.action}
-          <Button size="small" onclick={action.run}>{action.label}</Button>
+          <Button size="small" disabled={action.disabled} onclick={action.run}>{action.label}</Button>
         {/if}
       </div>
       {#if 'component' in body}

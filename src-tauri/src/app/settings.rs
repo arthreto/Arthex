@@ -22,6 +22,8 @@ pub enum Theme {
 }
 
 /// Mirrors `src/core/settings/types.ts`.
+// Independent switches of the settings file, not a state machine.
+#[allow(clippy::struct_excessive_bools)]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
 pub struct Settings {
@@ -35,6 +37,8 @@ pub struct Settings {
     pub tab_bar: Vec<String>,
     pub favorites: Vec<String>,
     pub modules: BTreeMap<String, bool>,
+    /// Installs updates found at launch without asking.
+    pub auto_update: bool,
 }
 
 impl Settings {
@@ -58,6 +62,7 @@ impl Default for Settings {
                 .to_vec(),
             favorites: Vec::new(),
             modules: BTreeMap::new(),
+            auto_update: true,
         }
     }
 }

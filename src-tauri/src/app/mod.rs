@@ -11,6 +11,7 @@ mod settings;
 pub mod storage;
 mod system;
 mod tray;
+pub mod updates;
 
 use serde_json::Value;
 use tauri::{AppHandle, Emitter, Manager};
@@ -33,6 +34,7 @@ pub fn setup(app: &AppHandle) -> Result<()> {
     tray::create(app)?;
     overlay::prepare(app);
     hotkey::start(app, &settings.hotkey);
+    updates::start(app);
     if !autostart::launched_at_startup() {
         overlay::show(app);
     }

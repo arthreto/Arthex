@@ -68,7 +68,8 @@
     "sections": {
       "general": "General",
       "hotkey": "Keyboard shortcut",
-      "features": "Features"
+      "features": "Features",
+      "updates": "Updates"
     },
     "general": {
       "language": "Language",
@@ -119,6 +120,16 @@
       "turnOn": "Turn on {name}",
       "turnOff": "Turn off {name}",
       "managePages": "Manage pages"
+    },
+    "updates": {
+      "check": "Check",
+      "upToDate": "Arthex is up to date · version {version}",
+      "checking": "Looking for a new version on GitHub…",
+      "available": "Version {version} available",
+      "install": "Install and restart",
+      "installing": "Installing version {version}…",
+      "unavailable": "Updates are not available in this build",
+      "auto": "Install automatically at launch"
     }
   },
   "uninstall": {
@@ -187,5 +198,13 @@
       "restart": "The computer restarts in 5 minutes. Open Arthex to cancel.",
       "sleep": "The computer goes to sleep in 5 minutes. Open Arthex to cancel."
     }
+  },
+  "whatsNew": {
+    "title": "What’s new",
+    "installed": "Arthex {version} is installed",
+    "new": "New",
+    "improved": "Improved",
+    "fixed": "Fixed",
+    "continue": "Continue"
   }
 }

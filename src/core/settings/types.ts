@@ -12,6 +12,8 @@ export interface Settings {
   tabBar: string[];
   favorites: string[];
   modules: Record<string, boolean>;
+  /** Installs updates found at launch without asking. */
+  autoUpdate: boolean;
 }
 
 export type SettingsPatch = Partial<Omit<Settings, 'version'>>;

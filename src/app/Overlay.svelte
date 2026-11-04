@@ -16,12 +16,15 @@
   import Settings from './settings/Settings.svelte';
   import TabBar from './TabBar.svelte';
   import UninstallDialog from './UninstallDialog.svelte';
+  import { updates } from './updates.svelte';
+  import WhatsNew from './WhatsNew.svelte';
   import { dialogs } from './dialogs.svelte';
 
   let shown = $state(0);
   let searchBar: SearchBar | undefined = $state();
 
   onMount(() => {
+    void updates.loadWhatsNew();
     const listeners = [
       on(events.overlayShown, async () => {
         shown += 1;
@@ -103,6 +106,10 @@
 
 {#if dialogs.uninstall}
   <UninstallDialog onclose={() => (dialogs.uninstall = false)} />
+{/if}
+
+{#if updates.whatsNew}
+  <WhatsNew notes={updates.whatsNew} onclose={() => (updates.whatsNew = null)} />
 {/if}
 
 <style>

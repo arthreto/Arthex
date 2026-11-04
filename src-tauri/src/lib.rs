@@ -16,7 +16,8 @@ pub fn run() {
         ))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_notification::init());
+        .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_updater::Builder::new().build());
     #[cfg(not(windows))]
     let builder = builder.plugin(tauri_plugin_global_shortcut::Builder::new().build());
 
@@ -29,6 +30,9 @@ pub fn run() {
             app::commands::app_info,
             app::commands::app_open_data_dir,
             app::commands::app_uninstall,
+            app::commands::updates_check,
+            app::commands::updates_install,
+            app::commands::updates_whats_new,
             modules::shortcuts::commands::shortcuts_list,
             modules::shortcuts::commands::shortcuts_save_site,
             modules::shortcuts::commands::shortcuts_save_app,

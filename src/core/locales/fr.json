@@ -68,7 +68,8 @@
     "sections": {
       "general": "Général",
       "hotkey": "Raccourci clavier",
-      "features": "Fonctions"
+      "features": "Fonctions",
+      "updates": "Mises à jour"
     },
     "general": {
       "language": "Langue",
@@ -119,6 +120,16 @@
       "turnOn": "Activer {name}",
       "turnOff": "Désactiver {name}",
       "managePages": "Gérer les pages"
+    },
+    "updates": {
+      "check": "Rechercher",
+      "upToDate": "Arthex est à jour · version {version}",
+      "checking": "Recherche d’une nouvelle version sur GitHub…",
+      "available": "Version {version} disponible",
+      "install": "Installer et redémarrer",
+      "installing": "Installation de la version {version}…",
+      "unavailable": "Les mises à jour ne sont pas disponibles dans cette version",
+      "auto": "Installer automatiquement au lancement"
     }
   },
   "uninstall": {
@@ -187,5 +198,13 @@
       "restart": "L’ordinateur redémarrera dans 5 minutes. Ouvre Arthex pour annuler.",
       "sleep": "L’ordinateur se mettra en veille dans 5 minutes. Ouvre Arthex pour annuler."
     }
+  },
+  "whatsNew": {
+    "title": "Quoi de neuf",
+    "installed": "Arthex {version} est installé",
+    "new": "Nouveau",
+    "improved": "Amélioré",
+    "fixed": "Corrigé",
+    "continue": "Continuer"
   }
 }

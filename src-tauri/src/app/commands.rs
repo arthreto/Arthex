@@ -5,7 +5,7 @@ use serde::Serialize;
 use serde_json::Value;
 use tauri::AppHandle;
 
-use super::{Result, hotkey, i18n, overlay, settings::Settings, system};
+use super::{Result, hotkey, i18n, overlay, settings::Settings, system, updates};
 
 #[tauri::command]
 pub fn settings_get(app: AppHandle) -> Settings {
@@ -51,4 +51,20 @@ pub fn app_open_data_dir(app: AppHandle) -> Result<()> {
 #[tauri::command]
 pub fn app_uninstall(app: AppHandle) -> Result<()> {
     system::uninstall(&app)
+}
+
+#[tauri::command]
+pub async fn updates_check(app: AppHandle) -> Result<Option<updates::Available>> {
+    updates::check(&app).await
+}
+
+#[tauri::command]
+pub async fn updates_install(app: AppHandle) -> Result<()> {
+    updates::install(&app).await
+}
+
+/// The release notes to show once after an update, if this launch follows one.
+#[tauri::command]
+pub fn updates_whats_new(app: AppHandle) -> Option<updates::WhatsNew> {
+    updates::whats_new(&app)
 }
