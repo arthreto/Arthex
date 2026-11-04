@@ -38,6 +38,7 @@ pub fn scan(roots: &[PathBuf], exclusions: &Exclusions, stop: &AtomicBool) -> Op
     for part in parts {
         index.append(part, NO_PARENT);
     }
+    index.shrink_to_fit();
     Some(index)
 }
 
@@ -98,7 +99,7 @@ fn read_into(
     path: &Path,
     exclusions: &Exclusions,
     stop: &AtomicBool,
-) -> Vec<(PathBuf, String, i64)> {
+) -> Vec<(PathBuf, String, u32)> {
     let Ok(entries) = fs::read_dir(path) else {
         return Vec::new();
     };
@@ -159,11 +160,14 @@ fn folder_size(path: &Path, stop: &AtomicBool) -> u64 {
         .sum()
 }
 
-pub fn modified(meta: &Metadata) -> i64 {
+/// Seconds since the Unix epoch, which fit in 32 bits until 2106 and keep entries small.
+pub fn modified(meta: &Metadata) -> u32 {
     meta.modified()
         .ok()
         .and_then(|time| time.duration_since(UNIX_EPOCH).ok())
-        .map_or(0, |elapsed| i64::try_from(elapsed.as_secs()).unwrap_or(0))
+        .map_or(0, |elapsed| {
+            u32::try_from(elapsed.as_secs()).unwrap_or(u32::MAX)
+        })
 }
 
 #[cfg(windows)]

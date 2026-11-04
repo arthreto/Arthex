@@ -11,6 +11,7 @@ mod watch;
 use std::{
     collections::HashMap,
     fs,
+    hash::{DefaultHasher, Hash, Hasher},
     path::{Path, PathBuf},
     sync::{
         Mutex, MutexGuard, PoisonError, RwLock, RwLockReadGuard,
@@ -46,8 +47,8 @@ pub struct FileIndex {
     cache_path: PathBuf,
     config: Mutex<Config>,
     index: RwLock<Index>,
-    /// Folded folder paths to their entry, to place new files.
-    folders: Mutex<HashMap<String, u32>>,
+    /// Folders by `key` of their path, to find them and place new files.
+    folders: Mutex<HashMap<u64, u32>>,
     watcher: Mutex<Option<RecommendedWatcher>>,
     /// Bumped when the module stops, so its background thread ends.
     generation: AtomicU64,
@@ -61,7 +62,7 @@ impl FileIndex {
         self.config.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
-    fn folders(&self) -> MutexGuard<'_, HashMap<String, u32>> {
+    fn folders(&self) -> MutexGuard<'_, HashMap<u64, u32>> {
         self.folders.lock().unwrap_or_else(PoisonError::into_inner)
     }
 
@@ -75,12 +76,17 @@ impl FileIndex {
 
     /// The entry of an indexed path.
     pub fn find(&self, path: &Path) -> Option<u32> {
-        if let Some(&folder) = self.folders().get(&key(path)) {
+        let folder = self.folders().get(&key(path)).copied();
+        if let Some(folder) = folder.filter(|&at| key_matches(&self.read(), at, path)) {
             return Some(folder);
         }
-        let parent = *self.folders().get(&key(path.parent()?))?;
+        let parent_path = path.parent()?;
+        let parent = *self.folders().get(&key(parent_path))?;
         let name = fold(&path.file_name()?.to_string_lossy());
         let index = self.read();
+        if !key_matches(&index, parent, parent_path) {
+            return None;
+        }
         index
             .entries()
             .iter()
@@ -167,8 +173,16 @@ impl FileIndex {
     }
 }
 
-fn key(path: &Path) -> String {
-    fold(&path.to_string_lossy())
+/// Folders are found by a hash of their folded path, which takes far less memory than the
+/// paths themselves; `find` checks the path, so a collision can never return the wrong entry.
+fn key(path: &Path) -> u64 {
+    let mut hasher = DefaultHasher::new();
+    fold(&path.to_string_lossy()).hash(&mut hasher);
+    hasher.finish()
+}
+
+fn key_matches(index: &Index, at: u32, path: &Path) -> bool {
+    fold(&index.path(at).to_string_lossy()) == fold(&path.to_string_lossy())
 }
 
 pub fn setup(app: &AppHandle) -> Result<()> {

@@ -9,10 +9,10 @@ use std::{
 use super::index::{Entry, Index};
 use crate::app::Result;
 
-const MAGIC: &[u8; 8] = b"ARTHEXI1";
+const MAGIC: &[u8; 8] = b"ARTHEXI2";
 /// Refuses absurd files rather than allocating for them.
 const MAX_ENTRIES: usize = 50_000_000;
-const ENTRY_BYTES: usize = 4 + 2 + 4 + 2 + 4 + 8 + 8 + 1;
+const ENTRY_BYTES: usize = 4 + 2 + 4 + 2 + 4 + 8 + 4 + 1;
 
 pub fn save(path: &Path, index: &Index) -> Result<()> {
     if let Some(dir) = path.parent() {
@@ -76,7 +76,7 @@ pub fn load(path: &Path) -> Option<Index> {
             reader.u16()?,
             reader.u32()?,
             reader.u64()?,
-            i64::from_le_bytes(reader.array()?),
+            reader.u32()?,
             reader.take(1)?[0],
         )));
     }

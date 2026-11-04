@@ -24,7 +24,7 @@ pub struct Entry {
     pub parent: u32,
     pub size: u64,
     /// Seconds since the Unix epoch.
-    pub modified: i64,
+    pub modified: u32,
     flags: u8,
 }
 
@@ -57,13 +57,13 @@ pub struct Item<'a> {
     /// An excluded folder whose `size` is its whole content.
     pub summary: bool,
     pub size: u64,
-    pub modified: i64,
+    pub modified: u32,
 }
 
 pub struct Hit {
     pub index: u32,
     pub score: u8,
-    pub modified: i64,
+    pub modified: u32,
 }
 
 impl Index {
@@ -112,6 +112,13 @@ impl Index {
                     entry
                 }),
         );
+    }
+
+    /// Gives back the room left over by growing, once the index is complete.
+    pub fn shrink_to_fit(&mut self) {
+        self.names.shrink_to_fit();
+        self.folded.shrink_to_fit();
+        self.entries.shrink_to_fit();
     }
 
     pub fn entry(&self, index: u32) -> Option<&Entry> {
@@ -225,7 +232,7 @@ impl Index {
 }
 
 impl Entry {
-    pub fn raw(&self) -> (u32, u16, u32, u16, u32, u64, i64, u8) {
+    pub fn raw(&self) -> (u32, u16, u32, u16, u32, u64, u32, u8) {
         (
             self.name_start,
             self.name_len,
@@ -238,7 +245,7 @@ impl Entry {
         )
     }
 
-    pub fn from_raw(raw: (u32, u16, u32, u16, u32, u64, i64, u8)) -> Self {
+    pub fn from_raw(raw: (u32, u16, u32, u16, u32, u64, u32, u8)) -> Self {
         let (name_start, name_len, folded_start, folded_len, parent, size, modified, flags) = raw;
         Self {
             name_start,
@@ -286,7 +293,7 @@ pub fn location(path: &Path) -> String {
 mod tests {
     use super::*;
 
-    fn item(name: &str, parent: u32, is_dir: bool, modified: i64) -> Item<'_> {
+    fn item(name: &str, parent: u32, is_dir: bool, modified: u32) -> Item<'_> {
         Item {
             name,
             parent,

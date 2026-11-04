@@ -51,7 +51,7 @@ pub fn search(files: &FileIndex, query: &str, limit: usize) -> Vec<FileHit> {
                 path: path.to_string_lossy().into_owned(),
                 is_dir: entry.is_dir(),
                 size: entry.size,
-                modified: entry.modified,
+                modified: i64::from(entry.modified),
             })
         })
         .take(limit)
