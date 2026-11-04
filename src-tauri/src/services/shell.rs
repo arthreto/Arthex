@@ -18,11 +18,13 @@ use windows::{
         },
         System::Com::{
             CLSCTX_INPROC_SERVER, COINIT_APARTMENTTHREADED, CoCreateInstance, CoInitializeEx,
-            IPersistFile, STGM_READ,
+            CoTaskMemFree, IPersistFile, STGM_READ,
         },
         UI::Shell::{
-            IShellItemImageFactory, IShellLinkW, SHCreateItemFromParsingName, SIIGBF_BIGGERSIZEOK,
-            SIIGBF_ICONONLY, ShellLink,
+            BHID_EnumItems, FOLDERID_AppsFolder, IEnumShellItems, IShellItem,
+            IShellItemImageFactory, IShellLinkW, KF_FLAG_DEFAULT, SHCreateItemFromParsingName,
+            SHGetKnownFolderItem, SIGDN, SIGDN_NORMALDISPLAY, SIGDN_PARENTRELATIVEPARSING,
+            SIIGBF_BIGGERSIZEOK, SIIGBF_ICONONLY, ShellLink,
         },
     },
     core::{HSTRING, Interface},
@@ -33,13 +35,76 @@ fn init_com() {
     let _ = unsafe { CoInitializeEx(None, COINIT_APARTMENTTHREADED) };
 }
 
+pub type Pixels = (u32, u32, Vec<u8>);
+
 /// The icon Windows shows for a file, program or shortcut, as RGBA pixels.
-pub fn icon(path: &Path, side: i32) -> Option<(u32, u32, Vec<u8>)> {
+pub fn icon(path: &Path, side: i32) -> Option<Pixels> {
     init_com();
-    // SAFETY: COM objects are released when dropped; the bitmap is deleted after it is read.
+    // SAFETY: the COM object is released when dropped.
     unsafe {
         let factory: IShellItemImageFactory =
             SHCreateItemFromParsingName(&HSTRING::from(path), None).ok()?;
+        image(&factory, side)
+    }
+}
+
+pub struct ShellApp {
+    pub name: String,
+    /// What follows `shell:AppsFolder\` to start it: a Store app id or a program path.
+    pub id: String,
+    pub icon: Option<Pixels>,
+}
+
+/// Every app of the Start menu, desktop and Store alike, as `shell:AppsFolder` lists them.
+pub fn apps(icon_side: i32) -> Vec<ShellApp> {
+    init_com();
+    let mut apps = Vec::new();
+    // SAFETY: COM objects are released when dropped; names are freed by `display_name`.
+    unsafe {
+        let Ok(folder) =
+            SHGetKnownFolderItem::<IShellItem>(&FOLDERID_AppsFolder, KF_FLAG_DEFAULT, None)
+        else {
+            return apps;
+        };
+        let Ok(items) = folder.BindToHandler::<_, IEnumShellItems>(None, &BHID_EnumItems) else {
+            return apps;
+        };
+        loop {
+            let mut batch = [None];
+            let mut fetched = 0u32;
+            if items.Next(&mut batch, Some(&raw mut fetched)).is_err() || fetched == 0 {
+                break;
+            }
+            let Some(item) = batch[0].take() else { break };
+            let (Some(name), Some(id)) = (
+                display_name(&item, SIGDN_NORMALDISPLAY),
+                display_name(&item, SIGDN_PARENTRELATIVEPARSING),
+            ) else {
+                continue;
+            };
+            let icon = item
+                .cast::<IShellItemImageFactory>()
+                .ok()
+                .and_then(|factory| image(&factory, icon_side));
+            apps.push(ShellApp { name, id, icon });
+        }
+    }
+    apps
+}
+
+unsafe fn display_name(item: &IShellItem, kind: SIGDN) -> Option<String> {
+    // SAFETY: the shell allocates the string; it is copied, then freed with CoTaskMemFree.
+    unsafe {
+        let text = item.GetDisplayName(kind).ok()?;
+        let value = text.to_string().ok();
+        CoTaskMemFree(Some(text.0.cast_const().cast()));
+        value
+    }
+}
+
+unsafe fn image(factory: &IShellItemImageFactory, side: i32) -> Option<Pixels> {
+    // SAFETY: the bitmap is deleted after it is read.
+    unsafe {
         let bitmap = factory
             .GetImage(
                 SIZE { cx: side, cy: side },
@@ -70,7 +135,7 @@ pub fn shortcut_target(path: &Path) -> Option<PathBuf> {
 }
 
 /// Reads a 32-bit bitmap as straight RGBA (the shell hands out premultiplied BGRA).
-unsafe fn read_bitmap(bitmap: HBITMAP) -> Option<(u32, u32, Vec<u8>)> {
+unsafe fn read_bitmap(bitmap: HBITMAP) -> Option<Pixels> {
     let mut info = BITMAP::default();
     #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
     let size = mem::size_of::<BITMAP>() as i32;

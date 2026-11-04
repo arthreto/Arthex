@@ -1,5 +1,6 @@
 //! Rust side of the modules in `src/modules/`, one folder per module id.
 
+pub mod apps;
 pub mod recent_apps;
 pub mod shortcuts;
 
@@ -8,6 +9,7 @@ use tauri::{AppHandle, Listener};
 use crate::app::{self, Result, Settings, events};
 
 pub fn setup(app: &AppHandle) -> Result<()> {
+    apps::setup(app);
     shortcuts::setup(app)?;
     recent_apps::setup(app)?;
     sync(app, &app::settings(app));

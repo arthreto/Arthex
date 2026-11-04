@@ -27,6 +27,8 @@
     "allow-shortcuts-open",
     "allow-recent-apps-list",
     "allow-recent-apps-open",
-    "allow-recent-apps-clear"
+    "allow-recent-apps-clear",
+    "allow-apps-list",
+    "allow-apps-open"
   ]
 }

@@ -38,6 +38,8 @@ pub fn run() {
             modules::shortcuts::commands::shortcuts_browse_program,
             modules::shortcuts::commands::shortcuts_pick_icon,
             modules::shortcuts::commands::shortcuts_open,
+            modules::apps::commands::apps_list,
+            modules::apps::commands::apps_open,
             modules::recent_apps::commands::recent_apps_list,
             modules::recent_apps::commands::recent_apps_open,
             modules::recent_apps::commands::recent_apps_clear,

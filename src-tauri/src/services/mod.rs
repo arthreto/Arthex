@@ -3,4 +3,4 @@
 pub mod icons;
 pub mod programs;
 #[cfg(windows)]
-mod shell;
+pub mod shell;

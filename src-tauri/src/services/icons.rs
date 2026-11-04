@@ -73,6 +73,12 @@ pub fn file_icon(path: &Path) -> Option<String> {
 fn extract(path: &Path) -> Option<String> {
     #[allow(clippy::cast_possible_wrap)]
     let (width, height, pixels) = super::shell::icon(path, SIZE as i32)?;
+    rgba_data_url(width, height, pixels)
+}
+
+/// Raw RGBA pixels, as the Windows shell hands them out, to a PNG data URL.
+#[cfg_attr(not(windows), allow(dead_code))]
+pub fn rgba_data_url(width: u32, height: u32, pixels: Vec<u8>) -> Option<String> {
     encode(DynamicImage::ImageRgba8(image::RgbaImage::from_raw(
         width, height, pixels,
     )?))

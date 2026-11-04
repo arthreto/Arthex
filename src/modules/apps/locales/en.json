@@ -1,0 +1,11 @@
+{
+  "name": "Apps",
+  "description": "Launch any app from the search bar.",
+  "group": "Apps",
+  "kind": "App",
+  "subtitle": "App · {file}",
+  "executable": "Executable",
+  "tip": "Tip",
+  "tipText": "Enter to launch",
+  "launch": "Launch"
+}

@@ -1,0 +1,11 @@
+{
+  "name": "Applications",
+  "description": "Lance n’importe quelle app depuis la barre.",
+  "group": "Applications",
+  "kind": "Application",
+  "subtitle": "Application · {file}",
+  "executable": "Exécutable",
+  "tip": "Astuce",
+  "tipText": "Entrée pour lancer",
+  "launch": "Lancer"
+}
