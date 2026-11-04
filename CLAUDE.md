@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Rules and context for anyone (human or AI) working on Arthex. Read it fully before changing anything.
+Rules for anyone (human or AI) working on Arthex. Read it fully before changing anything. How the code works and how to extend it (API, modules, commands, settings, languages, releases) is in [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md): read it before writing code.
 
 Arthex is a fast, secure overlay utility. **Shift + Win** opens a full-screen translucent overlay with search, shortcuts, everyday tools and pages such as FileSize, Notes and Clipboard. It lives in the tray and starts with the system. Windows 11 comes first; macOS and Linux build a simplified version. Mobile is out of scope.
 
@@ -11,39 +11,15 @@ Arthex is a fast, secure overlay utility. **Shift + Win** opens a full-screen tr
    - A purely internal change (refactor, fix, performance) needs no mockup.
 2. **Commit and push often**, one logical change per commit.
    - Messages are in English, short and imperative ("Add clipboard history page").
-   - Push to the working branch. Never open a pull request unless the owner asks for one.
-3. **Every release has a changelog.** See "Releases" below. It is shown to users in the "What's new" view at their next launch, so it is never optional.
+   - Work and push directly on `main`. No feature or tool-named branches, no pull requests unless the owner asks.
+   - Commits are authored as the owner (`arthreto <86776616+arthreto@users.noreply.github.com>`) and carry no co-author or session trailers.
+3. **Every release has a changelog** as its description, in English and French, in the format given in `docs/DEVELOPMENT.md` → Releasing. Users see it in "What's new" at their next launch, so a release without one is a broken release.
 4. **English everywhere** in the repository: code, comments, commits, README, this file. The interface is translated through i18n. The owner writes in French; answer them in French.
-5. **Only two markdown files exist:** `README.md` and `CLAUDE.md`. No `docs/`, no `CONTRIBUTING.md`, no notes files.
-
-## Releases
-
-- Tag `vX.Y.Z` on the default branch. The version must match in `package.json`, `src-tauri/Cargo.toml` and `src-tauri/tauri.conf.json`.
-- The **Release description is the changelog** and is mandatory. It holds two sections, in this order, with the same items:
-
-  ```
-  ### English
-  #### New
-  - …
-  #### Improved
-  - …
-  #### Fixed
-  - …
-
-  ### Français
-  #### Nouveau
-  - …
-  #### Amélioré
-  - …
-  #### Corrigé
-  - …
-  ```
-
-  - Omit an empty subsection.
-  - Write for users, not developers: what changed for them, one short line each.
-
-- The release workflow builds and signs the installers. It publishes `latest.json`, whose `notes` field is that description.
-- At the first launch after an update (`settings.lastSeenVersion` differs from the running version), the app opens **What's new**: a large panel integrated with the overlay blur, showing the section of the active language. A release without a changelog is a broken release.
+5. **Three markdown files only**, each with one role. No other markdown file.
+   - `README.md`: presentation, installation and credits, for users.
+   - `docs/DEVELOPMENT.md`: how the code works and how to extend it, for developers. Update it in the same commit as any change it describes.
+   - `CLAUDE.md`: the project rules.
+6. **Run the checks** from `docs/DEVELOPMENT.md` → Checks before every commit.
 
 ## Interface rules
 
@@ -96,78 +72,6 @@ These come from the owner's feedback on the mockup. Do not reintroduce what was 
   - Pin TypeScript to `~6.0.x`. TypeScript 7 breaks `svelte-check` and `typescript-eslint`.
   - Lock files are committed.
 
-### Checks before every commit
-
-```bash
-npm run check && npm run lint && npm test && npm run i18n:check
-cd src-tauri && cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test
-```
-
-CI runs the same checks and builds the Windows installer.
-
-## Architecture
-
-```
-src/
-  app/            shell: App, Overlay, SearchBar, TabBar, Hub, KeyHints, settings/
-  core/           api.ts (typed commands and events), i18n/, settings/, modules/ (registry), appearance, toast
-  ui/             shared components + tokens.css (themes) + base.css
-  modules/<id>/   one folder per page or feature
-src-tauri/
-  build.rs        command list (ACL) + embeds the core locales for Rust
-  capabilities/   what the window may call
-  src/app/        setup, settings store, overlay window, tray, autostart, i18n, logging, commands
-```
-
-### Everything is a module
-
-A page (Home, FileSize, Notes…) or a feature (calculator, system commands…) is a folder in `src/modules/<id>/`:
-
-```
-manifest.ts          defineModule({ id, kind: 'page' | 'feature', icon, tint, order, locked?, page? })
-<Name>Page.svelte    loaded on first open (pages only)
-locales/en.json      { "name": "…", "description": "…", … }, other languages alongside
-i18n.ts              export const t = moduleTranslator<typeof en>('<id>')
-```
-
-- The registry discovers manifests with `import.meta.glob`. **Adding a module means adding a folder**; the shell is not edited.
-- `id` is lowercase `[a-z0-9-]`, at most 32 characters, and never changes once released, because settings store it.
-- Layout rules are pure functions in `src/core/modules/layout.ts`:
-  - `tabBarIds`: home first, max 6, no disabled modules;
-  - `launcherIds`: favourites, then enabled, then disabled;
-  - `toggleFavorite`.
-- A disabled module disappears everywhere: tab bar, search results, home widgets. Its Rust service stops.
-
-### Settings
-
-- Owned by Rust: `settings.json` in the app config folder, versioned and written atomically.
-- The interface sends **partial patches** (`commands.settingsUpdate({ theme: 'dark' })`). Rust rejects unknown keys, normalises the result, then emits `settings://changed` to every listener.
-- A new setting goes in three places, which must stay in sync:
-  - `Settings` in `src-tauri/src/app/settings.rs`, with its default and normalisation;
-  - `src/core/settings/types.ts`;
-  - a test.
-- A breaking change bumps `VERSION` and migrates old files.
-
-### Adding a Rust command
-
-1. Write it in `src-tauri/src/app/commands.rs` (or in the module's Rust file). Validate every input.
-2. Add its name to `COMMANDS` in `src-tauri/build.rs`.
-3. Add `allow-<name-with-dashes>` to `src-tauri/capabilities/main.json`.
-4. Register it in `generate_handler!` in `src-tauri/src/lib.rs`.
-5. Add a typed wrapper in `src/core/api.ts`.
-
-Events shared by both sides are declared in `src-tauri/src/app/events.rs` and in `events` in `src/core/api.ts`.
-
-### Internationalisation
-
-- ICU messages (`intl-messageformat`).
-  - Shell strings live in `src/core/locales/<lang>.json`.
-  - Module strings live in `src/modules/<id>/locales/<lang>.json`, under the `modules.<id>.*` namespace.
-- English is the reference and the fallback. Keys are typed from `en.json`, so a missing key does not compile.
-- `npm run i18n:new <code>` creates every file for a new language. `npm run i18n:check` reports missing or unknown keys and mismatched variables.
-- The tray menu is translated by Rust from the same `core/locales` files (`tray.*`), embedded at build time.
-- Dates, sizes and numbers go through `Intl` in the active language.
-
 ## Security
 
 - **Minimal capabilities:** only our commands and the plugin permissions actually used. No `shell` plugin.
@@ -191,17 +95,6 @@ Events shared by both sides are declared in `src-tauri/src/app/events.rs` and in
 | Total RAM       | < 150 MB including the file index                                 |
 | Search          | < 50 ms per keystroke                                             |
 | Installer       | < 10 MB                                                           |
-
-## Platform notes
-
-- **Shift + Win** cannot be registered with `RegisterHotKey`, because it is made only of modifiers.
-  - It uses a `WH_KEYBOARD_LL` hook on its own thread, driven by a pure, tested state machine.
-  - It fires when Shift + Win is released with no other key in between, so Win + Shift + S still works.
-  - A neutral `vkE8` key press is injected so that releasing Win does not open the Start menu.
-  - The hook callback does O(1) work. Windows silently removes slow hooks.
-- The startup entry is managed by `tauri-plugin-autostart`, launched with `--autostart` so the app starts silently. Debug builds never register it.
-- Install is NSIS per user. `src-tauri/windows/hooks.nsh` removes the startup entry on uninstall.
-- Data lives in the Tauri app folders named after the identifier `dev.arthreto.arthex`. The NSIS uninstaller offers to delete them.
 
 ## Roadmap
 

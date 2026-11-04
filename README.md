@@ -33,7 +33,7 @@ It is built for Windows 11. macOS and Linux get a simplified version.
 
 Languages: English and French.
 
-## Install
+## Installation
 
 1. Download `Arthex_x.y.z_x64-setup.exe` from the [Releases](https://github.com/arthreto/Arthex/releases) page.
 2. Run it. No administrator rights are needed, and you can choose the install folder.
@@ -54,85 +54,14 @@ To uninstall, use the tray menu (**Uninstall…**) or Windows Settings → Apps.
 
 Arthex never needs administrator rights and sends no telemetry. The network is used only for website icons and update checks.
 
-## Build from source
+## Credits
 
-Requirements:
+Arthex is made by [arthreto](https://github.com/arthreto).
 
-- [Node.js](https://nodejs.org) 22 or later.
-- [Rust](https://rustup.rs) stable.
-- The [Tauri prerequisites](https://tauri.app/start/prerequisites/) for your system: WebView2 and the MSVC build tools on Windows, WebKitGTK on Linux.
+- Built with [Tauri](https://tauri.app), [Svelte](https://svelte.dev) and [Rust](https://www.rust-lang.org).
+- Want to build it, add a page or a language? See the [developer guide](docs/DEVELOPMENT.md).
 
-```bash
-npm install
-```
+Released under the [PolyForm Noncommercial 1.0.0](LICENSE) license:
 
-```bash
-npm run tauri dev
-```
-
-```bash
-npm run tauri build
-```
-
-`npm run tauri build` writes the installer to `src-tauri/target/release/bundle/`.
-
-Checks run by CI:
-
-```bash
-npm run check && npm run lint && npm test && npm run i18n:check
-```
-
-```bash
-cd src-tauri && cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test
-```
-
-## Architecture
-
-- **Stack:** [Tauri 2](https://tauri.app) (Rust) with a [Svelte 5](https://svelte.dev) + TypeScript interface.
-- **`src/app/`:** the shell (overlay, search bar, tab bar, All pages, settings).
-- **`src/core/`:** typed Rust API, settings, internationalisation and the module registry.
-- **`src/ui/`:** shared components and theme tokens (dark and light).
-- **`src/modules/<id>/`:** one folder per page or feature, discovered automatically.
-- **`src-tauri/src/app/`:**
-  - settings store (owned by Rust);
-  - overlay window;
-  - tray, startup entry, logging;
-  - the commands the interface may call.
-- **Security:** the window may only call the commands listed in `src-tauri/capabilities/main.json`, under a strict Content Security Policy.
-
-### Create a module
-
-1. Create `src/modules/<id>/manifest.ts`:
-   ```ts
-   export default defineModule({
-     id: 'timer',
-     kind: 'page',
-     icon: '<svg path>',
-     tint: 'green',
-     order: 50,
-     page: () => import('./TimerPage.svelte'),
-   });
-   ```
-2. Write `TimerPage.svelte` with components from `src/ui/`.
-3. Add `locales/en.json` with at least `name` and `description`, plus one file per other language.
-4. Add `i18n.ts`: `export const t = moduleTranslator<typeof en>('timer');`.
-5. Run `npm run i18n:check`. The module appears in All pages.
-
-### Add a language
-
-```bash
-npm run i18n:new de
-```
-
-This creates every `de.json` from English. Translate them, then check that nothing is missing:
-
-```bash
-npm run i18n:check
-```
-
-## License
-
-[PolyForm Noncommercial 1.0.0](LICENSE).
-
-- You may use, study and modify Arthex, as long as you credit the author.
-- Commercial use is not allowed, including for modified versions.
+- you may use, study and modify Arthex, as long as you credit the author;
+- commercial use is not allowed, including for modified versions.
