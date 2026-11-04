@@ -105,9 +105,9 @@ CI measures the installer, the program and the memory used on Windows at every p
 1. Skeleton: shell, UI kit, i18n, themes, settings, tray, autostart, overlay window, CI — done.
 2. Onboarding, Shift + Win hook and recorder, "All pages" hub with Customize — done.
 3. Home: website and software shortcuts (edit, delete with undo, reorder), recent apps, Settings → Features — done.
-4. Search: file index, app launcher, calculator, system commands (including scheduled shutdown).
-5. FileSize: tree, treemap, largest files, Recycle Bin.
-6. Clipboard history and Markdown notes.
+4. Search: file index, app launcher, calculator, system commands (including scheduled shutdown) — done.
+5. FileSize: tree, treemap, largest files, Recycle Bin — done.
+6. Clipboard history, Markdown notes and the Home cards — done.
 7. Signed auto-updates with What's new, then polish, accessibility and a performance pass.
 
 Ideas for later, never started without the owner's go-ahead:
