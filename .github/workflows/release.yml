@@ -3,6 +3,13 @@ name: Release
 on:
   push:
     tags: ['v*']
+  # Or by hand (or through the API), for the version in package.json; the tag is created when
+  # the release is published.
+  workflow_dispatch:
+    inputs:
+      notes:
+        description: Changelog, in the format of docs/DEVELOPMENT.md → Releasing
+        required: true
 
 permissions:
   contents: write
@@ -18,9 +25,21 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Check the version, the update key and the changelog
         shell: bash
+        env:
+          NOTES: ${{ inputs.notes }}
         run: |
-          git fetch --force origin "refs/tags/${GITHUB_REF_NAME}:refs/tags/${GITHUB_REF_NAME}"
-          version="${GITHUB_REF_NAME#v}"
+          if [ "$GITHUB_EVENT_NAME" = workflow_dispatch ]; then
+            version=$(node -p "require('./package.json').version")
+            tag="v$version"
+            printf '%s\n' "$NOTES" > "$RUNNER_TEMP/notes.md"
+          else
+            tag="$GITHUB_REF_NAME"
+            version="${tag#v}"
+            git fetch --force origin "refs/tags/$tag:refs/tags/$tag"
+            # The body only: the subject line and any signature stay out of the notes.
+            git tag -l --format='%(contents:body)' "$tag" > "$RUNNER_TEMP/notes.md"
+          fi
+          echo "TAG=$tag" >> "$GITHUB_ENV"
           for file in package.json src-tauri/tauri.conf.json; do
             grep -q "\"version\": \"$version\"" "$file" || { echo "::error::$file is not at version $version"; exit 1; }
           done
@@ -29,10 +48,8 @@ jobs:
             echo "::error::Set the updater public key first, see docs/DEVELOPMENT.md → Releasing"
             exit 1
           fi
-          # The body only: the subject line and any signature stay out of the notes.
-          git tag -l --format='%(contents:body)' "$GITHUB_REF_NAME" > "$RUNNER_TEMP/notes.md"
           if ! grep -q '^### English' "$RUNNER_TEMP/notes.md" || ! grep -q '^### Français' "$RUNNER_TEMP/notes.md"; then
-            echo "::error::The tag message must hold the changelog, see docs/DEVELOPMENT.md → Releasing"
+            echo "::error::The changelog is missing, see docs/DEVELOPMENT.md → Releasing"
             exit 1
           fi
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -75,6 +92,6 @@ jobs:
                 },
               },
             }, null, 2));
-          ' "$INSTALLER" "$name" "$GITHUB_REF_NAME" "$RUNNER_TEMP/notes.md"
-          gh release create "$GITHUB_REF_NAME" "$INSTALLER" "$INSTALLER.sig" latest.json \
-            --title "Arthex $GITHUB_REF_NAME" --notes-file "$RUNNER_TEMP/notes.md"
+          ' "$INSTALLER" "$name" "$TAG" "$RUNNER_TEMP/notes.md"
+          gh release create "$TAG" "$INSTALLER" "$INSTALLER.sig" latest.json --target "$GITHUB_SHA" \
+            --title "Arthex $TAG" --notes-file "$RUNNER_TEMP/notes.md"

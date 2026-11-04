@@ -292,6 +292,8 @@ Then, for each release:
    git push origin vX.Y.Z
    ```
 
+   Or run the Release workflow by hand (Actions → Release → Run workflow, or through the API) with the changelog as its `notes` input: it releases the version of `package.json` and creates the tag itself.
+
 3. The release workflow checks the versions and the changelog, builds the installer, signs it in a separate step (the only one that sees the key; its actions are pinned to commits), then publishes the GitHub Release with `latest.json`.
 
 The **changelog is mandatory**. It becomes the Release description and the `notes` of `latest.json`. Updates are installed by the app (automatically at launch, or from Settings → Updates) only when their signature matches the public key; their notes are kept in `whats-new.json`, and at the next launch the app shows the section of the active language in **What's new**.
