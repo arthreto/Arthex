@@ -1,10 +1,10 @@
 <script lang="ts">
   import type { Snippet } from 'svelte';
 
-  let { children }: { children: Snippet } = $props();
+  let { large = false, children }: { large?: boolean; children: Snippet } = $props();
 </script>
 
-<kbd>{@render children()}</kbd>
+<kbd class:large>{@render children()}</kbd>
 
 <style>
   kbd {
@@ -23,5 +23,13 @@
     font-weight: 600;
     color: var(--text-muted);
     white-space: nowrap;
+  }
+
+  .large {
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 7px;
+    font-size: 13px;
+    color: var(--text);
   }
 </style>

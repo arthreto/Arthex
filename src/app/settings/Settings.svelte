@@ -4,18 +4,18 @@
   import Icon from '../../ui/Icon.svelte';
   import type { IconName } from '../../ui/icons';
   import GeneralSettings from './GeneralSettings.svelte';
+  import HotkeySettings from './HotkeySettings.svelte';
 
   interface Section {
     id: string;
     title: ShellKey;
     icon: IconName;
-    component: Component<{ onuninstall: () => void }>;
+    component: Component;
   }
-
-  let { onuninstall }: { onuninstall: () => void } = $props();
 
   const sections: Section[] = [
     { id: 'general', title: 'settings.sections.general', icon: 'sliders', component: GeneralSettings },
+    { id: 'hotkey', title: 'settings.sections.hotkey', icon: 'keyboard', component: HotkeySettings },
   ];
 
   let currentId = $state('general');
@@ -39,7 +39,7 @@
     {@const Body = current.component}
     <div class="content scroll">
       <h3>{t(current.title)}</h3>
-      <Body {onuninstall} />
+      <Body />
     </div>
   {/if}
 </div>

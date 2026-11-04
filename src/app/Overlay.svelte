@@ -15,9 +15,9 @@
   import Settings from './settings/Settings.svelte';
   import TabBar from './TabBar.svelte';
   import UninstallDialog from './UninstallDialog.svelte';
+  import { dialogs } from './dialogs.svelte';
 
   let shown = $state(0);
-  let confirmingUninstall = $state(false);
   let searchBar: SearchBar | undefined = $state();
 
   onMount(() => {
@@ -31,7 +31,7 @@
         search.clear();
         navigation.openTarget(target);
       }),
-      on(events.confirmUninstall, () => (confirmingUninstall = true)),
+      on(events.confirmUninstall, () => (dialogs.uninstall = true)),
     ];
     searchBar?.focus();
     return () => listeners.forEach((listener) => listener.then((unlisten) => unlisten()));
@@ -81,7 +81,7 @@
       {:else if navigation.view.kind === 'hub'}
         <Hub />
       {:else if navigation.view.kind === 'settings'}
-        <Settings onuninstall={() => (confirmingUninstall = true)} />
+        <Settings />
       {:else}
         <PageView id={navigation.view.id} />
       {/if}
@@ -90,8 +90,8 @@
   </section>
 {/key}
 
-{#if confirmingUninstall}
-  <UninstallDialog onclose={() => (confirmingUninstall = false)} />
+{#if dialogs.uninstall}
+  <UninstallDialog onclose={() => (dialogs.uninstall = false)} />
 {/if}
 
 <style>

@@ -7,11 +7,11 @@
   import type { SettingsPatch, Theme } from '../../core/settings/types';
   import { toast } from '../../core/toast.svelte';
   import Button from '../../ui/Button.svelte';
+  import Panel from '../../ui/Panel.svelte';
   import Segmented from '../../ui/Segmented.svelte';
   import Switch from '../../ui/Switch.svelte';
+  import { dialogs } from '../dialogs.svelte';
   import SettingRow from './SettingRow.svelte';
-
-  let { onuninstall }: { onuninstall: () => void } = $props();
 
   let version = $state('');
   onMount(async () => {
@@ -45,7 +45,7 @@
   }
 </script>
 
-<section class="box">
+<Panel list>
   <SettingRow label={t('settings.general.language')}>
     <Segmented
       label={t('settings.general.language')}
@@ -76,28 +76,22 @@
       onchange={(reduceMotion) => save({ reduceMotion })}
     />
   </SettingRow>
-</section>
+</Panel>
 
-<section class="box about">
-  <img src={logo} alt="" width="34" height="34" />
-  <span class="version">{t('settings.general.version', { version })}</span>
-  <Button onclick={openDataDir}>{t('settings.general.data')}</Button>
-  <Button onclick={onuninstall}>{t('settings.general.uninstall')}</Button>
-</section>
+<Panel>
+  <div class="about">
+    <img src={logo} alt="" width="34" height="34" />
+    <span class="version">{t('settings.general.version', { version })}</span>
+    <Button onclick={openDataDir}>{t('settings.general.data')}</Button>
+    <Button onclick={() => (dialogs.uninstall = true)}>{t('settings.general.uninstall')}</Button>
+  </div>
+</Panel>
 
 <style>
-  .box {
-    padding: 6px 18px;
-    border-radius: 14px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-  }
-
   .about {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 14px 18px;
   }
 
   .version {

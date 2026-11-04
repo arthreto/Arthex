@@ -8,6 +8,7 @@ export const icons = {
   sliders: 'M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1M15 4v4M9 10v4M17 16v4',
   pin: 'M12 17v5M8 3h8l-1 6 3 3v2H6v-2l3-3z',
   check: 'm5 12 5 5 9-10',
+  keyboard: 'M3 6.5h18v11H3zM7 10h.01M11 10h.01M15 10h.01M7.5 14h9',
 } as const;
 
 export type IconName = keyof typeof icons;

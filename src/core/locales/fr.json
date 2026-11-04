@@ -1,6 +1,13 @@
 {
-  "$meta": { "code": "fr", "name": "French", "nativeName": "Français" },
-  "common": { "cancel": "Annuler", "close": "Fermer" },
+  "$meta": {
+    "code": "fr",
+    "name": "French",
+    "nativeName": "Français"
+  },
+  "common": {
+    "cancel": "Annuler",
+    "close": "Fermer"
+  },
   "keys": {
     "shift": "Shift",
     "win": "Win",
@@ -16,7 +23,11 @@
     "clear": "Effacer la recherche",
     "noResults": "Aucun résultat pour « {query} »."
   },
-  "tabs": { "label": "Pages épinglées", "hub": "Toutes les pages", "settings": "Paramètres" },
+  "tabs": {
+    "label": "Pages épinglées",
+    "hub": "Toutes les pages",
+    "settings": "Paramètres"
+  },
   "hints": {
     "navigate": "Naviguer",
     "open": "Ouvrir",
@@ -35,16 +46,54 @@
   },
   "settings": {
     "label": "Sections des paramètres",
-    "sections": { "general": "Général" },
+    "sections": {
+      "general": "Général",
+      "hotkey": "Raccourci clavier"
+    },
     "general": {
       "language": "Langue",
       "theme": "Thème",
-      "themes": { "system": "Système", "dark": "Sombre", "light": "Clair" },
+      "themes": {
+        "system": "Système",
+        "dark": "Sombre",
+        "light": "Clair"
+      },
       "autostart": "Lancer Arthex au démarrage de Windows",
       "reduceMotion": "Réduire les animations",
       "version": "Arthex {version}",
       "data": "Données",
       "uninstall": "Désinstaller…"
+    },
+    "hotkey": {
+      "intro": "Une touche ou une combinaison. Shift + Win se déclenche quand tu relâches les touches sans en avoir appuyé d'autre : Win + Shift + S et les autres raccourcis Windows continuent de marcher.",
+      "change": "Modifier",
+      "changeLabel": "Modifier le raccourci, actuellement {keys}",
+      "waiting": "Appuie sur ta combinaison… (Échap pour annuler)",
+      "reset": "Rétablir {keys}",
+      "saved": "Nouveau raccourci enregistré : {keys}",
+      "restored": "Raccourci rétabli : {keys}",
+      "problems": {
+        "modifierOnly": "Une touche de modification seule ouvrirait Arthex sans arrêt. Ajoute une deuxième touche.",
+        "typing": "Une lettre ou un chiffre seul gênerait ta frappe. Préfère une combinaison, ou une touche comme F13 à F24, Pause ou Inser.",
+        "reserved": "{keys} est déjà utilisé par Windows pour {use}. Choisis une autre combinaison."
+      },
+      "uses": {
+        "copy": "copier",
+        "paste": "coller",
+        "cut": "couper",
+        "undo": "annuler",
+        "selectAll": "tout sélectionner",
+        "switchWindow": "changer de fenêtre",
+        "closeWindow": "fermer la fenêtre",
+        "lock": "verrouiller la session",
+        "desktop": "afficher le bureau",
+        "explorer": "ouvrir l'Explorateur",
+        "run": "la boîte Exécuter",
+        "settings": "les Paramètres",
+        "screenshot": "la capture d'écran",
+        "taskView": "la vue des tâches",
+        "clipboard": "son propre presse-papiers"
+      }
     }
   },
   "uninstall": {
@@ -52,7 +101,9 @@
     "body": "Arthex, son raccourci clavier et son démarrage automatique seront supprimés. Le désinstalleur te demandera si tu veux aussi effacer tes notes et tes raccourcis.",
     "confirm": "Désinstaller"
   },
-  "errors": { "generic": "Une erreur est survenue : {message}" },
+  "errors": {
+    "generic": "Une erreur est survenue : {message}"
+  },
   "tray": {
     "open": "Ouvrir Arthex",
     "settings": "Paramètres",
