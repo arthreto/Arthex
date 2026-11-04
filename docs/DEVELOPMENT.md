@@ -72,6 +72,8 @@ Reuse these instead of writing your own.
 | A module's name or description                           | `moduleText(id, 'name' \| 'description')` from `src/core/i18n`                            |
 | A button, switch, modal, panel, text field, keycap, icon | `src/ui/`                                                                                 |
 | Colours, radii, veil                                     | the tokens in `src/ui/tokens.css`                                                         |
+| Match text against a search                              | `matchesAll` and `normalize` from `src/core/text.ts` (case and accents ignored)           |
+| Show a time ("2 min ago")                                | `formatWhen` from `src/core/format.ts`                                                    |
 | Feedback after an action                                 | `toast.show(message)` from `src/core/toast.svelte.ts`                                     |
 | Open a page, the hub or settings                         | `navigation.open(view)` from `src/app/navigation.svelte.ts`                               |
 | Open the uninstall dialog                                | `dialogs.uninstall = true` from `src/app/dialogs.svelte.ts`                               |
@@ -85,6 +87,7 @@ A page (Home, FileSize, Notes…) or a feature without a page (calculator, syste
 manifest.ts          what the module is (id, kind, icon, tint, order, page?, widget?)
 <Name>Page.svelte    its page, loaded on first open (pages only)
 <Name>Widget.svelte  its card on Home, if any (`widget: { slot: 'top' | 'main' | 'side', component }`)
+<Action>.svelte      a control next to its switch in Settings → Features, if any (`settingsAction`)
 locales/<lang>.json  its text: at least "name" and "description"
 i18n.ts              its typed translator
 api.ts               typed wrappers of its Rust commands (if any)
