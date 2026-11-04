@@ -3,11 +3,14 @@ use std::path::Path;
 use tauri::{AppHandle, Manager};
 use tauri_plugin_opener::OpenerExt;
 
-use super::{FileHit, FileSearch, Status};
-use crate::app::{
-    AppError, Result,
-    dialogs::{blocking, pick_folder},
-    overlay,
+use super::{FileHit, Status, search, status};
+use crate::{
+    app::{
+        AppError, Result,
+        dialogs::{blocking, pick_folder},
+        overlay,
+    },
+    services::file_index::FileIndex,
 };
 
 /// Results shown per search; the interface adds them under other groups.
@@ -15,7 +18,7 @@ const LIMIT: usize = 8;
 
 #[tauri::command]
 pub async fn file_search_query(app: AppHandle, query: String) -> Result<Vec<FileHit>> {
-    blocking(move || app.state::<FileSearch>().search(&query, LIMIT)).await
+    blocking(move || search(&app.state::<FileIndex>(), &query, LIMIT)).await
 }
 
 #[tauri::command]
@@ -41,41 +44,39 @@ pub fn file_search_reveal(app: AppHandle, path: String) -> Result<()> {
 
 #[tauri::command]
 pub fn file_search_status(app: AppHandle) -> Status {
-    app.state::<FileSearch>().status()
+    status(&app.state::<FileIndex>())
 }
 
 #[tauri::command]
 pub fn file_search_rescan(app: AppHandle) {
-    app.state::<FileSearch>()
-        .rescan
-        .store(true, std::sync::atomic::Ordering::Relaxed);
+    app.state::<FileIndex>().rescan();
 }
 
 #[tauri::command]
 pub async fn file_search_add_folder(app: AppHandle) -> Result<Status> {
     if let Some(folder) = pick_folder(&app).await? {
         let folder = folder.to_string_lossy().into_owned();
-        app.state::<FileSearch>().update_config(|config| {
+        app.state::<FileIndex>().update_config(|config| {
             if !config.folders.contains(&folder) {
                 config.folders.push(folder);
             }
         })?;
     }
-    Ok(app.state::<FileSearch>().status())
+    Ok(status(&app.state::<FileIndex>()))
 }
 
 #[tauri::command]
 pub fn file_search_remove_folder(app: AppHandle, folder: String) -> Result<Status> {
-    let search = app.state::<FileSearch>();
-    search.update_config(|config| config.folders.retain(|item| *item != folder))?;
-    Ok(search.status())
+    let files = app.state::<FileIndex>();
+    files.update_config(|config| config.folders.retain(|item| *item != folder))?;
+    Ok(status(&files))
 }
 
 #[tauri::command]
 pub fn file_search_remove_exclusion(app: AppHandle, exclusion: String) -> Result<Status> {
-    let search = app.state::<FileSearch>();
-    search.update_config(|config| config.exclusions.retain(|item| *item != exclusion))?;
-    Ok(search.status())
+    let files = app.state::<FileIndex>();
+    files.update_config(|config| config.exclusions.retain(|item| *item != exclusion))?;
+    Ok(status(&files))
 }
 
 fn existing(path: &str) -> Result<&Path> {

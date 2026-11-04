@@ -8,11 +8,14 @@ pub mod system;
 
 use tauri::{AppHandle, Listener};
 
-use crate::app::{self, Result, Settings, events};
+use crate::{
+    app::{self, Result, Settings, events},
+    services::file_index,
+};
 
 pub fn setup(app: &AppHandle) -> Result<()> {
     apps::setup(app);
-    file_search::setup(app)?;
+    file_index::setup(app)?;
     shortcuts::setup(app)?;
     system::setup(app);
     recent_apps::setup(app)?;
@@ -29,5 +32,5 @@ pub fn setup(app: &AppHandle) -> Result<()> {
 /// Starts or stops the background work of each module to match its switch in Settings.
 fn sync(app: &AppHandle, settings: &Settings) {
     recent_apps::set_enabled(app, settings.is_module_enabled(recent_apps::ID));
-    file_search::set_enabled(app, settings.is_module_enabled(file_search::ID));
+    file_index::set_wanted(app, settings.is_module_enabled(file_search::ID));
 }

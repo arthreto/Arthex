@@ -1,5 +1,6 @@
 //! System services shared by several modules.
 
+pub mod file_index;
 pub mod icons;
 pub mod programs;
 #[cfg(windows)]

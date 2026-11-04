@@ -115,7 +115,7 @@ impl<'a> Reader<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::modules::file_search::index::{Item, NO_PARENT};
+    use crate::services::file_index::index::{Item, NO_PARENT};
 
     #[test]
     fn round_trips_and_refuses_damage() {

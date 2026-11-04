@@ -50,7 +50,7 @@ src-tauri/
   build.rs        declares the commands granted in capabilities/ + embeds the core locales for Rust
   capabilities/   what the window may call
   src/app/        setup, settings store, overlay window, tray, hotkey, autostart, i18n, logging, storage, commands
-  src/services/   system services shared by modules (icons, installed programs, Windows shell, text folding)
+  src/services/   system services shared by modules (file index, icons, installed programs, Windows shell, text folding)
   src/modules/<id>/  Rust side of a module: its state, commands and events
   windows/        NSIS installer hooks
 ```
@@ -241,7 +241,7 @@ The language appears in Settings and in the tray at the next build. No code chan
 - The startup entry is managed by `tauri-plugin-autostart`. It launches the app with `--autostart`, so it starts silently. Debug builds never register it.
 - Install is NSIS per user. `src-tauri/windows/hooks.nsh` removes the startup entry on uninstall.
 - Data lives in the Tauri app folders named after the identifier `dev.arthreto.arthex`. The uninstaller offers to delete them.
-- **File index** (`src-tauri/src/modules/file_search/`):
+- **File index** (`src-tauri/src/services/file_index/`), shared by file search and FileSize, runs while either is on:
   - It covers the fixed drives (the home folder on other systems) plus the folders the user adds, minus the exclusions.
   - Names live in two shared buffers (as typed and folded), with one compact entry per file pointing to its parent, so a million files take tens of megabytes.
   - The scan runs on background-priority threads, 30 s after a start at login. The cache loads first, so search works at once.
