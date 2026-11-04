@@ -34,6 +34,7 @@ ureq = "3"
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.56"
+webview2-com = "0.39"
 windows = { version = "0.62", features = [
     "Win32_Graphics_Gdi",
     "Win32_Storage_FileSystem",

@@ -56,6 +56,9 @@ pub fn hold(app: &AppHandle) -> Hold {
 
 pub fn prepare(app: &AppHandle) {
     app.manage(Timeline::default());
+    if let Some(window) = app.get_webview_window(LABEL) {
+        set_low_memory(&window, true);
+    }
 }
 
 pub fn show(app: &AppHandle) {
@@ -84,6 +87,7 @@ pub fn hide(app: &AppHandle) {
     if let Err(error) = window.hide() {
         tracing::warn!(%error, "could not hide the overlay");
     }
+    set_low_memory(&window, true);
 }
 
 pub fn toggle(app: &AppHandle) {
@@ -125,6 +129,7 @@ pub fn on_window_event(window: &Window, event: &WindowEvent) {
 
 /// Covers the work area of the monitor under the cursor, then takes the focus.
 fn present(window: &WebviewWindow) -> tauri::Result<()> {
+    set_low_memory(window, false);
     let cursor = window.cursor_position()?;
     let monitor = match window.monitor_from_point(cursor.x, cursor.y)? {
         Some(monitor) => Some(monitor),
@@ -138,3 +143,36 @@ fn present(window: &WebviewWindow) -> tauri::Result<()> {
     window.show()?;
     window.set_focus()
 }
+
+/// While the overlay is hidden, `WebView2` is asked to give back as much memory as it can.
+#[cfg(windows)]
+fn set_low_memory(window: &WebviewWindow, low: bool) {
+    use webview2_com::Microsoft::Web::WebView2::Win32::{
+        COREWEBVIEW2_MEMORY_USAGE_TARGET_LEVEL_LOW, COREWEBVIEW2_MEMORY_USAGE_TARGET_LEVEL_NORMAL,
+        ICoreWebView2_19,
+    };
+    use windows::core::Interface;
+
+    let level = if low {
+        COREWEBVIEW2_MEMORY_USAGE_TARGET_LEVEL_LOW
+    } else {
+        COREWEBVIEW2_MEMORY_USAGE_TARGET_LEVEL_NORMAL
+    };
+    let result = window.with_webview(move |webview| {
+        // SAFETY: COM calls on the WebView2 objects Tauri hands out, on the thread it calls us on.
+        // Older WebView2 runtimes lack ICoreWebView2_19 and simply keep their usual memory.
+        unsafe {
+            if let Ok(core) = webview.controller().CoreWebView2()
+                && let Ok(core) = core.cast::<ICoreWebView2_19>()
+            {
+                let _ = core.SetMemoryUsageTargetLevel(level);
+            }
+        }
+    });
+    if let Err(error) = result {
+        tracing::warn!(%error, "could not change the WebView2 memory level");
+    }
+}
+
+#[cfg(not(windows))]
+fn set_low_memory(_window: &WebviewWindow, _low: bool) {}

@@ -69,6 +69,7 @@ dependencies = [
  "tracing-appender",
  "tracing-subscriber",
  "ureq",
+ "webview2-com",
  "windows",
  "windows-sys 0.61.2",
  "winreg",
