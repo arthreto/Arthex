@@ -7,6 +7,7 @@ mod i18n;
 mod logging;
 pub mod overlay;
 mod settings;
+pub mod storage;
 mod system;
 mod tray;
 

@@ -49,7 +49,9 @@ src/
 src-tauri/
   build.rs        declares the commands granted in capabilities/ + embeds the core locales for Rust
   capabilities/   what the window may call
-  src/app/        setup, settings store, overlay window, tray, autostart, i18n, logging, commands
+  src/app/        setup, settings store, overlay window, tray, hotkey, autostart, i18n, logging, storage, commands
+  src/services/   system services shared by modules (icons…)
+  src/modules/<id>/  Rust side of a module: its state, commands and events
   windows/        NSIS installer hooks
 ```
 
@@ -60,28 +62,29 @@ src-tauri/
 
 Reuse these instead of writing your own.
 
-| Need                                         | Use                                                                                       |
-| -------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Call Rust                                    | the typed wrappers: `commands` in `src/core/api.ts` (shell) or `src/modules/<id>/api.ts`  |
-| Listen to Rust                               | `on(events.x, handler)` from `src/core/api.ts`                                            |
-| Show a Rust error                            | `errorMessage(error)` from `src/core/api.ts`                                              |
-| Read or change settings                      | `settings.value` and `settings.update(patch)` from `src/core/settings/settings.svelte.ts` |
-| Text                                         | `t('key')` from `src/core/i18n` (shell) or the module's `i18n.ts`                         |
-| A module's name or description               | `moduleText(id, 'name' \| 'description')` from `src/core/i18n`                            |
-| A button, switch, modal, panel, keycap, icon | `src/ui/`                                                                                 |
-| Colours, radii, veil                         | the tokens in `src/ui/tokens.css`                                                         |
-| Feedback after an action                     | `toast.show(message)` from `src/core/toast.svelte.ts`                                     |
-| Open a page, the hub or settings             | `navigation.open(view)` from `src/app/navigation.svelte.ts`                               |
-| Open the uninstall dialog                    | `dialogs.uninstall = true` from `src/app/dialogs.svelte.ts`                               |
-| Module list, tab bar, launcher order         | `modules`, `getModule`, `tabBarIds`, `launcherIds` from `src/core/modules`                |
+| Need                                                     | Use                                                                                       |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Call Rust                                                | the typed wrappers: `commands` in `src/core/api.ts` (shell) or `src/modules/<id>/api.ts`  |
+| Listen to Rust                                           | `on(events.x, handler)` from `src/core/api.ts`                                            |
+| Show a Rust error                                        | `errorMessage(error)` from `src/core/api.ts`                                              |
+| Read or change settings                                  | `settings.value` and `settings.update(patch)` from `src/core/settings/settings.svelte.ts` |
+| Text                                                     | `t('key')` from `src/core/i18n` (shell) or the module's `i18n.ts`                         |
+| A module's name or description                           | `moduleText(id, 'name' \| 'description')` from `src/core/i18n`                            |
+| A button, switch, modal, panel, text field, keycap, icon | `src/ui/`                                                                                 |
+| Colours, radii, veil                                     | the tokens in `src/ui/tokens.css`                                                         |
+| Feedback after an action                                 | `toast.show(message)` from `src/core/toast.svelte.ts`                                     |
+| Open a page, the hub or settings                         | `navigation.open(view)` from `src/app/navigation.svelte.ts`                               |
+| Open the uninstall dialog                                | `dialogs.uninstall = true` from `src/app/dialogs.svelte.ts`                               |
+| Module list, tab bar, launcher order                     | `modules`, `getModule`, `tabBarIds`, `launcherIds` from `src/core/modules`                |
 
 ## Modules
 
 A page (Home, FileSize, Notes…) or a feature without a page (calculator, system commands…) is a folder in `src/modules/<id>/`:
 
 ```
-manifest.ts          what the module is
+manifest.ts          what the module is (id, kind, icon, tint, order, page?, widget?)
 <Name>Page.svelte    its page, loaded on first open (pages only)
+<Name>Widget.svelte  its card on Home, if any (`widget: { slot: 'top' | 'main' | 'side', component }`)
 locales/<lang>.json  its text: at least "name" and "description"
 i18n.ts              its typed translator
 api.ts               typed wrappers of its Rust commands (if any)
@@ -161,6 +164,12 @@ Events go from Rust to the interface.
 | `app://confirm-uninstall` | none       | the tray asked to uninstall                       |
 | `hotkey://held`           | key names  | modifiers held while recording (Windows)          |
 | `hotkey://recorded`       | key names  | recording finished, `[]` when cancelled (Windows) |
+
+## Data files
+
+Modules keep their data in JSON files of the app data folder, read and written with `storage::read_json` and `storage::write_json` (`src-tauri/src/app/storage.rs`). Writes are atomic, and a corrupt file is set aside instead of crashing.
+
+Icons reach the interface as small PNG data URLs made by `services::icons::png_data_url`, so the webview never loads a file or a remote image.
 
 ## Settings
 

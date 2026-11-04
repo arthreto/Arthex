@@ -1,18 +1,26 @@
 import type { Component } from 'svelte';
 import { getModule } from '../core/modules';
 
-type PageModule = { default: Component };
+type Loaded = { default: Component };
 
-const loaded = new Map<string, Promise<PageModule>>();
+const loaded = new Map<string, Promise<Loaded>>();
 
-/** Loads a page component once and reuses it on later visits. */
-export function loadPage(id: string): Promise<PageModule> | null {
-  const load = getModule(id)?.page;
+function once(key: string, load: (() => Promise<Loaded>) | undefined): Promise<Loaded> | null {
   if (!load) return null;
-  let promise = loaded.get(id);
+  let promise = loaded.get(key);
   if (!promise) {
     promise = load();
-    loaded.set(id, promise);
+    loaded.set(key, promise);
   }
   return promise;
+}
+
+/** Loads a page component once and reuses it on later visits. */
+export function loadPage(id: string): Promise<Loaded> | null {
+  return once(`page:${id}`, getModule(id)?.page);
+}
+
+/** Loads the Home card of a module once. */
+export function loadWidget(id: string): Promise<Loaded> | null {
+  return once(`widget:${id}`, getModule(id)?.widget?.component);
 }

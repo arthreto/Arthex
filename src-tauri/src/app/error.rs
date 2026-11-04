@@ -4,6 +4,8 @@ use serde::{Serialize, Serializer, ser::SerializeStruct};
 pub enum AppError {
     #[error("invalid settings: {0}")]
     InvalidSettings(String),
+    #[error("invalid input: {0}")]
+    Invalid(String),
     #[error("not available on this system")]
     Unsupported,
     #[error("{0}")]
@@ -20,6 +22,7 @@ impl AppError {
     fn kind(&self) -> &'static str {
         match self {
             Self::InvalidSettings(_) => "invalidSettings",
+            Self::Invalid(_) => "invalid",
             Self::Unsupported => "unsupported",
             Self::Failed(_) => "failed",
             Self::Io(_) => "io",

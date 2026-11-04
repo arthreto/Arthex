@@ -1,4 +1,6 @@
 mod app;
+mod modules;
+mod services;
 
 use tauri_plugin_autostart::MacosLauncher;
 
@@ -25,8 +27,15 @@ pub fn run() {
             app::commands::app_info,
             app::commands::app_open_data_dir,
             app::commands::app_uninstall,
+            modules::shortcuts::commands::shortcuts_list,
+            modules::shortcuts::commands::shortcuts_add_site,
+            modules::shortcuts::commands::shortcuts_open,
         ])
-        .setup(|tauri_app| Ok(app::setup(tauri_app.handle())?))
+        .setup(|tauri_app| {
+            app::setup(tauri_app.handle())?;
+            modules::setup(tauri_app.handle())?;
+            Ok(())
+        })
         .on_window_event(app::overlay::on_window_event)
         .run(tauri::generate_context!())
         .expect("Arthex failed to start");

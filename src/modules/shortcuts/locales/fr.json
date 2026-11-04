@@ -1,0 +1,19 @@
+{
+  "name": "Raccourcis",
+  "description": "Tes sites et logiciels favoris sur l’accueil.",
+  "title": "Raccourcis",
+  "keyboard": "Pour les ouvrir au clavier",
+  "add": "Ajouter",
+  "dialog": {
+    "title": "Nouveau raccourci",
+    "address": "Adresse",
+    "name": "Nom",
+    "submit": "Ajouter"
+  },
+  "errors": {
+    "missing": "Indique l’adresse du site.",
+    "scheme": "Seules les adresses http:// et https:// sont acceptées (sécurité).",
+    "invalid": "Cette adresse n’est pas valide."
+  },
+  "added": "Raccourci « {name} » ajouté, son icône est récupérée automatiquement"
+}

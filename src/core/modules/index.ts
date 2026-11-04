@@ -1,9 +1,9 @@
 import type { Settings } from '../settings/types';
 import * as layout from './layout';
-import type { ModuleManifest } from './manifest';
+import type { ModuleManifest, WidgetSlot } from './manifest';
 
 export { defineModule } from './manifest';
-export type { ModuleKind, ModuleManifest, Tint } from './manifest';
+export type { ModuleKind, ModuleManifest, Tint, WidgetSlot } from './manifest';
 export { HOME_ID, MAX_TAB_BAR, ZONES, toggleFavorite } from './layout';
 export type { Placement, Zone } from './layout';
 
@@ -26,3 +26,5 @@ export const placePage = (settings: Settings, id: string, zone: layout.Zone, bef
   layout.placePage(modules, settings, id, zone, beforeId);
 export const moveInBar = (settings: Settings, id: string, step: -1 | 1) =>
   layout.moveInBar(modules, settings, id, step);
+export const homeWidgets = (settings: Settings, slot: WidgetSlot) =>
+  modules.filter((m) => m.widget?.slot === slot && layout.isEnabled(modules, settings, m.id));

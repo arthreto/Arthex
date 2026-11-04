@@ -8,6 +8,7 @@ export const icons = {
   sliders: 'M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1M15 4v4M9 10v4M17 16v4',
   pin: 'M12 17v5M8 3h8l-1 6 3 3v2H6v-2l3-3z',
   check: 'm5 12 5 5 9-10',
+  plus: 'M12 5v14M5 12h14',
   arrowRight: 'M5 12h14M13 6l6 6-6 6',
   chevronLeft: 'm15 6-6 6 6 6',
   edit: 'M4 20h4L19 9l-4-4L4 16z',

@@ -1,14 +1,13 @@
 use std::{
     collections::BTreeMap,
-    fs,
-    path::{Path, PathBuf},
+    path::PathBuf,
     sync::{PoisonError, RwLock},
 };
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use super::{AppError, Result, hotkey::Hotkey};
+use super::{AppError, Result, hotkey::Hotkey, storage};
 
 const VERSION: u32 = 1;
 const HOME: &str = "home";
@@ -118,19 +117,7 @@ pub struct SettingsStore {
 impl SettingsStore {
     /// Never fails: a missing file gives the defaults, an unreadable one is set aside.
     pub fn load(path: PathBuf) -> Self {
-        let mut settings = match fs::read(&path) {
-            Ok(bytes) => serde_json::from_slice(&bytes).unwrap_or_else(|error| {
-                tracing::warn!(%error, "settings file is corrupt, using defaults");
-                let _ = fs::rename(&path, path.with_extension("json.corrupt"));
-                Settings::default()
-            }),
-            Err(error) => {
-                if error.kind() != std::io::ErrorKind::NotFound {
-                    tracing::warn!(%error, "could not read the settings file");
-                }
-                Settings::default()
-            }
-        };
+        let mut settings: Settings = storage::read_json(&path).unwrap_or_default();
         settings.normalize();
         Self {
             path,
@@ -168,24 +155,16 @@ impl SettingsStore {
             return Err(AppError::InvalidSettings("unusable hotkey".into()));
         }
         next.normalize();
-        write_atomic(&self.path, &serde_json::to_vec_pretty(&next)?)?;
+        storage::write_json(&self.path, &next)?;
         *current = next.clone();
         Ok(next)
     }
 }
 
-fn write_atomic(path: &Path, bytes: &[u8]) -> Result<()> {
-    if let Some(dir) = path.parent() {
-        fs::create_dir_all(dir)?;
-    }
-    let tmp = path.with_extension("json.tmp");
-    fs::write(&tmp, bytes)?;
-    fs::rename(&tmp, path)?;
-    Ok(())
-}
-
 #[cfg(test)]
 mod tests {
+    use std::fs;
+
     use serde_json::json;
 
     use super::*;

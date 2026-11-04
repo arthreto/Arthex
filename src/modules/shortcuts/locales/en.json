@@ -1,0 +1,19 @@
+{
+  "name": "Shortcuts",
+  "description": "Your favourite sites and apps on Home.",
+  "title": "Shortcuts",
+  "keyboard": "Open from the keyboard",
+  "add": "Add",
+  "dialog": {
+    "title": "New shortcut",
+    "address": "Address",
+    "name": "Name",
+    "submit": "Add"
+  },
+  "errors": {
+    "missing": "Enter the site address.",
+    "scheme": "Only http:// and https:// addresses are accepted (security).",
+    "invalid": "This address is not valid."
+  },
+  "added": "Shortcut “{name}” added, its icon is fetched automatically"
+}
