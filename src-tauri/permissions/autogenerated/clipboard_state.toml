@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-clipboard-state"
+description = "Enables the clipboard_state command without any pre-configured scope."
+commands.allow = ["clipboard_state"]
+
+[[permission]]
+identifier = "deny-clipboard-state"
+description = "Denies the clipboard_state command without any pre-configured scope."
+commands.deny = ["clipboard_state"]

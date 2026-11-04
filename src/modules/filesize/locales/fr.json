@@ -32,5 +32,9 @@
     "system": "Système",
     "images": "Images",
     "other": "Autres"
+  },
+  "card": {
+    "title": "Stockage",
+    "free": "{free} libres sur {total}"
   }
 }

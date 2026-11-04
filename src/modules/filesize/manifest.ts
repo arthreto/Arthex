@@ -7,4 +7,5 @@ export default defineModule({
   tint: 'amber',
   order: 10,
   page: () => import('./FileSizePage.svelte'),
+  widget: { slot: 'side', component: () => import('./StorageWidget.svelte') },
 });

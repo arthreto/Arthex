@@ -1,9 +1,9 @@
-//! Win32 calls of `FileSize`: free space of a drive and the Recycle Bin.
+//! Win32 calls of `FileSize`: name and free space of a drive, and the Recycle Bin.
 
 use std::{iter, os::windows::ffi::OsStrExt, path::Path, ptr};
 
 use windows_sys::Win32::{
-    Storage::FileSystem::GetDiskFreeSpaceExW,
+    Storage::FileSystem::{GetDiskFreeSpaceExW, GetVolumeInformationW},
     UI::Shell::{
         FO_DELETE, FOF_ALLOWUNDO, FOF_NOCONFIRMATION, FOF_NOERRORUI, FOF_SILENT, SHFILEOPSTRUCTW,
         SHFileOperationW,
@@ -26,6 +26,27 @@ pub fn space(path: &Path) -> Option<(u64, u64)> {
         )
     };
     (done != 0).then_some((total, free))
+}
+
+/// The name given to a drive ("System", "Data"), if any.
+pub fn label(path: &Path) -> Option<String> {
+    let wide: Vec<u16> = path.as_os_str().encode_wide().chain(Some(0)).collect();
+    let mut name = [0u16; 261];
+    // SAFETY: `wide` is terminated, the name buffer length is passed, other outputs are skipped.
+    let done = unsafe {
+        GetVolumeInformationW(
+            wide.as_ptr(),
+            name.as_mut_ptr(),
+            261,
+            ptr::null_mut(),
+            ptr::null_mut(),
+            ptr::null_mut(),
+            ptr::null_mut(),
+            0,
+        )
+    };
+    let length = name.iter().position(|&unit| unit == 0).unwrap_or(0);
+    (done != 0 && length > 0).then(|| String::from_utf16_lossy(&name[..length]))
 }
 
 /// Sends a file or folder to the Recycle Bin, never deleting it for good: without

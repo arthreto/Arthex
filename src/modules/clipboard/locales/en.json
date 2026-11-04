@@ -1,0 +1,29 @@
+{
+  "name": "Clipboard",
+  "description": "Find the last texts you copied in one click.",
+  "count": "{count, plural, one {# item} other {# items}}",
+  "pause": "Pause",
+  "resume": "Resume",
+  "clear": "Clear all",
+  "cleared": "History cleared, pinned items are kept",
+  "paused": "Paused: what you copy now is not kept.",
+  "empty": "Nothing yet. Copy text anywhere and it shows up here.",
+  "copy": "Copy: {text}",
+  "copied": "Copied: “{text}”",
+  "pin": "Pin",
+  "unpin": "Unpin",
+  "pinned": "pinned",
+  "remove": "Remove from history",
+  "kinds": {
+    "link": "Link",
+    "path": "Path",
+    "color": "Colour",
+    "code": "Code",
+    "text": "Text"
+  },
+  "card": {
+    "title": "Last copied",
+    "link": "History",
+    "empty": "Nothing copied yet"
+  }
+}

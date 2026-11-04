@@ -19,6 +19,8 @@ const MAX_LARGEST: usize = 50;
 #[serde(rename_all = "camelCase")]
 pub struct Drive {
     pub path: String,
+    /// The name given to the drive, empty when it has none.
+    pub label: String,
     /// Bytes, 0 when the system does not say.
     pub total: u64,
     pub free: u64,
@@ -128,10 +130,13 @@ pub fn drives() -> Vec<Drive> {
         .map(|drive| {
             #[cfg(windows)]
             let (total, free) = windows::space(&drive).unwrap_or_default();
+            #[cfg(windows)]
+            let label = windows::label(&drive).unwrap_or_default();
             #[cfg(not(windows))]
-            let (total, free) = (0, 0);
+            let (total, free, label) = (0, 0, String::new());
             Drive {
                 path: drive.to_string_lossy().into_owned(),
+                label,
                 total,
                 free,
             }

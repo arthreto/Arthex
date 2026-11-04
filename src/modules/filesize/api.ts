@@ -6,6 +6,8 @@ export type Category = 'games' | 'personal' | 'videos' | 'apps' | 'system' | 'im
 
 export interface Drive {
   path: string;
+  /** The name given to the drive, empty when it has none. */
+  label: string;
   /** Bytes, 0 when the system does not say. */
   total: number;
   free: number;

@@ -62,23 +62,23 @@ src-tauri/
 
 Reuse these instead of writing your own.
 
-| Need                                                    | Use                                                                                       |
-| ------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Call Rust                                               | the typed wrappers: `commands` in `src/core/api.ts` (shell) or `src/modules/<id>/api.ts`  |
-| Listen to Rust                                          | `on(events.x, handler)` from `src/core/api.ts`                                            |
-| Show a Rust error                                       | `errorMessage(error)` from `src/core/api.ts`                                              |
-| Read or change settings                                 | `settings.value` and `settings.update(patch)` from `src/core/settings/settings.svelte.ts` |
-| Text                                                    | `t('key')` from `src/core/i18n` (shell) or the module's `i18n.ts`                         |
-| A module's name or description                          | `moduleText(id, 'name' \| 'description')` from `src/core/i18n`                            |
-| A button, switch, modal, panel, chip, file icon, field  | `src/ui/`                                                                                 |
-| Colours, radii, veil                                    | the tokens in `src/ui/tokens.css`                                                         |
-| Match text against a search                             | `matchesAll` and `normalize` from `src/core/text.ts` (case and accents ignored)           |
-| Show a time ("2 min ago"), a size ("1.2 GB") or a share | `formatWhen`, `formatBytes` and `formatPercent` from `src/core/format.ts`                 |
-| Copy a path                                             | `copyPath` from `src/core/clipboard.ts`                                                   |
-| Feedback after an action                                | `toast.show(message)` from `src/core/toast.svelte.ts`                                     |
-| Open a page, the hub or settings                        | `navigation.open(view)` from `src/app/navigation.svelte.ts`                               |
-| Open the uninstall dialog                               | `dialogs.uninstall = true` from `src/app/dialogs.svelte.ts`                               |
-| Module list, tab bar, launcher order                    | `modules`, `getModule`, `tabBarIds`, `launcherIds` from `src/core/modules`                |
+| Need                                                                   | Use                                                                                       |
+| ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Call Rust                                                              | the typed wrappers: `commands` in `src/core/api.ts` (shell) or `src/modules/<id>/api.ts`  |
+| Listen to Rust                                                         | `on(events.x, handler)` from `src/core/api.ts`                                            |
+| Show a Rust error                                                      | `errorMessage(error)` from `src/core/api.ts`                                              |
+| Read or change settings                                                | `settings.value` and `settings.update(patch)` from `src/core/settings/settings.svelte.ts` |
+| Text                                                                   | `t('key')` from `src/core/i18n` (shell) or the module's `i18n.ts`                         |
+| A module's name or description                                         | `moduleText(id, 'name' \| 'description')` from `src/core/i18n`                            |
+| A button, switch, modal, panel, chip, card, checkbox, file icon, field | `src/ui/`                                                                                 |
+| Colours, radii, veil                                                   | the tokens in `src/ui/tokens.css`                                                         |
+| Match text against a search                                            | `matchesAll` and `normalize` from `src/core/text.ts` (case and accents ignored)           |
+| Show a time ("2 min ago"), a size ("1.2 GB") or a share                | `formatWhen`, `formatBytes` and `formatPercent` from `src/core/format.ts`                 |
+| Copy a path                                                            | `copyPath` from `src/core/clipboard.ts`                                                   |
+| Feedback after an action                                               | `toast.show(message)` from `src/core/toast.svelte.ts`                                     |
+| Open a page, the hub or settings                                       | `navigation.open(view)` from `src/app/navigation.svelte.ts`                               |
+| Open the uninstall dialog                                              | `dialogs.uninstall = true` from `src/app/dialogs.svelte.ts`                               |
+| Module list, tab bar, launcher order                                   | `modules`, `getModule`, `tabBarIds`, `launcherIds` from `src/core/modules`                |
 
 ## Modules
 
@@ -183,6 +183,7 @@ Events go from Rust to the interface.
 | `hotkey://held`           | key names  | modifiers held while recording (Windows)          |
 | `hotkey://recorded`       | key names  | recording finished, `[]` when cancelled (Windows) |
 | `file-index://updated`    | none       | a file index scan finished                        |
+| `clipboard://changed`     | none       | the clipboard history changed (Windows)           |
 
 ## Data files
 
@@ -193,6 +194,7 @@ Modules keep their data in JSON files of the app data folder, read and written w
 | `settings.json`    | config     | settings (see below)                                           |
 | `shortcuts.json`   | data       | Home shortcuts                                                 |
 | `recent.json`      | data       | recently used programs (path, name, time; never window titles) |
+| `notes.json`       | data       | notes (id, title, Markdown text, time)                         |
 | `file-search.json` | config     | folders added to the file index and the exclusions             |
 | `index.bin`        | local data | the file index cache, rebuilt from the drives when missing     |
 
@@ -243,6 +245,10 @@ The language appears in Settings and in the tray at the next build. No code chan
 - The startup entry is managed by `tauri-plugin-autostart`. It launches the app with `--autostart`, so it starts silently. Debug builds never register it.
 - Install is NSIS per user. `src-tauri/windows/hooks.nsh` removes the startup entry on uninstall.
 - Data lives in the Tauri app folders named after the identifier `dev.arthreto.arthex`. The uninstaller offers to delete them.
+- **Clipboard history** (`src-tauri/src/modules/clipboard/`):
+  - A message-only window registered with `AddClipboardFormatListener` hears each copy, so nothing is polled.
+  - Nothing is read while the module is off or paused. Copies marked `ExcludeClipboardContentFromMonitorProcessing`, `Clipboard Viewer Ignore` or `CanIncludeInClipboardHistory = 0` (password managers) are skipped.
+  - Text only, 100 KB at most, 50 entries besides pinned ones, in memory only. Turning the module off forgets everything.
 - **File index** (`src-tauri/src/services/file_index/`), shared by file search and FileSize, runs while either is on:
   - It covers the fixed drives (the home folder on other systems) plus the folders the user adds, minus the exclusions.
   - Names live in two shared buffers (as typed and folded), with one compact entry per file pointing to its parent, so a million files take tens of megabytes.

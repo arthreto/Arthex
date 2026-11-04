@@ -49,6 +49,14 @@
     "allow-filesize-rescan",
     "allow-filesize-reveal",
     "allow-filesize-pick-folder",
-    "allow-filesize-trash"
+    "allow-filesize-trash",
+    "allow-clipboard-state",
+    "allow-clipboard-pause",
+    "allow-clipboard-pin",
+    "allow-clipboard-remove",
+    "allow-clipboard-clear",
+    "allow-notes-list",
+    "allow-notes-save",
+    "allow-notes-delete"
   ]
 }

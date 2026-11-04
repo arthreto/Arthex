@@ -32,5 +32,9 @@
     "system": "System",
     "images": "Images",
     "other": "Other"
+  },
+  "card": {
+    "title": "Storage",
+    "free": "{free} free of {total}"
   }
 }

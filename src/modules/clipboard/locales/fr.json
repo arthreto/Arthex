@@ -1,0 +1,29 @@
+{
+  "name": "Presse-papiers",
+  "description": "Retrouve tes derniers textes copiés en un clic.",
+  "count": "{count, plural, one {# élément} other {# éléments}}",
+  "pause": "Mettre en pause",
+  "resume": "Reprendre",
+  "clear": "Tout effacer",
+  "cleared": "Historique effacé, les éléments épinglés sont gardés",
+  "paused": "En pause : ce que tu copies maintenant n’est pas enregistré.",
+  "empty": "Rien pour l’instant. Copie du texte n’importe où, il apparaîtra ici.",
+  "copy": "Copier : {text}",
+  "copied": "Copié : « {text} »",
+  "pin": "Épingler",
+  "unpin": "Désépingler",
+  "pinned": "épinglé",
+  "remove": "Supprimer de l’historique",
+  "kinds": {
+    "link": "Lien",
+    "path": "Chemin",
+    "color": "Couleur",
+    "code": "Code",
+    "text": "Texte"
+  },
+  "card": {
+    "title": "Dernier copié",
+    "link": "Historique",
+    "empty": "Rien de copié pour l’instant"
+  }
+}
