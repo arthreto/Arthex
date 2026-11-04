@@ -88,10 +88,11 @@ jobs:
           $exe = Get-Item src-tauri/target/release/arthex.exe
           $installer = Get-ChildItem src-tauri/target/release/bundle/nsis/*.exe | Select-Object -First 1
           $mb = { param($bytes) [math]::Round($bytes / 1MB, 1) }
-          # Hidden in the tray as after a Windows start, then open on the first-launch screen.
-          $rows = foreach ($run in @(@{ Name = 'hidden'; Args = '--autostart' }, @{ Name = 'open'; Args = '' })) {
+          # Hidden in the tray as after a Windows start, then open on the first-launch screen, long
+          # enough for the file index to scan the drive.
+          $rows = foreach ($run in @(@{ Name = 'hidden'; Args = '--autostart'; Wait = 20 }, @{ Name = 'open'; Args = ''; Wait = 75 })) {
             $app = if ($run.Args) { Start-Process $exe.FullName -ArgumentList $run.Args -PassThru } else { Start-Process $exe.FullName -PassThru }
-            Start-Sleep -Seconds 20
+            Start-Sleep -Seconds $run.Wait
             $app.Refresh()
             $webview = Get-CimInstance Win32_Process -Filter "Name = 'msedgewebview2.exe'" |
               Where-Object { $_.CommandLine -match 'arthex' } |
@@ -100,7 +101,7 @@ jobs:
             $webviewPrivate = ($webview | Measure-Object PrivateMemorySize64 -Sum).Sum
             "| Memory $($run.Name): Arthex | $(& $mb $app.WorkingSet64) MB (private $(& $mb $app.PrivateMemorySize64) MB) |"
             "| Memory $($run.Name): WebView2, $($webview.Count) processes | $(& $mb $webviewBytes) MB (private $(& $mb $webviewPrivate) MB) |"
-            "| CPU time $($run.Name), first 20 s | $([math]::Round($app.TotalProcessorTime.TotalMilliseconds)) ms |"
+            "| CPU time $($run.Name), first $($run.Wait) s | $([math]::Round($app.TotalProcessorTime.TotalMilliseconds)) ms |"
             Stop-Process -Id $app.Id -Force
             Start-Sleep -Seconds 3
           }
