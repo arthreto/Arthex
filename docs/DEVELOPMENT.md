@@ -283,8 +283,10 @@ Then, for each release:
 2. Write the changelog (format below) as the message of an annotated tag on `main`, then push the tag:
 
    ```bash
-   git tag -a vX.Y.Z
+   git tag -a --cleanup=verbatim vX.Y.Z
    ```
+
+   `--cleanup=verbatim` matters: by default Git drops the lines that start with `#`, so the headings would be lost and the workflow would refuse the tag.
 
    ```bash
    git push origin vX.Y.Z
