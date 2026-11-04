@@ -1,29 +1,53 @@
 use std::{env, fmt::Write as _, fs, path::PathBuf};
 
-/// Commands callable from the interface; each one gets an `allow-<name>` permission.
-const COMMANDS: &[&str] = &[
-    "settings_get",
-    "settings_update",
-    "overlay_hide",
-    "app_info",
-    "app_open_data_dir",
-    "app_uninstall",
-];
-
 fn main() {
     embed_locales();
     tauri_build::try_build(
         tauri_build::Attributes::new()
-            .app_manifest(tauri_build::AppManifest::new().commands(COMMANDS)),
+            .app_manifest(tauri_build::AppManifest::new().commands(granted_commands())),
     )
     .expect("tauri-build failed");
+}
+
+/// The capability files are the single list of commands: every `allow-<name>` permission they
+/// grant declares the command `<name>`, so adding a command never means editing this file.
+fn granted_commands() -> &'static [&'static str] {
+    let dir = manifest_dir().join("capabilities");
+    println!("cargo:rerun-if-changed={}", dir.display());
+
+    let mut commands = Vec::new();
+    for entry in fs::read_dir(&dir).expect("capabilities/ must exist") {
+        let path = entry.expect("readable capabilities/").path();
+        let json: serde_json::Value =
+            serde_json::from_str(&fs::read_to_string(&path).expect("readable capability"))
+                .unwrap_or_else(|error| panic!("{}: {error}", path.display()));
+        let permissions = json["permissions"].as_array().into_iter().flatten();
+        for permission in permissions.filter_map(serde_json::Value::as_str) {
+            if let Some(name) = permission.strip_prefix("allow-") {
+                let name = name.replace('-', "_");
+                if !commands.contains(&name) {
+                    commands.push(name);
+                }
+            }
+        }
+    }
+    // tauri-build wants 'static strings; leaking is harmless in a build script.
+    Box::leak(
+        commands
+            .into_iter()
+            .map(|name| &*Box::leak(name.into_boxed_str()))
+            .collect(),
+    )
+}
+
+fn manifest_dir() -> PathBuf {
+    PathBuf::from(env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR"))
 }
 
 /// Embeds every `src/core/locales/*.json`, so the tray menu speaks the same languages as the UI
 /// and a new language file is picked up without touching Rust code.
 fn embed_locales() {
-    let manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR"));
-    let dir = manifest_dir.join("../src/core/locales");
+    let dir = manifest_dir().join("../src/core/locales");
     println!("cargo:rerun-if-changed={}", dir.display());
 
     let mut files: Vec<PathBuf> = fs::read_dir(&dir)

@@ -1,4 +1,5 @@
-//! Commands callable from the interface. Each one must also be listed in `build.rs`.
+//! Commands callable from the interface. Each one must be granted in `capabilities/main.json`
+//! and registered in `lib.rs`.
 
 use serde::Serialize;
 use serde_json::Value;
