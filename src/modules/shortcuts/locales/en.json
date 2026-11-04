@@ -33,5 +33,14 @@
   "edit": "Edit",
   "delete": "Delete",
   "edited": "Shortcut “{name}” edited",
-  "deleted": "Shortcut “{name}” deleted"
+  "deleted": "Shortcut “{name}” deleted",
+  "search": {
+    "group": "Sites",
+    "kind": "Website",
+    "meta": "Shortcut",
+    "address": "Address",
+    "opening": "Opens in",
+    "browser": "Default browser",
+    "open": "Open the site"
+  }
 }

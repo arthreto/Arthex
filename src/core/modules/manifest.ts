@@ -1,4 +1,5 @@
 import type { Component } from 'svelte';
+import type { SearchProvider } from '../search/types';
 
 export type ModuleKind = 'page' | 'feature';
 
@@ -26,6 +27,8 @@ export interface ModuleManifest {
   widget?: { slot: WidgetSlot; component: Lazy };
   /** A small control shown next to the module's switch in Settings ("Clear history"). */
   settingsAction?: Lazy;
+  /** Results this module adds to the search, while it is enabled. */
+  search?: SearchProvider;
 }
 
 export function defineModule(manifest: ModuleManifest): ModuleManifest {

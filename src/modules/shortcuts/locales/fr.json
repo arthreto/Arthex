@@ -33,5 +33,14 @@
   "edit": "Modifier",
   "delete": "Supprimer",
   "edited": "Raccourci « {name} » modifié",
-  "deleted": "Raccourci « {name} » supprimé"
+  "deleted": "Raccourci « {name} » supprimé",
+  "search": {
+    "group": "Sites",
+    "kind": "Site web",
+    "meta": "Raccourci",
+    "address": "Adresse",
+    "opening": "Ouverture",
+    "browser": "Navigateur par défaut",
+    "open": "Ouvrir le site"
+  }
 }

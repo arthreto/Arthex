@@ -1,0 +1,11 @@
+{
+  "name": "Calculatrice",
+  "description": "Tape un calcul, le résultat s’affiche.",
+  "group": "Calcul",
+  "subtitle": "{expression} · Entrée pour copier le résultat",
+  "expression": "Expression",
+  "tip": "Astuce",
+  "tipText": "Virgule ou point, ^ pour les puissances, sqrt(), pi",
+  "copy": "Copier le résultat",
+  "copied": "Résultat {value} copié dans le presse-papiers"
+}

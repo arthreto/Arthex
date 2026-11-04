@@ -24,3 +24,8 @@ export function guessName(input: string): string {
     .split(/[/.:?#]/)[0];
   return label ? label.charAt(0).toUpperCase() + label.slice(1) : '';
 }
+
+/** `https://github.com/` reads better as `github.com`; Rust adds the https:// back when saving. */
+export function shortAddress(url: string): string {
+  return url.replace(/^https:\/\//i, '').replace(/\/$/, '');
+}

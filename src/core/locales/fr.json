@@ -22,7 +22,10 @@
     "label": "Rechercher",
     "placeholder": "Rechercher fichiers, apps, sites…    = calcul    > commande",
     "clear": "Effacer la recherche",
-    "noResults": "Aucun résultat pour « {query} »."
+    "noResults": "Aucun résultat pour « {query} ».",
+    "preview": "Aperçu",
+    "copyPath": "Copier le chemin",
+    "pathCopied": "Chemin copié : {path}"
   },
   "tabs": {
     "label": "Pages épinglées",

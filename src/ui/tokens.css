@@ -51,6 +51,7 @@
   --glow-1: rgba(76, 194, 255, 0.2);
   --glow-2: rgba(167, 139, 250, 0.16);
 
+  --folder: #e8b04a;
   --tint-blue: #4cc2ff;
   --tint-amber: #fbbf24;
   --tint-green: #6ee7b7;
@@ -99,6 +100,7 @@
   --glow-1: rgba(0, 103, 192, 0.13);
   --glow-2: rgba(124, 58, 237, 0.1);
 
+  --folder: #d99a2b;
   --tint-blue: #0067c0;
   --tint-amber: #b45309;
   --tint-green: #047857;

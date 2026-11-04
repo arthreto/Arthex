@@ -22,7 +22,10 @@
     "label": "Search",
     "placeholder": "Search files, apps, sites…    = calculate    > command",
     "clear": "Clear search",
-    "noResults": "No results for “{query}”."
+    "noResults": "No results for “{query}”.",
+    "preview": "Preview",
+    "copyPath": "Copy path",
+    "pathCopied": "Path copied: {path}"
   },
   "tabs": {
     "label": "Pinned pages",

@@ -8,6 +8,10 @@ export const icons = {
   sliders: 'M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1M15 4v4M9 10v4M17 16v4',
   pin: 'M12 17v5M8 3h8l-1 6 3 3v2H6v-2l3-3z',
   check: 'm5 12 5 5 9-10',
+  file: 'M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8zM14 3v5h5',
+  calculator:
+    'M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2M8 7h8M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01M16 16h.01',
+  power: 'M12 3v9M6.3 6.3a8 8 0 1 0 11.4 0',
   toggle: 'M8 7h8a5 5 0 0 1 0 10H8A5 5 0 0 1 8 7M16 9.5a2.5 2.5 0 1 0 0 5a2.5 2.5 0 1 0 0-5',
   plus: 'M12 5v14M5 12h14',
   arrowRight: 'M5 12h14M13 6l6 6-6 6',

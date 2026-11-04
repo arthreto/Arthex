@@ -28,3 +28,5 @@ export const moveInBar = (settings: Settings, id: string, step: -1 | 1) =>
   layout.moveInBar(modules, settings, id, step);
 export const homeWidgets = (settings: Settings, slot: WidgetSlot) =>
   modules.filter((m) => m.widget?.slot === slot && layout.isEnabled(modules, settings, m.id));
+export const searchProviders = (settings: Settings) =>
+  modules.flatMap((m) => (m.search && layout.isEnabled(modules, settings, m.id) ? [m.search] : []));

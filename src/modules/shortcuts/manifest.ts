@@ -1,4 +1,5 @@
 import { defineModule } from '../../core/modules/manifest';
+import { shortcutsSearch } from './search';
 
 export default defineModule({
   id: 'shortcuts',
@@ -7,4 +8,5 @@ export default defineModule({
   tint: 'mint',
   order: 30,
   widget: { slot: 'top', component: () => import('./ShortcutsWidget.svelte') },
+  search: shortcutsSearch,
 });

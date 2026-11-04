@@ -15,9 +15,17 @@
   }
 
   function onkeydown(event: KeyboardEvent) {
-    if (event.key === 'Escape' && search.active) {
+    if (!search.active) return;
+    if (event.key === 'Escape') {
       event.preventDefault();
-      search.clear();
+      if (search.confirming) search.confirming = null;
+      else search.clear();
+    } else if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      event.preventDefault();
+      search.move(event.key === 'ArrowDown' ? 1 : -1);
+    } else if (event.key === 'Enter') {
+      event.preventDefault();
+      void search.activate(search.current, event.ctrlKey);
     }
   }
 </script>

@@ -11,7 +11,7 @@
   import { shortcutsApi, type Program, type Shortcut } from './api';
   import { t } from './i18n';
   import { shortcuts } from './shortcuts.svelte';
-  import { guessName, siteProblem } from './site';
+  import { guessName, shortAddress, siteProblem } from './site';
 
   /** Without `editing`, the dialog adds a new shortcut. */
   let { editing = null, onclose }: { editing?: Shortcut | null; onclose: () => void } = $props();
@@ -37,10 +37,6 @@
     { value: 'site' as const, label: t('dialog.site') },
     { value: 'app' as const, label: t('dialog.app') },
   ]);
-  /** `https://github.com/` reads better as `github.com`; Rust adds the https:// back. */
-  function shortAddress(url: string): string {
-    return url.replace(/^https:\/\//i, '').replace(/\/$/, '');
-  }
 
   const placeholder = $derived(guessName(address) || 'YouTube');
   const taken = $derived(

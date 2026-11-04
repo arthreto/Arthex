@@ -1,0 +1,11 @@
+{
+  "name": "Calculator",
+  "description": "Type a calculation, get the result.",
+  "group": "Calculation",
+  "subtitle": "{expression} · Enter to copy the result",
+  "expression": "Expression",
+  "tip": "Tip",
+  "tipText": "Comma or dot, ^ for powers, sqrt(), pi",
+  "copy": "Copy the result",
+  "copied": "Result {value} copied"
+}
