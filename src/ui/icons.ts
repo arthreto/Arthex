@@ -10,6 +10,8 @@ export const icons = {
   check: 'm5 12 5 5 9-10',
   arrowRight: 'M5 12h14M13 6l6 6-6 6',
   chevronLeft: 'm15 6-6 6 6 6',
+  edit: 'M4 20h4L19 9l-4-4L4 16z',
+  lock: 'M7 11h10a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-6a2 2 0 0 1 2-2M8 11V7a4 4 0 0 1 8 0v4',
   keyboard: 'M3 6.5h18v11H3zM7 10h.01M11 10h.01M15 10h.01M7.5 14h9',
 } as const;
 

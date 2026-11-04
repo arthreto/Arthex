@@ -33,3 +33,65 @@ export function launcherIds(catalog: readonly ModuleManifest[], layout: Layout):
 export function toggleFavorite(favorites: readonly string[], id: string): string[] {
   return favorites.includes(id) ? favorites.filter((f) => f !== id) : [...favorites, id];
 }
+
+export type Zone = 'bar' | 'other' | 'off';
+export const ZONES: readonly Zone[] = ['bar', 'other', 'off'];
+
+/** The three groups of the "Customize" view: in the tab bar, enabled elsewhere, turned off. */
+export function zoneIds(catalog: readonly ModuleManifest[], layout: Layout): Record<Zone, string[]> {
+  const bar = tabBarIds(catalog, layout);
+  const pages = catalog.filter((m) => m.kind === 'page');
+  return {
+    bar,
+    other: pages.filter((m) => isEnabled(catalog, layout, m.id) && !bar.includes(m.id)).map((m) => m.id),
+    off: pages.filter((m) => !isEnabled(catalog, layout, m.id)).map((m) => m.id),
+  };
+}
+
+export type Placement =
+  { ok: true; patch: Pick<Settings, 'tabBar' | 'modules'> } | { ok: false; reason: 'locked' | 'barFull' };
+
+/** Moves a page into a zone, before `beforeId` in the bar or at its end. Home never leaves the bar. */
+export function placePage(
+  catalog: readonly ModuleManifest[],
+  layout: Layout,
+  id: string,
+  zone: Zone,
+  beforeId?: string,
+): Placement {
+  const bar = tabBarIds(catalog, layout);
+  const module = catalog.find((m) => m.id === id);
+  if (module?.locked) {
+    return zone === 'bar'
+      ? { ok: true, patch: { tabBar: bar, modules: layout.modules } }
+      : { ok: false, reason: 'locked' };
+  }
+  if (zone === 'bar' && !bar.includes(id) && bar.length >= MAX_TAB_BAR)
+    return { ok: false, reason: 'barFull' };
+
+  const modules = Object.fromEntries(Object.entries(layout.modules).filter(([other]) => other !== id));
+  if (zone === 'off') modules[id] = false;
+
+  const tabBar = bar.filter((other) => other !== id);
+  if (zone === 'bar') {
+    const at = beforeId === undefined ? -1 : tabBar.indexOf(beforeId);
+    tabBar.splice(at === -1 ? tabBar.length : Math.max(1, at), 0, id);
+  }
+  return { ok: true, patch: { tabBar, modules } };
+}
+
+/** Moves a tab one step left or right, never before Home. */
+export function moveInBar(
+  catalog: readonly ModuleManifest[],
+  layout: Layout,
+  id: string,
+  step: -1 | 1,
+): string[] | null {
+  const bar = tabBarIds(catalog, layout);
+  const from = bar.indexOf(id);
+  const to = from + step;
+  if (from < 1 || to < 1 || to >= bar.length) return null;
+  bar.splice(from, 1);
+  bar.splice(to, 0, id);
+  return bar;
+}

@@ -42,7 +42,22 @@
     "unpin": "Unpin {name}",
     "pinned": "{name} pinned to the top",
     "unpinned": "{name} unpinned",
-    "off": "{name} is turned off."
+    "off": "{name} is turned off.",
+    "customize": "Customize",
+    "done": "Done",
+    "zones": {
+      "bar": "In the bar",
+      "other": "Other pages",
+      "off": "Turned off"
+    },
+    "barHint": "drag to reorder · {count} / {max}",
+    "dropHere": "Drag a page here",
+    "item": "{name}, {zone}. Drag it or use the arrow keys.",
+    "lockedItem": "{name}, {zone}, start page",
+    "startPage": "Start page",
+    "locked": "{name} always stays in the bar",
+    "barFull": "{max} tabs at most in the bar",
+    "turnedOff": "{name} turned off"
   },
   "settings": {
     "label": "Settings sections",

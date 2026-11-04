@@ -42,7 +42,22 @@
     "unpin": "Désépingler {name}",
     "pinned": "{name} épinglée en tête de liste",
     "unpinned": "{name} désépinglée",
-    "off": "{name} est désactivée."
+    "off": "{name} est désactivée.",
+    "customize": "Personnaliser",
+    "done": "Terminé",
+    "zones": {
+      "bar": "Dans la barre",
+      "other": "Autres pages",
+      "off": "Désactivées"
+    },
+    "barHint": "glisse pour changer l’ordre · {count} / {max}",
+    "dropHere": "Glisse une page ici",
+    "item": "{name}, {zone}. Glisse-la ou utilise les flèches.",
+    "lockedItem": "{name}, {zone}, page de départ",
+    "startPage": "Page de départ",
+    "locked": "{name} reste toujours dans la barre",
+    "barFull": "{max} onglets maximum dans la barre",
+    "turnedOff": "{name} désactivée"
   },
   "settings": {
     "label": "Sections des paramètres",

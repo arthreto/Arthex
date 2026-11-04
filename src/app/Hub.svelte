@@ -4,8 +4,12 @@
   import { getModule, isEnabled, launcherIds, toggleFavorite } from '../core/modules';
   import { settings } from '../core/settings/settings.svelte';
   import { toast } from '../core/toast.svelte';
+  import Button from '../ui/Button.svelte';
   import Icon from '../ui/Icon.svelte';
+  import HubZones from './HubZones.svelte';
   import { navigation } from './navigation.svelte';
+
+  let customizing = $state(false);
 
   const pages = $derived(
     launcherIds(settings.value).flatMap((id) => {
@@ -39,37 +43,55 @@
 </script>
 
 <div class="hub fade-in">
-  <h2>{t('hub.title')}</h2>
-  <div class="center">
-    <ul class="grid">
-      {#each pages as { module, enabled, favorite } (module.id)}
-        {@const name = moduleText(module.id, 'name')}
-        <li class="card" class:off={!enabled}>
-          <button class="open" aria-label={t('hub.open', { name })} onclick={() => open(module.id, enabled)}>
-            <span class="icon" style:color="var(--tint-{module.tint})">
-              <Icon path={module.icon} size={46} stroke={1.6} />
-            </span>
-            <span class="text">
-              <span class="name">{name}</span>
-              <span class="description">{moduleText(module.id, 'description')}</span>
-            </span>
-          </button>
-          {#if enabled}
-            <button
-              class="pin"
-              class:on={favorite}
-              aria-pressed={favorite}
-              aria-label={t(favorite ? 'hub.unpin' : 'hub.pin', { name })}
-              title={t(favorite ? 'hub.unpin' : 'hub.pin', { name })}
-              onclick={() => pin(module.id, favorite)}
-            >
-              <Icon name="pin" size={18} stroke={2.1} filled={favorite} />
-            </button>
-          {/if}
-        </li>
-      {/each}
-    </ul>
+  <div class="header">
+    <h2>{t('hub.title')}</h2>
+    <Button
+      variant={customizing ? 'primary' : 'default'}
+      aria-pressed={customizing}
+      onclick={() => (customizing = !customizing)}
+    >
+      <Icon name="edit" size={15} stroke={2} />
+      {t(customizing ? 'hub.done' : 'hub.customize')}
+    </Button>
   </div>
+  {#if customizing}
+    <HubZones />
+  {:else}
+    <div class="center">
+      <ul class="grid">
+        {#each pages as { module, enabled, favorite } (module.id)}
+          {@const name = moduleText(module.id, 'name')}
+          <li class="card" class:off={!enabled}>
+            <button
+              class="open"
+              aria-label={t('hub.open', { name })}
+              onclick={() => open(module.id, enabled)}
+            >
+              <span class="icon" style:color="var(--tint-{module.tint})">
+                <Icon path={module.icon} size={46} stroke={1.6} />
+              </span>
+              <span class="text">
+                <span class="name">{name}</span>
+                <span class="description">{moduleText(module.id, 'description')}</span>
+              </span>
+            </button>
+            {#if enabled}
+              <button
+                class="pin"
+                class:on={favorite}
+                aria-pressed={favorite}
+                aria-label={t(favorite ? 'hub.unpin' : 'hub.pin', { name })}
+                title={t(favorite ? 'hub.unpin' : 'hub.pin', { name })}
+                onclick={() => pin(module.id, favorite)}
+              >
+                <Icon name="pin" size={18} stroke={2.1} filled={favorite} />
+              </button>
+            {/if}
+          </li>
+        {/each}
+      </ul>
+    </div>
+  {/if}
 </div>
 
 <style>
@@ -81,7 +103,15 @@
     gap: 18px;
   }
 
+  .header {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
   h2 {
+    flex: 1;
     font-size: 20px;
     font-weight: 600;
   }
