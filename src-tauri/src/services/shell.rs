@@ -119,8 +119,8 @@ unsafe fn read_bitmap(bitmap: HBITMAP) -> Option<(u32, u32, Vec<u8>)> {
     if lines == 0 {
         return None;
     }
-    let has_alpha = pixels.chunks_exact(4).any(|pixel| pixel[3] != 0);
-    for pixel in pixels.chunks_exact_mut(4) {
+    let has_alpha = pixels.as_chunks::<4>().0.iter().any(|pixel| pixel[3] != 0);
+    for pixel in pixels.as_chunks_mut::<4>().0 {
         let alpha = if has_alpha { pixel[3] } else { 255 };
         let straight = |channel: u8| -> u8 {
             if alpha == 0 || !has_alpha {
