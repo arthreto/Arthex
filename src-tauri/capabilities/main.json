@@ -34,6 +34,14 @@
     "allow-system-recycle-bin-size",
     "allow-system-schedule",
     "allow-system-schedule-cancel",
-    "allow-system-schedule-get"
+    "allow-system-schedule-get",
+    "allow-file-search-query",
+    "allow-file-search-open",
+    "allow-file-search-reveal",
+    "allow-file-search-status",
+    "allow-file-search-rescan",
+    "allow-file-search-add-folder",
+    "allow-file-search-remove-folder",
+    "allow-file-search-remove-exclusion"
   ]
 }

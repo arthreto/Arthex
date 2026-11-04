@@ -50,7 +50,7 @@ src-tauri/
   build.rs        declares the commands granted in capabilities/ + embeds the core locales for Rust
   capabilities/   what the window may call
   src/app/        setup, settings store, overlay window, tray, hotkey, autostart, i18n, logging, storage, commands
-  src/services/   system services shared by modules (icons…)
+  src/services/   system services shared by modules (icons, installed programs, Windows shell, text folding)
   src/modules/<id>/  Rust side of a module: its state, commands and events
   windows/        NSIS installer hooks
 ```
@@ -62,32 +62,35 @@ src-tauri/
 
 Reuse these instead of writing your own.
 
-| Need                                                     | Use                                                                                       |
-| -------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Call Rust                                                | the typed wrappers: `commands` in `src/core/api.ts` (shell) or `src/modules/<id>/api.ts`  |
-| Listen to Rust                                           | `on(events.x, handler)` from `src/core/api.ts`                                            |
-| Show a Rust error                                        | `errorMessage(error)` from `src/core/api.ts`                                              |
-| Read or change settings                                  | `settings.value` and `settings.update(patch)` from `src/core/settings/settings.svelte.ts` |
-| Text                                                     | `t('key')` from `src/core/i18n` (shell) or the module's `i18n.ts`                         |
-| A module's name or description                           | `moduleText(id, 'name' \| 'description')` from `src/core/i18n`                            |
-| A button, switch, modal, panel, text field, keycap, icon | `src/ui/`                                                                                 |
-| Colours, radii, veil                                     | the tokens in `src/ui/tokens.css`                                                         |
-| Match text against a search                              | `matchesAll` and `normalize` from `src/core/text.ts` (case and accents ignored)           |
-| Show a time ("2 min ago")                                | `formatWhen` from `src/core/format.ts`                                                    |
-| Feedback after an action                                 | `toast.show(message)` from `src/core/toast.svelte.ts`                                     |
-| Open a page, the hub or settings                         | `navigation.open(view)` from `src/app/navigation.svelte.ts`                               |
-| Open the uninstall dialog                                | `dialogs.uninstall = true` from `src/app/dialogs.svelte.ts`                               |
-| Module list, tab bar, launcher order                     | `modules`, `getModule`, `tabBarIds`, `launcherIds` from `src/core/modules`                |
+| Need                                                   | Use                                                                                       |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| Call Rust                                              | the typed wrappers: `commands` in `src/core/api.ts` (shell) or `src/modules/<id>/api.ts`  |
+| Listen to Rust                                         | `on(events.x, handler)` from `src/core/api.ts`                                            |
+| Show a Rust error                                      | `errorMessage(error)` from `src/core/api.ts`                                              |
+| Read or change settings                                | `settings.value` and `settings.update(patch)` from `src/core/settings/settings.svelte.ts` |
+| Text                                                   | `t('key')` from `src/core/i18n` (shell) or the module's `i18n.ts`                         |
+| A module's name or description                         | `moduleText(id, 'name' \| 'description')` from `src/core/i18n`                            |
+| A button, switch, modal, panel, chip, text field, icon | `src/ui/`                                                                                 |
+| Colours, radii, veil                                   | the tokens in `src/ui/tokens.css`                                                         |
+| Match text against a search                            | `matchesAll` and `normalize` from `src/core/text.ts` (case and accents ignored)           |
+| Show a time ("2 min ago") or a size ("1.2 GB")         | `formatWhen` and `formatBytes` from `src/core/format.ts`                                  |
+| Feedback after an action                               | `toast.show(message)` from `src/core/toast.svelte.ts`                                     |
+| Open a page, the hub or settings                       | `navigation.open(view)` from `src/app/navigation.svelte.ts`                               |
+| Open the uninstall dialog                              | `dialogs.uninstall = true` from `src/app/dialogs.svelte.ts`                               |
+| Module list, tab bar, launcher order                   | `modules`, `getModule`, `tabBarIds`, `launcherIds` from `src/core/modules`                |
 
 ## Modules
 
 A page (Home, FileSize, Notes…) or a feature without a page (calculator, system commands…) is a folder in `src/modules/<id>/`:
 
 ```
-manifest.ts          what the module is (id, kind, icon, tint, order, page?, widget?)
+manifest.ts          what the module is (id, kind, icon, tint, order) and what it adds, below
 <Name>Page.svelte    its page, loaded on first open (pages only)
 <Name>Widget.svelte  its card on Home, if any (`widget: { slot: 'top' | 'main' | 'side', component }`)
 <Action>.svelte      a control next to its switch in Settings → Features, if any (`settingsAction`)
+<Name>Settings.svelte  a section of its own in Settings, if any (`settingsSection: { component, action? }`)
+<Name>Pill.svelte    a small status at the top right of the overlay, if any (`badge`)
+search.ts            its search results, if any (`search`, see Search below)
 locales/<lang>.json  its text: at least "name" and "description"
 i18n.ts              its typed translator
 api.ts               typed wrappers of its Rust commands (if any)
@@ -100,7 +103,18 @@ api.ts               typed wrappers of its Rust commands (if any)
   - `tabBarIds`: home first, max 6, no disabled modules;
   - `launcherIds`: pinned first, then enabled, then disabled;
   - `toggleFavorite`.
-- A disabled module disappears everywhere: tab bar, search results, home widgets. Its Rust service stops.
+- A disabled module disappears everywhere: tab bar, search results, home widgets, its Settings section and its badge. Its Rust service stops.
+
+### Search
+
+A module adds results to the search bar with a `SearchProvider` (`src/core/search/types.ts`):
+
+- `search(query)` returns `SearchResult`s, synchronously or not. `query` carries the typed `text`, a `normalized` copy and `commandsOnly` (the query starts with `>`).
+- `order` places its group among the others: calculator 0, apps 10, sites 20, system commands 30, files 40.
+- `exclusive: true` hides every other group when it answers (the calculator).
+- A result names its `primary` action (Enter) and may add a `secondary` one (Ctrl + Enter), a `path` to copy, a `confirm` question for actions that cannot be undone, or a `panel` component that replaces the preview buttons.
+
+The shell asks every enabled provider at each keystroke and drops answers to older queries.
 
 ### Create a module
 
@@ -172,6 +186,14 @@ Events go from Rust to the interface.
 
 Modules keep their data in JSON files of the app data folder, read and written with `storage::read_json` and `storage::write_json` (`src-tauri/src/app/storage.rs`). Writes are atomic, and a corrupt file is set aside instead of crashing.
 
+| File               | Folder     | Content                                                        |
+| ------------------ | ---------- | -------------------------------------------------------------- |
+| `settings.json`    | config     | settings (see below)                                           |
+| `shortcuts.json`   | data       | Home shortcuts                                                 |
+| `recent.json`      | data       | recently used programs (path, name, time; never window titles) |
+| `file-search.json` | config     | folders added to the file index and the exclusions             |
+| `index.bin`        | local data | the file index cache, rebuilt from the drives when missing     |
+
 Icons reach the interface as small PNG data URLs made by `services::icons::png_data_url`, so the webview never loads a file or a remote image.
 
 ## Settings
@@ -219,6 +241,12 @@ The language appears in Settings and in the tray at the next build. No code chan
 - The startup entry is managed by `tauri-plugin-autostart`. It launches the app with `--autostart`, so it starts silently. Debug builds never register it.
 - Install is NSIS per user. `src-tauri/windows/hooks.nsh` removes the startup entry on uninstall.
 - Data lives in the Tauri app folders named after the identifier `dev.arthreto.arthex`. The uninstaller offers to delete them.
+- **File index** (`src-tauri/src/modules/file_search/`):
+  - It covers the fixed drives (the home folder on other systems) plus the folders the user adds, minus the exclusions.
+  - Names live in two shared buffers (as typed and folded), with one compact entry per file pointing to its parent, so a million files take tens of megabytes.
+  - The scan runs on background-priority threads, 30 s after a start at login. The cache loads first, so search works at once.
+  - `notify` adds new files as they appear; a full rescan runs every 6 hours, or at once from Settings, and drops removed files. Results whose file is gone are never shown.
+  - Search splits the query into words that must all match, in parallel with `rayon` and `memchr`. Exact names rank first, then names that start with the query, then the most recently modified.
 
 ## Releasing
 

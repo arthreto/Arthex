@@ -1,0 +1,176 @@
+//! Walks the indexed folders in parallel, on low-priority threads so the PC stays responsive.
+
+use std::{
+    fs::{self, Metadata},
+    path::{Path, PathBuf},
+    sync::atomic::{AtomicBool, Ordering},
+    time::UNIX_EPOCH,
+};
+
+use rayon::prelude::*;
+
+use super::{
+    config::Exclusions,
+    index::{Index, Item, NO_PARENT},
+};
+
+/// Folders this close to a root are scanned in parallel; deeper ones go on sequentially.
+const PARALLEL_DEPTH: u8 = 2;
+
+pub fn scan(roots: &[PathBuf], exclusions: &Exclusions, stop: &AtomicBool) -> Option<Index> {
+    let threads = std::thread::available_parallelism().map_or(2, |n| (n.get() / 2).max(2));
+    let pool = rayon::ThreadPoolBuilder::new()
+        .num_threads(threads)
+        .thread_name(|n| format!("file-index-{n}"))
+        .start_handler(|_| lower_priority())
+        .build()
+        .ok()?;
+    let parts: Vec<Index> = pool.install(|| {
+        roots
+            .par_iter()
+            .map(|root| scan_folder(root, &root.to_string_lossy(), 0, exclusions, stop))
+            .collect()
+    });
+    if stop.load(Ordering::Relaxed) {
+        return None;
+    }
+    let mut index = Index::default();
+    for part in parts {
+        index.append(part, NO_PARENT);
+    }
+    Some(index)
+}
+
+/// Returns a part whose first entry is this folder.
+fn scan_folder(
+    path: &Path,
+    name: &str,
+    depth: u8,
+    exclusions: &Exclusions,
+    stop: &AtomicBool,
+) -> Index {
+    let mut part = Index::default();
+    let me = part.push(&Item {
+        name,
+        parent: NO_PARENT,
+        is_dir: true,
+        size: 0,
+        modified: fs::metadata(path).map_or(0, |meta| modified(&meta)),
+    });
+    if depth < PARALLEL_DEPTH {
+        let folders = read_into(&mut part, me, path, exclusions);
+        let children: Vec<Index> = folders
+            .into_par_iter()
+            .map(|(folder, name, _)| scan_folder(&folder, &name, depth + 1, exclusions, stop))
+            .collect();
+        for child in children {
+            part.append(child, me);
+        }
+    } else {
+        walk(&mut part, me, path, exclusions, stop);
+    }
+    part
+}
+
+fn walk(part: &mut Index, parent: u32, path: &Path, exclusions: &Exclusions, stop: &AtomicBool) {
+    if stop.load(Ordering::Relaxed) {
+        return;
+    }
+    for (folder, name, time) in read_into(part, parent, path, exclusions) {
+        let me = part.push(&Item {
+            name: &name,
+            parent,
+            is_dir: true,
+            size: 0,
+            modified: time,
+        });
+        walk(part, me, &folder, exclusions, stop);
+    }
+}
+
+/// Adds the files of `path` and returns its folders to visit. Links and junctions are skipped,
+/// so the walk never loops or leaves the indexed folders.
+fn read_into(
+    part: &mut Index,
+    parent: u32,
+    path: &Path,
+    exclusions: &Exclusions,
+) -> Vec<(PathBuf, String, i64)> {
+    let Ok(entries) = fs::read_dir(path) else {
+        return Vec::new();
+    };
+    let mut folders = Vec::new();
+    for entry in entries.flatten() {
+        let Ok(kind) = entry.file_type() else {
+            continue;
+        };
+        if kind.is_symlink() {
+            continue;
+        }
+        let name = entry.file_name().to_string_lossy().into_owned();
+        let meta = entry.metadata().ok();
+        let time = meta.as_ref().map_or(0, modified);
+        if kind.is_dir() {
+            let folder = entry.path();
+            if !exclusions.excludes(&folder) {
+                folders.push((folder, name, time));
+            }
+        } else {
+            part.push(&Item {
+                name: &name,
+                parent,
+                is_dir: false,
+                size: meta.as_ref().map_or(0, Metadata::len),
+                modified: time,
+            });
+        }
+    }
+    folders
+}
+
+pub fn modified(meta: &Metadata) -> i64 {
+    meta.modified()
+        .ok()
+        .and_then(|time| time.duration_since(UNIX_EPOCH).ok())
+        .map_or(0, |elapsed| i64::try_from(elapsed.as_secs()).unwrap_or(0))
+}
+
+#[cfg(windows)]
+fn lower_priority() {
+    use windows_sys::Win32::System::Threading::{
+        GetCurrentThread, SetThreadPriority, THREAD_MODE_BACKGROUND_BEGIN,
+    };
+    // SAFETY: lowers the CPU and disk priority of the calling pool thread only.
+    unsafe { SetThreadPriority(GetCurrentThread(), THREAD_MODE_BACKGROUND_BEGIN) };
+}
+
+#[cfg(not(windows))]
+fn lower_priority() {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn indexes_files_and_folders_without_exclusions() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::create_dir_all(dir.path().join("docs/deep/deeper")).unwrap();
+        fs::create_dir_all(dir.path().join("node_modules/pkg")).unwrap();
+        fs::write(dir.path().join("docs/deep/deeper/report.pdf"), b"12345").unwrap();
+        fs::write(dir.path().join("node_modules/pkg/index.js"), b"x").unwrap();
+
+        let exclusions = Exclusions::new(&["node_modules".into()]);
+        let index = scan(
+            &[dir.path().to_path_buf()],
+            &exclusions,
+            &AtomicBool::new(false),
+        )
+        .unwrap();
+        let hits = index.search(&["report".into()], 5);
+        assert_eq!(hits.len(), 1);
+        let path = index.path(hits[0].index);
+        assert_eq!(path, dir.path().join("docs/deep/deeper/report.pdf"));
+        assert_eq!(index.entry(hits[0].index).unwrap().size, 5);
+        assert!(index.search(&["index.js".into()], 5).is_empty());
+    }
+}

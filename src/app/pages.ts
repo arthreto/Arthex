@@ -25,6 +25,11 @@ export function loadSettingsAction(id: string): Promise<Loaded> | null {
   return once(`action:${id}`, getModule(id)?.settingsAction);
 }
 
+/** Loads the section a module adds to Settings, once. */
+export function loadSettingsSection(id: string): Promise<Loaded> | null {
+  return once(`section:${id}`, getModule(id)?.settingsSection?.component);
+}
+
 /** Loads the status a module shows at the top right of the overlay, once. */
 export function loadBadge(id: string): Promise<Loaded> | null {
   return once(`badge:${id}`, getModule(id)?.badge);

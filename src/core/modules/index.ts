@@ -3,7 +3,7 @@ import * as layout from './layout';
 import type { ModuleManifest, WidgetSlot } from './manifest';
 
 export { defineModule } from './manifest';
-export type { ModuleKind, ModuleManifest, Tint, WidgetSlot } from './manifest';
+export type { ModuleKind, ModuleManifest, SettingsSection, Tint, WidgetSlot } from './manifest';
 export { HOME_ID, MAX_TAB_BAR, ZONES, toggleFavorite } from './layout';
 export type { Placement, Zone } from './layout';
 
@@ -30,5 +30,7 @@ export const homeWidgets = (settings: Settings, slot: WidgetSlot) =>
   modules.filter((m) => m.widget?.slot === slot && layout.isEnabled(modules, settings, m.id));
 export const searchProviders = (settings: Settings) =>
   modules.flatMap((m) => (m.search && layout.isEnabled(modules, settings, m.id) ? [m.search] : []));
+export const settingsModules = (settings: Settings) =>
+  modules.filter((m) => m.settingsSection && layout.isEnabled(modules, settings, m.id));
 export const badgeModules = (settings: Settings) =>
   modules.filter((m) => m.badge && layout.isEnabled(modules, settings, m.id));

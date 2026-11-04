@@ -1,34 +1,60 @@
 <script lang="ts">
   import type { Component } from 'svelte';
-  import { t, type ShellKey } from '../../core/i18n';
+  import { moduleText, t } from '../../core/i18n';
+  import { settingsModules } from '../../core/modules';
+  import { settings } from '../../core/settings/settings.svelte';
   import Button from '../../ui/Button.svelte';
   import Icon from '../../ui/Icon.svelte';
   import type { IconName } from '../../ui/icons';
   import { navigation } from '../navigation.svelte';
+  import { loadSettingsSection } from '../pages';
   import FeaturesSettings from './FeaturesSettings.svelte';
   import GeneralSettings from './GeneralSettings.svelte';
   import HotkeySettings from './HotkeySettings.svelte';
 
+  type Loaded = { default: Component };
+
   interface Section {
     id: string;
-    title: ShellKey;
-    icon: IconName;
-    component: Component;
+    title: string;
+    icon: { name: IconName } | { path: string };
+    /** Shell sections are bundled; a module section loads the first time it opens. */
+    body: { component: Component } | { load: () => Promise<Loaded> | null };
     /** A button next to the section title. */
-    action?: { label: ShellKey; run: () => void };
+    action?: { label: string; run: () => unknown };
   }
 
-  const sections: Section[] = [
-    { id: 'general', title: 'settings.sections.general', icon: 'sliders', component: GeneralSettings },
-    { id: 'hotkey', title: 'settings.sections.hotkey', icon: 'keyboard', component: HotkeySettings },
+  const sections = $derived<Section[]>([
+    {
+      id: 'general',
+      title: t('settings.sections.general'),
+      icon: { name: 'sliders' },
+      body: { component: GeneralSettings },
+    },
+    {
+      id: 'hotkey',
+      title: t('settings.sections.hotkey'),
+      icon: { name: 'keyboard' },
+      body: { component: HotkeySettings },
+    },
     {
       id: 'features',
-      title: 'settings.sections.features',
-      icon: 'toggle',
-      component: FeaturesSettings,
-      action: { label: 'settings.features.managePages', run: () => navigation.open({ kind: 'hub' }) },
+      title: t('settings.sections.features'),
+      icon: { name: 'toggle' },
+      body: { component: FeaturesSettings },
+      action: { label: t('settings.features.managePages'), run: () => navigation.open({ kind: 'hub' }) },
     },
-  ];
+    ...settingsModules(settings.value).map((module) => {
+      const action = module.settingsSection?.action;
+      return {
+        id: module.id,
+        title: moduleText(module.id, 'name'),
+        icon: { path: module.icon },
+        body: { load: () => loadSettingsSection(module.id) },
+        action: action && { label: action.label(), run: action.run },
+      };
+    }),
+  ]);
 
   let currentId = $state('general');
   const current = $derived(sections.find((s) => s.id === currentId) ?? sections[0]);
@@ -42,22 +68,30 @@
         aria-current={section.id === current?.id ? 'page' : undefined}
         onclick={() => (currentId = section.id)}
       >
-        <Icon name={section.icon} />
-        {t(section.title)}
+        <Icon {...section.icon} />
+        {section.title}
       </button>
     {/each}
   </nav>
   {#if current}
-    {@const Body = current.component}
+    {@const body = current.body}
     <div class="content scroll">
       <div class="title">
-        <h3>{t(current.title)}</h3>
+        <h3>{current.title}</h3>
         {#if current.action}
           {@const action = current.action}
-          <Button size="small" onclick={action.run}>{t(action.label)}</Button>
+          <Button size="small" onclick={action.run}>{action.label}</Button>
         {/if}
       </div>
-      <Body />
+      {#if 'component' in body}
+        <body.component />
+      {:else}
+        {#await body.load() then loaded}
+          {#if loaded}
+            <loaded.default />
+          {/if}
+        {/await}
+      {/if}
     </div>
   {/if}
 </div>

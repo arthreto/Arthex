@@ -1,0 +1,23 @@
+{
+  "name": "File search",
+  "description": "Finds files and folders in an instant.",
+  "search": {
+    "group": "Files and folders",
+    "file": "File",
+    "folder": "Folder",
+    "location": "Location",
+    "size": "Size",
+    "modified": "Modified",
+    "open": "Open",
+    "openFolder": "Open folder"
+  },
+  "settings": {
+    "rescan": "Reindex",
+    "rescanStarted": "Indexing restarted in the background, at low priority",
+    "folders": "Indexed folders",
+    "addFolder": "Add a folder…",
+    "removeFolder": "Remove {folder} from the indexed folders",
+    "exclusions": "Exclusions",
+    "removeExclusion": "Remove {exclusion} from the exclusions"
+  }
+}

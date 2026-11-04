@@ -29,6 +29,23 @@ pub async fn pick_file(
     .map_err(|error| AppError::Failed(error.to_string()))
 }
 
+/// Asks for one folder.
+pub async fn pick_folder(app: &AppHandle) -> Result<Option<PathBuf>> {
+    let app = app.clone();
+    tauri::async_runtime::spawn_blocking(move || {
+        let _hold = overlay::hold(&app);
+        let mut dialog = app.dialog().file();
+        if let Some(window) = app.get_webview_window(overlay::LABEL) {
+            dialog = dialog.set_parent(&window);
+        }
+        dialog
+            .blocking_pick_folder()
+            .and_then(|folder| folder.into_path().ok())
+    })
+    .await
+    .map_err(|error| AppError::Failed(error.to_string()))
+}
+
 /// Runs slow work (disk, shell) off the interface thread.
 pub async fn blocking<T: Send + 'static>(work: impl FnOnce() -> T + Send + 'static) -> Result<T> {
     tauri::async_runtime::spawn_blocking(work)

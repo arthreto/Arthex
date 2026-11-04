@@ -1,0 +1,23 @@
+{
+  "name": "Recherche de fichiers",
+  "description": "Trouve fichiers et dossiers en un instant.",
+  "search": {
+    "group": "Fichiers et dossiers",
+    "file": "Fichier",
+    "folder": "Dossier",
+    "location": "Emplacement",
+    "size": "Taille",
+    "modified": "Modifié",
+    "open": "Ouvrir",
+    "openFolder": "Ouvrir le dossier"
+  },
+  "settings": {
+    "rescan": "Réindexer",
+    "rescanStarted": "Analyse relancée en arrière-plan, en priorité basse",
+    "folders": "Dossiers indexés",
+    "addFolder": "Ajouter un dossier…",
+    "removeFolder": "Retirer {folder} des dossiers indexés",
+    "exclusions": "Exclusions",
+    "removeExclusion": "Retirer {exclusion} des exclusions"
+  }
+}
