@@ -6,7 +6,10 @@ use std::{
     time::{Duration, Instant},
 };
 
-use tauri::{AppHandle, Emitter, Manager, WebviewWindow, Window, WindowEvent};
+use tauri::{
+    AppHandle, Emitter, Manager, Webview, WebviewWindow, Window, WindowEvent,
+    webview::{PageLoadEvent, PageLoadPayload},
+};
 
 use super::{events, hotkey};
 
@@ -56,8 +59,17 @@ pub fn hold(app: &AppHandle) -> Hold {
 
 pub fn prepare(app: &AppHandle) {
     app.manage(Timeline::default());
-    if let Some(window) = app.get_webview_window(LABEL) {
-        set_low_memory(&window, true);
+}
+
+/// A silent start leaves the overlay hidden: once its page has loaded, it can rest.
+pub fn on_page_load(webview: &Webview, payload: &PageLoadPayload<'_>) {
+    if payload.event() != PageLoadEvent::Finished {
+        return;
+    }
+    if let Some(window) = webview.app_handle().get_webview_window(LABEL)
+        && !window.is_visible().unwrap_or(true)
+    {
+        set_resting(&window, true);
     }
 }
 
@@ -87,7 +99,7 @@ pub fn hide(app: &AppHandle) {
     if let Err(error) = window.hide() {
         tracing::warn!(%error, "could not hide the overlay");
     }
-    set_low_memory(&window, true);
+    set_resting(&window, true);
 }
 
 pub fn toggle(app: &AppHandle) {
@@ -129,7 +141,7 @@ pub fn on_window_event(window: &Window, event: &WindowEvent) {
 
 /// Covers the work area of the monitor under the cursor, then takes the focus.
 fn present(window: &WebviewWindow) -> tauri::Result<()> {
-    set_low_memory(window, false);
+    set_resting(window, false);
     let cursor = window.cursor_position()?;
     let monitor = match window.monitor_from_point(cursor.x, cursor.y)? {
         Some(monitor) => Some(monitor),
@@ -144,35 +156,46 @@ fn present(window: &WebviewWindow) -> tauri::Result<()> {
     window.set_focus()
 }
 
-/// While the overlay is hidden, `WebView2` is asked to give back as much memory as it can.
+/// While the overlay is hidden, `WebView2` is made invisible, suspended (its page stops running)
+/// and asked to give memory back. Showing it again resumes it.
 #[cfg(windows)]
-fn set_low_memory(window: &WebviewWindow, low: bool) {
-    use webview2_com::Microsoft::Web::WebView2::Win32::{
-        COREWEBVIEW2_MEMORY_USAGE_TARGET_LEVEL_LOW, COREWEBVIEW2_MEMORY_USAGE_TARGET_LEVEL_NORMAL,
-        ICoreWebView2_19,
+fn set_resting(window: &WebviewWindow, resting: bool) {
+    use webview2_com::{
+        Microsoft::Web::WebView2::Win32::{
+            COREWEBVIEW2_MEMORY_USAGE_TARGET_LEVEL_LOW,
+            COREWEBVIEW2_MEMORY_USAGE_TARGET_LEVEL_NORMAL, ICoreWebView2_3, ICoreWebView2_19,
+        },
+        TrySuspendCompletedHandler,
     };
     use windows::core::Interface;
 
-    let level = if low {
+    let level = if resting {
         COREWEBVIEW2_MEMORY_USAGE_TARGET_LEVEL_LOW
     } else {
         COREWEBVIEW2_MEMORY_USAGE_TARGET_LEVEL_NORMAL
     };
     let result = window.with_webview(move |webview| {
         // SAFETY: COM calls on the WebView2 objects Tauri hands out, on the thread it calls us on.
-        // Older WebView2 runtimes lack ICoreWebView2_19 and simply keep their usual memory.
+        // Older WebView2 runtimes lack the newer interfaces and simply keep running as usual.
         unsafe {
-            if let Ok(core) = webview.controller().CoreWebView2()
-                && let Ok(core) = core.cast::<ICoreWebView2_19>()
-            {
+            let controller = webview.controller();
+            let _ = controller.SetIsVisible(!resting);
+            let Ok(core) = controller.CoreWebView2() else {
+                return;
+            };
+            if let Ok(core) = core.cast::<ICoreWebView2_19>() {
                 let _ = core.SetMemoryUsageTargetLevel(level);
+            }
+            if resting && let Ok(core) = core.cast::<ICoreWebView2_3>() {
+                let _ =
+                    core.TrySuspend(&TrySuspendCompletedHandler::create(Box::new(|_, _| Ok(()))));
             }
         }
     });
     if let Err(error) = result {
-        tracing::warn!(%error, "could not change the WebView2 memory level");
+        tracing::warn!(%error, "could not change the WebView2 state");
     }
 }
 
 #[cfg(not(windows))]
-fn set_low_memory(_window: &WebviewWindow, _low: bool) {}
+fn set_resting(_window: &WebviewWindow, _resting: bool) {}

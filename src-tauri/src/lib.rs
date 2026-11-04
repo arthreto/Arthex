@@ -48,6 +48,7 @@ pub fn run() {
             Ok(())
         })
         .on_window_event(app::overlay::on_window_event)
+        .on_page_load(app::overlay::on_page_load)
         .run(tauri::generate_context!())
         .expect("Arthex failed to start");
 }
