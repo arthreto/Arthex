@@ -8,12 +8,23 @@
     "title": "Nouveau raccourci",
     "address": "Adresse",
     "name": "Nom",
-    "submit": "Ajouter"
+    "submit": "Ajouter",
+    "type": "Type de raccourci",
+    "site": "Site web",
+    "app": "Logiciel",
+    "customIcon": "Choisir une icône personnalisée…",
+    "search": "Rechercher un logiciel…",
+    "installed": "Logiciels installés",
+    "none": "Aucun logiciel trouvé.",
+    "browse": "Parcourir un autre programme…"
   },
   "errors": {
     "missing": "Indique l’adresse du site.",
     "scheme": "Seules les adresses http:// et https:// sont acceptées (sécurité).",
-    "invalid": "Cette adresse n’est pas valide."
+    "invalid": "Cette adresse n’est pas valide.",
+    "pickApp": "Choisis un logiciel dans la liste."
   },
-  "added": "Raccourci « {name} » ajouté, son icône est récupérée automatiquement"
+  "added": "Raccourci « {name} » ajouté, son icône est récupérée automatiquement",
+  "addedApp": "Raccourci « {name} » ajouté",
+  "iconChosen": "Icône choisie"
 }

@@ -13,8 +13,12 @@ class ShortcutsState {
     return this.#loading;
   }
 
-  async addSite(url: string, name: string | null): Promise<void> {
-    this.items = await shortcutsApi.addSite(url, name);
+  async addSite(url: string, name: string | null, icon: string | null): Promise<void> {
+    this.items = await shortcutsApi.addSite(url, name, icon);
+  }
+
+  async addApp(path: string, name: string | null): Promise<void> {
+    this.items = await shortcutsApi.addApp(path, name);
   }
 }
 

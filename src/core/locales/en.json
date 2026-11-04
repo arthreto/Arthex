@@ -163,5 +163,9 @@
       "off": "off",
       "separator": ": "
     }
+  },
+  "files": {
+    "programs": "Programs",
+    "images": "Images"
   }
 }

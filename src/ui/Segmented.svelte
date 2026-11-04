@@ -29,6 +29,7 @@
 <style>
   .segmented {
     display: inline-flex;
+    align-self: flex-start;
     gap: 2px;
     padding: 3px;
     border-radius: 9px;

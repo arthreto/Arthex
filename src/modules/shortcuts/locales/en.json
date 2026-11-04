@@ -8,12 +8,23 @@
     "title": "New shortcut",
     "address": "Address",
     "name": "Name",
-    "submit": "Add"
+    "submit": "Add",
+    "type": "Shortcut type",
+    "site": "Website",
+    "app": "Software",
+    "customIcon": "Choose a custom icon…",
+    "search": "Search for an app…",
+    "installed": "Installed apps",
+    "none": "No app found.",
+    "browse": "Browse for another program…"
   },
   "errors": {
     "missing": "Enter the site address.",
     "scheme": "Only http:// and https:// addresses are accepted (security).",
-    "invalid": "This address is not valid."
+    "invalid": "This address is not valid.",
+    "pickApp": "Choose an app from the list."
   },
-  "added": "Shortcut “{name}” added, its icon is fetched automatically"
+  "added": "Shortcut “{name}” added, its icon is fetched automatically",
+  "addedApp": "Shortcut “{name}” added",
+  "iconChosen": "Icon chosen"
 }

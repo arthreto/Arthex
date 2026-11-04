@@ -14,7 +14,8 @@ pub fn run() {
             MacosLauncher::LaunchAgent,
             Some(vec![app::autostart::LAUNCH_ARG]),
         ))
-        .plugin(tauri_plugin_opener::init());
+        .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init());
     #[cfg(not(windows))]
     let builder = builder.plugin(tauri_plugin_global_shortcut::Builder::new().build());
 
@@ -29,6 +30,10 @@ pub fn run() {
             app::commands::app_uninstall,
             modules::shortcuts::commands::shortcuts_list,
             modules::shortcuts::commands::shortcuts_add_site,
+            modules::shortcuts::commands::shortcuts_add_app,
+            modules::shortcuts::commands::shortcuts_programs,
+            modules::shortcuts::commands::shortcuts_browse_program,
+            modules::shortcuts::commands::shortcuts_pick_icon,
             modules::shortcuts::commands::shortcuts_open,
         ])
         .setup(|tauri_app| {

@@ -163,5 +163,9 @@
       "off": "désactivé",
       "separator": " : "
     }
+  },
+  "files": {
+    "programs": "Programmes",
+    "images": "Images"
   }
 }

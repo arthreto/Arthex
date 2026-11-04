@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-shortcuts-pick-icon"
+description = "Enables the shortcuts_pick_icon command without any pre-configured scope."
+commands.allow = ["shortcuts_pick_icon"]
+
+[[permission]]
+identifier = "deny-shortcuts-pick-icon"
+description = "Denies the shortcuts_pick_icon command without any pre-configured scope."
+commands.deny = ["shortcuts_pick_icon"]

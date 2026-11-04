@@ -17,6 +17,10 @@
     "allow-app-uninstall",
     "allow-shortcuts-list",
     "allow-shortcuts-add-site",
+    "allow-shortcuts-add-app",
+    "allow-shortcuts-programs",
+    "allow-shortcuts-browse-program",
+    "allow-shortcuts-pick-icon",
     "allow-shortcuts-open"
   ]
 }

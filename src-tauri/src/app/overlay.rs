@@ -1,5 +1,8 @@
 use std::{
-    sync::{Mutex, PoisonError},
+    sync::{
+        Mutex, PoisonError,
+        atomic::{AtomicUsize, Ordering},
+    },
     time::{Duration, Instant},
 };
 
@@ -17,6 +20,8 @@ const GRACE: Duration = Duration::from_millis(400);
 struct Timeline {
     shown_at: Mutex<Option<Instant>>,
     hidden_at: Mutex<Option<Instant>>,
+    /// Open system dialogs: they take the focus, which must not close the overlay.
+    held: AtomicUsize,
 }
 
 impl Timeline {
@@ -29,6 +34,24 @@ impl Timeline {
             .unwrap_or_else(PoisonError::into_inner)
             .is_some_and(|at| at.elapsed() < GRACE)
     }
+}
+
+/// Keeps the overlay open while it lives, for system dialogs that take the focus.
+pub struct Hold(AppHandle);
+
+impl Drop for Hold {
+    fn drop(&mut self) {
+        if let Some(timeline) = self.0.try_state::<Timeline>() {
+            timeline.held.fetch_sub(1, Ordering::SeqCst);
+        }
+    }
+}
+
+pub fn hold(app: &AppHandle) -> Hold {
+    if let Some(timeline) = app.try_state::<Timeline>() {
+        timeline.held.fetch_add(1, Ordering::SeqCst);
+    }
+    Hold(app.clone())
 }
 
 pub fn prepare(app: &AppHandle) {
@@ -88,10 +111,11 @@ pub fn on_window_event(window: &Window, event: &WindowEvent) {
             hide(app);
         }
         WindowEvent::Focused(false) => {
-            let just_shown = app
-                .try_state::<Timeline>()
-                .is_some_and(|timeline| Timeline::within_grace(&timeline.shown_at));
-            if !just_shown {
+            let keep = app.try_state::<Timeline>().is_some_and(|timeline| {
+                Timeline::within_grace(&timeline.shown_at)
+                    || timeline.held.load(Ordering::SeqCst) > 0
+            });
+            if !keep {
                 hide(app);
             }
         }

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-shortcuts-browse-program"
+description = "Enables the shortcuts_browse_program command without any pre-configured scope."
+commands.allow = ["shortcuts_browse_program"]
+
+[[permission]]
+identifier = "deny-shortcuts-browse-program"
+description = "Denies the shortcuts_browse_program command without any pre-configured scope."
+commands.deny = ["shortcuts_browse_program"]

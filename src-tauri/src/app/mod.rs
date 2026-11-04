@@ -1,5 +1,6 @@
 pub mod autostart;
 pub mod commands;
+pub mod dialogs;
 mod error;
 mod events;
 mod hotkey;
