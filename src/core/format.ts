@@ -37,3 +37,12 @@ export function formatBytes(bytes: number, locale = getLocale()): string {
     maximumFractionDigits: unit < 2 ? 0 : 1,
   }).format(value);
 }
+
+/** "12.3%" / "12,3 %", for a share between 0 and 1. */
+export function formatPercent(share: number, digits = 1, locale = getLocale()): string {
+  return new Intl.NumberFormat(locale, {
+    style: 'percent',
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(share);
+}

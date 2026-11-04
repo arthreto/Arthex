@@ -11,6 +11,22 @@
   --motion-fast: 120ms;
   --motion-base: 180ms;
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* FileSize categories: fills with their text colour, readable in both themes. */
+  --category-games: #4cc2ff;
+  --category-games-ink: #06222f;
+  --category-personal: #6ee7b7;
+  --category-personal-ink: #062a1e;
+  --category-videos: #fbbf24;
+  --category-videos-ink: #2a1f02;
+  --category-apps: #a78bfa;
+  --category-apps-ink: #1a1033;
+  --category-system: #64748b;
+  --category-system-ink: #f1f5f9;
+  --category-images: #f9a8d4;
+  --category-images-ink: #3a0b24;
+  --category-other: #4b5466;
+  --category-other-ink: #e5e7eb;
 }
 
 :root,

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-filesize-largest"
+description = "Enables the filesize_largest command without any pre-configured scope."
+commands.allow = ["filesize_largest"]
+
+[[permission]]
+identifier = "deny-filesize-largest"
+description = "Denies the filesize_largest command without any pre-configured scope."
+commands.deny = ["filesize_largest"]

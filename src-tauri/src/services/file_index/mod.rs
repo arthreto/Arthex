@@ -5,6 +5,7 @@ mod config;
 mod index;
 mod scan;
 mod store;
+mod usage;
 mod watch;
 
 use std::{
@@ -20,17 +21,20 @@ use std::{
 };
 
 use notify::RecommendedWatcher;
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 
 use self::{config::Exclusions, index::Item};
 pub use self::{
     config::{Config, drives},
     index::{Index, location},
+    usage::Category,
 };
 use crate::{
     app::{Result, autostart, storage},
     services::text::fold,
 };
+/// Sent when a scan finishes, so views built on the index refresh.
+pub const UPDATED: &str = "file-index://updated";
 /// A start at login waits before scanning, to stay out of the way while Windows settles.
 const DELAY_AT_LOGIN: Duration = Duration::from_secs(30);
 const DELAY: Duration = Duration::from_secs(3);
@@ -69,6 +73,35 @@ impl FileIndex {
         self.config().clone()
     }
 
+    /// The entry of an indexed path.
+    pub fn find(&self, path: &Path) -> Option<u32> {
+        if let Some(&folder) = self.folders().get(&key(path)) {
+            return Some(folder);
+        }
+        let parent = *self.folders().get(&key(path.parent()?))?;
+        let name = fold(&path.file_name()?.to_string_lossy());
+        let index = self.read();
+        index
+            .entries()
+            .iter()
+            .enumerate()
+            .skip(parent as usize + 1)
+            .find(|(_, entry)| {
+                entry.parent == parent
+                    && !entry.is_removed()
+                    && index.folded_name(entry) == name.as_bytes()
+            })
+            .and_then(|(position, _)| u32::try_from(position).ok())
+    }
+
+    /// Hides an entry sent to the Recycle Bin until the next scan.
+    pub fn remove(&self, index: u32) {
+        self.index
+            .write()
+            .unwrap_or_else(PoisonError::into_inner)
+            .remove(index);
+    }
+
     /// Asks the background thread for a full scan now.
     pub fn rescan(&self) {
         self.rescan.store(true, Ordering::Relaxed);
@@ -76,7 +109,11 @@ impl FileIndex {
 
     fn replace_index(&self, index: Index) {
         let folders = (0..u32::try_from(index.len()).unwrap_or(u32::MAX))
-            .filter(|&at| index.entry(at).is_some_and(index::Entry::is_dir))
+            .filter(|&at| {
+                index
+                    .entry(at)
+                    .is_some_and(|entry| entry.is_dir() && !entry.is_summary())
+            })
             .map(|at| (key(&index.path(at)), at))
             .collect();
         *self.folders() = folders;
@@ -119,6 +156,7 @@ impl FileIndex {
                     name: &name.to_string_lossy(),
                     parent,
                     is_dir: meta.is_dir(),
+                    summary: false,
                     size: if meta.is_dir() { 0 } else { meta.len() },
                     modified: scan::modified(&meta),
                 });
@@ -178,6 +216,7 @@ fn keep_up_to_date(app: &AppHandle, generation: u64) {
     let current = || files.generation.load(Ordering::SeqCst) == generation;
     if let Some(cached) = store::load(&files.cache_path) {
         files.replace_index(cached);
+        app.emit(UPDATED, ()).ok();
     }
     let delay = if autostart::launched_at_startup() {
         DELAY_AT_LOGIN
@@ -204,6 +243,7 @@ fn keep_up_to_date(app: &AppHandle, generation: u64) {
             tracing::warn!(%error, "could not save the file index");
         }
         files.replace_index(index);
+        app.emit(UPDATED, ()).ok();
         let handle = app.clone();
         *files.watcher.lock().unwrap_or_else(PoisonError::into_inner) =
             watch::start(&roots, move |paths| handle.state::<FileIndex>().add(paths));

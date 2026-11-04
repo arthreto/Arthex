@@ -1,0 +1,36 @@
+{
+  "name": "FileSize",
+  "description": "Vois ce qui prend de la place sur tes disques.",
+  "drives": "Disques",
+  "pickFolder": "Choisir un dossier…",
+  "used": "{used} utilisés sur {total}",
+  "rescan": "Relancer l’analyse",
+  "rescanStarted": "Analyse relancée en arrière-plan, en priorité basse",
+  "preparing": "Analyse du disque en cours…",
+  "view": "Vue",
+  "folders": "Dossiers",
+  "largest": "Plus gros fichiers",
+  "path": "Chemin",
+  "openFolder": "Ouvrir le dossier {name}",
+  "hint": "clique pour sélectionner, double-clic pour ouvrir",
+  "protected": "élément système, protégé",
+  "explorer": "Explorateur",
+  "copyPath": "Copier le chemin",
+  "trash": "Corbeille",
+  "confirm": "Mettre « {name} » ({size}) à la corbeille ? Tu pourras le restaurer.",
+  "confirmTrash": "Mettre à la corbeille",
+  "trashed": "« {name} » mis à la corbeille",
+  "notes": {
+    "hiberfil": "veille prolongée de Windows",
+    "pagefile": "mémoire virtuelle de Windows"
+  },
+  "categories": {
+    "games": "Jeux",
+    "personal": "Fichiers perso",
+    "videos": "Vidéos",
+    "apps": "Applications",
+    "system": "Système",
+    "images": "Images",
+    "other": "Autres"
+  }
+}

@@ -62,22 +62,23 @@ src-tauri/
 
 Reuse these instead of writing your own.
 
-| Need                                                   | Use                                                                                       |
-| ------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| Call Rust                                              | the typed wrappers: `commands` in `src/core/api.ts` (shell) or `src/modules/<id>/api.ts`  |
-| Listen to Rust                                         | `on(events.x, handler)` from `src/core/api.ts`                                            |
-| Show a Rust error                                      | `errorMessage(error)` from `src/core/api.ts`                                              |
-| Read or change settings                                | `settings.value` and `settings.update(patch)` from `src/core/settings/settings.svelte.ts` |
-| Text                                                   | `t('key')` from `src/core/i18n` (shell) or the module's `i18n.ts`                         |
-| A module's name or description                         | `moduleText(id, 'name' \| 'description')` from `src/core/i18n`                            |
-| A button, switch, modal, panel, chip, text field, icon | `src/ui/`                                                                                 |
-| Colours, radii, veil                                   | the tokens in `src/ui/tokens.css`                                                         |
-| Match text against a search                            | `matchesAll` and `normalize` from `src/core/text.ts` (case and accents ignored)           |
-| Show a time ("2 min ago") or a size ("1.2 GB")         | `formatWhen` and `formatBytes` from `src/core/format.ts`                                  |
-| Feedback after an action                               | `toast.show(message)` from `src/core/toast.svelte.ts`                                     |
-| Open a page, the hub or settings                       | `navigation.open(view)` from `src/app/navigation.svelte.ts`                               |
-| Open the uninstall dialog                              | `dialogs.uninstall = true` from `src/app/dialogs.svelte.ts`                               |
-| Module list, tab bar, launcher order                   | `modules`, `getModule`, `tabBarIds`, `launcherIds` from `src/core/modules`                |
+| Need                                                    | Use                                                                                       |
+| ------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Call Rust                                               | the typed wrappers: `commands` in `src/core/api.ts` (shell) or `src/modules/<id>/api.ts`  |
+| Listen to Rust                                          | `on(events.x, handler)` from `src/core/api.ts`                                            |
+| Show a Rust error                                       | `errorMessage(error)` from `src/core/api.ts`                                              |
+| Read or change settings                                 | `settings.value` and `settings.update(patch)` from `src/core/settings/settings.svelte.ts` |
+| Text                                                    | `t('key')` from `src/core/i18n` (shell) or the module's `i18n.ts`                         |
+| A module's name or description                          | `moduleText(id, 'name' \| 'description')` from `src/core/i18n`                            |
+| A button, switch, modal, panel, chip, file icon, field  | `src/ui/`                                                                                 |
+| Colours, radii, veil                                    | the tokens in `src/ui/tokens.css`                                                         |
+| Match text against a search                             | `matchesAll` and `normalize` from `src/core/text.ts` (case and accents ignored)           |
+| Show a time ("2 min ago"), a size ("1.2 GB") or a share | `formatWhen`, `formatBytes` and `formatPercent` from `src/core/format.ts`                 |
+| Copy a path                                             | `copyPath` from `src/core/clipboard.ts`                                                   |
+| Feedback after an action                                | `toast.show(message)` from `src/core/toast.svelte.ts`                                     |
+| Open a page, the hub or settings                        | `navigation.open(view)` from `src/app/navigation.svelte.ts`                               |
+| Open the uninstall dialog                               | `dialogs.uninstall = true` from `src/app/dialogs.svelte.ts`                               |
+| Module list, tab bar, launcher order                    | `modules`, `getModule`, `tabBarIds`, `launcherIds` from `src/core/modules`                |
 
 ## Modules
 
@@ -181,6 +182,7 @@ Events go from Rust to the interface.
 | `app://confirm-uninstall` | none       | the tray asked to uninstall                       |
 | `hotkey://held`           | key names  | modifiers held while recording (Windows)          |
 | `hotkey://recorded`       | key names  | recording finished, `[]` when cancelled (Windows) |
+| `file-index://updated`    | none       | a file index scan finished                        |
 
 ## Data files
 
@@ -246,6 +248,8 @@ The language appears in Settings and in the tray at the next build. No code chan
   - Names live in two shared buffers (as typed and folded), with one compact entry per file pointing to its parent, so a million files take tens of megabytes.
   - The scan runs on background-priority threads, 30 s after a start at login. The cache loads first, so search works at once.
   - `notify` adds new files as they appear; a full rescan runs every 6 hours, or at once from Settings, and drops removed files. Results whose file is gone are never shown.
+  - Excluded folders stay out of search but still count in FileSize, as one entry holding their total size.
+  - FileSize works out folder sizes, kinds of content (by place and extension) and the largest files in one pass over the index each time a folder opens (`usage.rs`). Windows, Program Files, profiles, `AppData` and game libraries are protected: they never go to the Recycle Bin, and Rust checks it again before moving anything.
   - Search splits the query into words that must all match, in parallel with `rayon` and `memchr`. Exact names rank first, then names that start with the query, then the most recently modified.
 
 ## Releasing

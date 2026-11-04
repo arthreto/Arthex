@@ -1,16 +1,13 @@
-use std::path::Path;
-
 use tauri::{AppHandle, Manager};
-use tauri_plugin_opener::OpenerExt;
 
 use super::{FileHit, Status, search, status};
 use crate::{
     app::{
-        AppError, Result,
+        Result,
         dialogs::{blocking, pick_folder},
         overlay,
     },
-    services::file_index::FileIndex,
+    services::{file_index::FileIndex, paths},
 };
 
 /// Results shown per search; the interface adds them under other groups.
@@ -23,10 +20,7 @@ pub async fn file_search_query(app: AppHandle, query: String) -> Result<Vec<File
 
 #[tauri::command]
 pub fn file_search_open(app: AppHandle, path: String) -> Result<()> {
-    let path = existing(&path)?;
-    app.opener()
-        .open_path(path.to_string_lossy(), None::<&str>)
-        .map_err(|error| AppError::Failed(error.to_string()))?;
+    paths::open(&app, paths::existing(&path)?)?;
     overlay::hide(&app);
     Ok(())
 }
@@ -34,10 +28,7 @@ pub fn file_search_open(app: AppHandle, path: String) -> Result<()> {
 /// Opens the folder of a result in the file manager, with the item selected.
 #[tauri::command]
 pub fn file_search_reveal(app: AppHandle, path: String) -> Result<()> {
-    let path = existing(&path)?;
-    app.opener()
-        .reveal_item_in_dir(path)
-        .map_err(|error| AppError::Failed(error.to_string()))?;
+    paths::reveal(&app, paths::existing(&path)?)?;
     overlay::hide(&app);
     Ok(())
 }
@@ -77,13 +68,4 @@ pub fn file_search_remove_exclusion(app: AppHandle, exclusion: String) -> Result
     let files = app.state::<FileIndex>();
     files.update_config(|config| config.exclusions.retain(|item| *item != exclusion))?;
     Ok(status(&files))
-}
-
-fn existing(path: &str) -> Result<&Path> {
-    let path = Path::new(path);
-    if path.is_absolute() && path.exists() {
-        Ok(path)
-    } else {
-        Err(AppError::Invalid("this file no longer exists".into()))
-    }
 }

@@ -1,0 +1,36 @@
+{
+  "name": "FileSize",
+  "description": "See what takes up space on your drives.",
+  "drives": "Drives",
+  "pickFolder": "Choose a folder…",
+  "used": "{used} used of {total}",
+  "rescan": "Scan again",
+  "rescanStarted": "Scan restarted in the background, at low priority",
+  "preparing": "Scanning the drive…",
+  "view": "View",
+  "folders": "Folders",
+  "largest": "Largest files",
+  "path": "Path",
+  "openFolder": "Open folder {name}",
+  "hint": "click to select, double-click to open",
+  "protected": "system item, protected",
+  "explorer": "Explorer",
+  "copyPath": "Copy path",
+  "trash": "Recycle Bin",
+  "confirm": "Move “{name}” ({size}) to the Recycle Bin? You can restore it.",
+  "confirmTrash": "Move to Recycle Bin",
+  "trashed": "“{name}” moved to the Recycle Bin",
+  "notes": {
+    "hiberfil": "Windows hibernation",
+    "pagefile": "Windows virtual memory"
+  },
+  "categories": {
+    "games": "Games",
+    "personal": "Personal files",
+    "videos": "Videos",
+    "apps": "Apps",
+    "system": "System",
+    "images": "Images",
+    "other": "Other"
+  }
+}

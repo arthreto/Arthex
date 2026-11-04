@@ -1,17 +1,12 @@
 <script lang="ts">
+  import { copyPath } from '../core/clipboard';
   import { t } from '../core/i18n';
   import type { SearchResult } from '../core/search/types';
-  import { toast } from '../core/toast.svelte';
   import Button from '../ui/Button.svelte';
   import ResultIcon from './ResultIcon.svelte';
   import { search } from './search.svelte';
 
   let { result }: { result: SearchResult } = $props();
-
-  async function copyPath(path: string) {
-    await navigator.clipboard.writeText(path);
-    toast.show(t('search.pathCopied', { path }));
-  }
 </script>
 
 <aside aria-label={t('search.preview')}>

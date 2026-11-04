@@ -124,6 +124,7 @@ mod tests {
             name: "root",
             parent: NO_PARENT,
             is_dir: true,
+            summary: false,
             size: 0,
             modified: 1,
         });
@@ -131,6 +132,7 @@ mod tests {
             name: "Été.txt",
             parent: root,
             is_dir: false,
+            summary: false,
             size: 42,
             modified: 7,
         });

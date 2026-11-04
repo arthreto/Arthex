@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-filesize-trash"
+description = "Enables the filesize_trash command without any pre-configured scope."
+commands.allow = ["filesize_trash"]
+
+[[permission]]
+identifier = "deny-filesize-trash"
+description = "Denies the filesize_trash command without any pre-configured scope."
+commands.deny = ["filesize_trash"]

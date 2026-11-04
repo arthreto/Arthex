@@ -2,6 +2,7 @@
 
 pub mod apps;
 pub mod file_search;
+pub mod filesize;
 pub mod recent_apps;
 pub mod shortcuts;
 pub mod system;
@@ -32,5 +33,8 @@ pub fn setup(app: &AppHandle) -> Result<()> {
 /// Starts or stops the background work of each module to match its switch in Settings.
 fn sync(app: &AppHandle, settings: &Settings) {
     recent_apps::set_enabled(app, settings.is_module_enabled(recent_apps::ID));
-    file_index::set_wanted(app, settings.is_module_enabled(file_search::ID));
+    file_index::set_wanted(
+        app,
+        settings.is_module_enabled(file_search::ID) || settings.is_module_enabled(filesize::ID),
+    );
 }

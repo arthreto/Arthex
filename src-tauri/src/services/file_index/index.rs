@@ -10,6 +10,10 @@ use crate::services::text::fold;
 
 pub const NO_PARENT: u32 = u32::MAX;
 const DIRECTORY: u8 = 1;
+/// An excluded folder: kept as one entry holding its total size, without its content.
+const SUMMARY: u8 = 2;
+/// Sent to the Recycle Bin since the last scan.
+const REMOVED: u8 = 4;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Entry {
@@ -28,6 +32,14 @@ impl Entry {
     pub fn is_dir(&self) -> bool {
         self.flags & DIRECTORY != 0
     }
+
+    pub fn is_summary(&self) -> bool {
+        self.flags & SUMMARY != 0
+    }
+
+    pub fn is_removed(&self) -> bool {
+        self.flags & REMOVED != 0
+    }
 }
 
 #[derive(Debug, Default)]
@@ -42,6 +54,8 @@ pub struct Item<'a> {
     pub name: &'a str,
     pub parent: u32,
     pub is_dir: bool,
+    /// An excluded folder whose `size` is its whole content.
+    pub summary: bool,
     pub size: u64,
     pub modified: i64,
 }
@@ -67,7 +81,8 @@ impl Index {
             parent: item.parent,
             size: item.size,
             modified: item.modified,
-            flags: if item.is_dir { DIRECTORY } else { 0 },
+            flags: (if item.is_dir { DIRECTORY } else { 0 })
+                | (if item.summary { SUMMARY } else { 0 }),
         };
         self.names.push_str(item.name);
         self.folded.push_str(&folded);
@@ -103,13 +118,24 @@ impl Index {
         self.entries.get(index as usize)
     }
 
+    pub fn entries(&self) -> &[Entry] {
+        &self.entries
+    }
+
+    /// Hides an entry, and so everything inside it, until the next scan.
+    pub fn remove(&mut self, index: u32) {
+        if let Some(entry) = self.entries.get_mut(index as usize) {
+            entry.flags |= REMOVED;
+        }
+    }
+
     pub fn name(&self, index: u32) -> &str {
         self.entry(index)
             .and_then(|entry| self.names.get(span(entry.name_start, entry.name_len)))
             .unwrap_or_default()
     }
 
-    fn folded_name(&self, entry: &Entry) -> &[u8] {
+    pub fn folded_name(&self, entry: &Entry) -> &[u8] {
         self.folded
             .as_bytes()
             .get(span(entry.folded_start, entry.folded_len))
@@ -151,6 +177,9 @@ impl Index {
             .par_iter()
             .enumerate()
             .filter_map(|(position, entry)| {
+                if entry.flags & (SUMMARY | REMOVED) != 0 {
+                    return None;
+                }
                 let name = self.folded_name(entry);
                 if !finders.iter().all(|finder| finder.find(name).is_some()) {
                     return None;
@@ -262,6 +291,7 @@ mod tests {
             name,
             parent,
             is_dir,
+            summary: false,
             size: 0,
             modified,
         }

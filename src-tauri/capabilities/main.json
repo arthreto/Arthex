@@ -42,6 +42,13 @@
     "allow-file-search-rescan",
     "allow-file-search-add-folder",
     "allow-file-search-remove-folder",
-    "allow-file-search-remove-exclusion"
+    "allow-file-search-remove-exclusion",
+    "allow-filesize-drives",
+    "allow-filesize-folder",
+    "allow-filesize-largest",
+    "allow-filesize-rescan",
+    "allow-filesize-reveal",
+    "allow-filesize-pick-folder",
+    "allow-filesize-trash"
   ]
 }

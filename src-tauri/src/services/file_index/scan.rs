@@ -54,11 +54,12 @@ fn scan_folder(
         name,
         parent: NO_PARENT,
         is_dir: true,
+        summary: false,
         size: 0,
         modified: fs::metadata(path).map_or(0, |meta| modified(&meta)),
     });
     if depth < PARALLEL_DEPTH {
-        let folders = read_into(&mut part, me, path, exclusions);
+        let folders = read_into(&mut part, me, path, exclusions, stop);
         let children: Vec<Index> = folders
             .into_par_iter()
             .map(|(folder, name, _)| scan_folder(&folder, &name, depth + 1, exclusions, stop))
@@ -76,11 +77,12 @@ fn walk(part: &mut Index, parent: u32, path: &Path, exclusions: &Exclusions, sto
     if stop.load(Ordering::Relaxed) {
         return;
     }
-    for (folder, name, time) in read_into(part, parent, path, exclusions) {
+    for (folder, name, time) in read_into(part, parent, path, exclusions, stop) {
         let me = part.push(&Item {
             name: &name,
             parent,
             is_dir: true,
+            summary: false,
             size: 0,
             modified: time,
         });
@@ -95,6 +97,7 @@ fn read_into(
     parent: u32,
     path: &Path,
     exclusions: &Exclusions,
+    stop: &AtomicBool,
 ) -> Vec<(PathBuf, String, i64)> {
     let Ok(entries) = fs::read_dir(path) else {
         return Vec::new();
@@ -112,7 +115,16 @@ fn read_into(
         let time = meta.as_ref().map_or(0, modified);
         if kind.is_dir() {
             let folder = entry.path();
-            if !exclusions.excludes(&folder) {
+            if exclusions.excludes(&folder) {
+                part.push(&Item {
+                    name: &name,
+                    parent,
+                    is_dir: true,
+                    summary: true,
+                    size: folder_size(&folder, stop),
+                    modified: time,
+                });
+            } else {
                 folders.push((folder, name, time));
             }
         } else {
@@ -120,12 +132,31 @@ fn read_into(
                 name: &name,
                 parent,
                 is_dir: false,
+                summary: false,
                 size: meta.as_ref().map_or(0, Metadata::len),
                 modified: time,
             });
         }
     }
     folders
+}
+
+/// The total size of the files in a folder, for excluded folders that `FileSize` still counts.
+fn folder_size(path: &Path, stop: &AtomicBool) -> u64 {
+    if stop.load(Ordering::Relaxed) {
+        return 0;
+    }
+    let Ok(entries) = fs::read_dir(path) else {
+        return 0;
+    };
+    entries
+        .flatten()
+        .map(|entry| match entry.file_type() {
+            Ok(kind) if kind.is_dir() && !kind.is_symlink() => folder_size(&entry.path(), stop),
+            Ok(kind) if kind.is_file() => entry.metadata().map_or(0, |meta| meta.len()),
+            _ => 0,
+        })
+        .sum()
 }
 
 pub fn modified(meta: &Metadata) -> i64 {
@@ -152,7 +183,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn indexes_files_and_folders_without_exclusions() {
+    fn indexes_files_and_counts_excluded_folders_as_a_whole() {
         let dir = tempfile::tempdir().unwrap();
         fs::create_dir_all(dir.path().join("docs/deep/deeper")).unwrap();
         fs::create_dir_all(dir.path().join("node_modules/pkg")).unwrap();
@@ -172,5 +203,8 @@ mod tests {
         assert_eq!(path, dir.path().join("docs/deep/deeper/report.pdf"));
         assert_eq!(index.entry(hits[0].index).unwrap().size, 5);
         assert!(index.search(&["index.js".into()], 5).is_empty());
+        assert!(index.search(&["node_modules".into()], 5).is_empty());
+        let excluded = index.entries().iter().find(|entry| entry.is_summary());
+        assert_eq!(excluded.map(|entry| entry.size), Some(1));
     }
 }

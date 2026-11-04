@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatBytes, formatWhen } from './format';
+import { formatBytes, formatPercent, formatWhen } from './format';
 
 const now = new Date(2026, 10, 4, 15, 0).getTime();
 const minutesAgo = (minutes: number) => now - minutes * 60_000;
@@ -25,5 +25,12 @@ describe('formatBytes', () => {
     expect(plain(formatBytes(512, 'en'))).toBe('512 byte');
     expect(plain(formatBytes(1.2 * 1024 ** 3, 'en'))).toBe('1.2 GB');
     expect(plain(formatBytes(1.2 * 1024 ** 3, 'fr'))).toBe('1,2 Go');
+  });
+});
+
+describe('formatPercent', () => {
+  it('follows the language', () => {
+    expect(formatPercent(0.1234, 1, 'en')).toBe('12.3%');
+    expect(formatPercent(0.1234, 0, 'fr').replace(/\s/g, ' ')).toBe('12 %');
   });
 });

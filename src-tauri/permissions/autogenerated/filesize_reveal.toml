@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-filesize-reveal"
+description = "Enables the filesize_reveal command without any pre-configured scope."
+commands.allow = ["filesize_reveal"]
+
+[[permission]]
+identifier = "deny-filesize-reveal"
+description = "Denies the filesize_reveal command without any pre-configured scope."
+commands.deny = ["filesize_reveal"]
