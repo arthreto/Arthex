@@ -263,10 +263,14 @@ The language appears in Settings and in the tray at the next build. No code chan
 
 ## Releasing
 
-Once, before the first release, create the update signing key on your own computer:
+Once, before the first release, create the update signing key on your own computer, outside the repository (Windows command prompt shown; it asks for a password):
 
 ```bash
-npx tauri signer generate -w ~/.tauri/arthex.key
+mkdir %USERPROFILE%\.tauri
+```
+
+```bash
+npx @tauri-apps/cli signer generate -w %USERPROFILE%\.tauri\arthex.key
 ```
 
 - Put the content of `arthex.key.pub` in `plugins.updater.pubkey` of `src-tauri/tauri.conf.json`. Until then, builds never look for updates and the release workflow refuses to run.
