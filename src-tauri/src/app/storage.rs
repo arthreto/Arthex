@@ -1,6 +1,10 @@
 //! JSON files in the app folders, replaced atomically so a crash never leaves half a file.
 
-use std::{fs, io::ErrorKind, path::Path};
+use std::{
+    fs::{self, File},
+    io::{ErrorKind, Write},
+    path::Path,
+};
 
 use serde::{Serialize, de::DeserializeOwned};
 
@@ -30,7 +34,11 @@ pub fn write_json<T: Serialize>(path: &Path, value: &T) -> Result<()> {
         fs::create_dir_all(dir)?;
     }
     let tmp = path.with_extension("json.tmp");
-    fs::write(&tmp, serde_json::to_vec_pretty(value)?)?;
+    let mut file = File::create(&tmp)?;
+    file.write_all(&serde_json::to_vec_pretty(value)?)?;
+    // On disk before the rename, so a power cut never leaves an empty file in its place.
+    file.sync_all()?;
+    drop(file);
     fs::rename(&tmp, path)?;
     Ok(())
 }

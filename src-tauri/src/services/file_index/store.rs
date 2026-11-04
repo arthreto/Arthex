@@ -12,6 +12,8 @@ use crate::app::Result;
 const MAGIC: &[u8; 8] = b"ARTHEXI2";
 /// Refuses absurd files rather than allocating for them.
 const MAX_ENTRIES: usize = 50_000_000;
+/// Far above any real index; a bigger file is not read at all.
+const MAX_FILE_BYTES: u64 = 4 * 1024 * 1024 * 1024;
 const ENTRY_BYTES: usize = 4 + 2 + 4 + 2 + 4 + 8 + 4 + 1;
 
 pub fn save(path: &Path, index: &Index) -> Result<()> {
@@ -48,8 +50,12 @@ pub fn save(path: &Path, index: &Index) -> Result<()> {
 
 /// `None` for a missing, old or damaged file: the next scan rebuilds it.
 pub fn load(path: &Path) -> Option<Index> {
+    let mut file = File::open(path).ok()?;
+    if file.metadata().ok()?.len() > MAX_FILE_BYTES {
+        return None;
+    }
     let mut bytes = Vec::new();
-    File::open(path).ok()?.read_to_end(&mut bytes).ok()?;
+    file.read_to_end(&mut bytes).ok()?;
     let mut reader = Reader {
         bytes: &bytes,
         at: 0,
@@ -61,7 +67,11 @@ pub fn load(path: &Path) -> Option<Index> {
     let names_len = usize::try_from(reader.u64()?).ok()?;
     let folded_len = usize::try_from(reader.u64()?).ok()?;
     if count > MAX_ENTRIES
-        || bytes.len() != MAGIC.len() + 24 + names_len + folded_len + count * ENTRY_BYTES
+        || Some(bytes.len())
+            != (MAGIC.len() + 24)
+                .checked_add(names_len)
+                .and_then(|total| total.checked_add(folded_len))
+                .and_then(|total| total.checked_add(count.checked_mul(ENTRY_BYTES)?))
     {
         return None;
     }

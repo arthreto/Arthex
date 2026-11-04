@@ -1,12 +1,19 @@
 //! Win32 calls of `FileSize`: name and free space of a drive, and the Recycle Bin.
 
-use std::{iter, os::windows::ffi::OsStrExt, path::Path, ptr};
+use std::{
+    iter,
+    os::windows::ffi::OsStrExt,
+    path::{Component, Path, Prefix},
+    ptr,
+};
 
 use windows_sys::Win32::{
-    Storage::FileSystem::{GetDiskFreeSpaceExW, GetVolumeInformationW},
+    Foundation::HWND,
+    Storage::FileSystem::{GetDiskFreeSpaceExW, GetDriveTypeW, GetVolumeInformationW},
+    System::WindowsProgramming::DRIVE_FIXED,
     UI::Shell::{
-        FO_DELETE, FOF_ALLOWUNDO, FOF_NOCONFIRMATION, FOF_NOERRORUI, FOF_SILENT, SHFILEOPSTRUCTW,
-        SHFileOperationW,
+        FO_DELETE, FOF_ALLOWUNDO, FOF_NO_CONNECTED_ELEMENTS, FOF_NOCONFIRMATION, FOF_NOERRORUI,
+        FOF_SILENT, FOF_WANTNUKEWARNING, SHFILEOPSTRUCTW, SHFileOperationW,
     },
 };
 
@@ -49,11 +56,36 @@ pub fn label(path: &Path) -> Option<String> {
     (done != 0 && length > 0).then(|| String::from_utf16_lossy(&name[..length]))
 }
 
-/// Sends a file or folder to the Recycle Bin, never deleting it for good: without
-/// `FOF_ALLOWUNDO` the shell would delete it permanently, so the flags are checked first.
-pub fn recycle(path: &Path) -> Result<()> {
-    let flags = u16::try_from(FOF_ALLOWUNDO | FOF_NOCONFIRMATION | FOF_NOERRORUI | FOF_SILENT)
-        .map_err(|_| AppError::Unsupported)?;
+/// Only fixed drives have a Recycle Bin: on a USB stick or a network share the shell would
+/// delete for good.
+pub fn has_recycle_bin(path: &Path) -> bool {
+    let Some(Component::Prefix(prefix)) = path.components().next() else {
+        return false;
+    };
+    let Prefix::Disk(letter) = prefix.kind() else {
+        return false;
+    };
+    let root: Vec<u16> = format!("{}:\\", char::from(letter))
+        .encode_utf16()
+        .chain(Some(0))
+        .collect();
+    // SAFETY: `root` is a terminated UTF-16 string.
+    unsafe { GetDriveTypeW(root.as_ptr()) == DRIVE_FIXED }
+}
+
+/// Sends a file or folder to the Recycle Bin. When the shell cannot (an item larger than the
+/// bin), `FOF_WANTNUKEWARNING` makes it ask before deleting for good, over `owner`, and a "no"
+/// cancels; without `FOF_ALLOWUNDO` it would delete straight away, so the flags are checked first.
+pub fn recycle(path: &Path, owner: isize) -> Result<()> {
+    let flags = u16::try_from(
+        FOF_ALLOWUNDO
+            | FOF_WANTNUKEWARNING
+            | FOF_NO_CONNECTED_ELEMENTS
+            | FOF_NOCONFIRMATION
+            | FOF_NOERRORUI
+            | FOF_SILENT,
+    )
+    .map_err(|_| AppError::Unsupported)?;
     // The shell takes a list of paths ended by an empty one, hence two terminating zeros.
     let from: Vec<u16> = path
         .as_os_str()
@@ -61,7 +93,7 @@ pub fn recycle(path: &Path) -> Result<()> {
         .chain(iter::repeat_n(0, 2))
         .collect();
     let mut operation = SHFILEOPSTRUCTW {
-        hwnd: ptr::null_mut(),
+        hwnd: owner as HWND,
         wFunc: FO_DELETE,
         pFrom: from.as_ptr(),
         pTo: ptr::null(),

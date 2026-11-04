@@ -121,6 +121,7 @@ struct Visit<'a> {
 
 impl Index {
     pub fn usage(&self, folder: u32) -> Usage {
+        let guarded = self.starts_zone(folder);
         let mut children: Vec<Child> = Vec::new();
         self.walk_under(folder, |visit| {
             if visit.is_top {
@@ -129,7 +130,7 @@ impl Index {
                     size: 0,
                     breakdown: [0; 7],
                     has_children: false,
-                    protected: is_protected(visit.entry, visit.zone, visit.parent_zone),
+                    protected: guarded || is_protected(visit.entry, visit.zone, visit.parent_zone),
                 });
             }
             let Some(child) = children.get_mut(visit.top) else {
@@ -192,9 +193,20 @@ impl Index {
             return true;
         }
         match (self.zone(entry.parent), self.zone(index)) {
-            (Some(parent_zone), Some(zone)) => is_protected(entry, zone, parent_zone),
+            (Some(parent_zone), Some(zone)) => {
+                is_protected(entry, zone, parent_zone) || self.starts_zone(entry.parent)
+            }
             _ => true,
         }
+    }
+
+    /// A folder like Program Files, a profile or `AppData`: what sits directly inside it
+    /// (`AppData\Roaming`, `Documents`, an installed program) is protected too.
+    fn starts_zone(&self, index: u32) -> bool {
+        let Some(entry) = self.entry(index) else {
+            return false;
+        };
+        entry.parent != NO_PARENT && entry.is_dir() && self.zone(index) != self.zone(entry.parent)
     }
 
     /// Visits every live entry inside `folder` in index order. Parents always come before their
@@ -407,8 +419,33 @@ mod tests {
         );
         assert!(usage.children.iter().all(|child| child.protected));
         assert!(index.is_protected(lea));
-        assert!(!index.is_protected(lea + 1));
+        assert!(index.is_protected(lea + 1), "directly inside a profile");
+        assert!(
+            index
+                .usage(lea)
+                .children
+                .iter()
+                .all(|child| child.protected)
+        );
         assert!(index.is_protected(users) && index.is_protected(steam));
+    }
+
+    #[test]
+    fn protects_what_holds_programs_and_profiles_but_not_their_content() {
+        let (mut index, [.., lea, _]) = drive();
+        let downloads = add(&mut index, "Downloads", lea, true, 0);
+        let iso = add(&mut index, "setup.iso", downloads, false, 5);
+        let old = add(&mut index, "Old", downloads, true, 0);
+        assert!(index.is_protected(downloads));
+        assert!(!index.is_protected(iso));
+        assert!(!index.is_protected(old));
+        assert!(
+            index
+                .usage(downloads)
+                .children
+                .iter()
+                .all(|child| !child.protected)
+        );
     }
 
     #[test]

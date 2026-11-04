@@ -7,14 +7,31 @@ use tauri_plugin_opener::OpenerExt;
 
 use crate::app::{AppError, Result};
 
-/// Accepts only an absolute path to something that exists.
+/// Accepts only an absolute path to something that exists. On Windows it must start with a
+/// drive letter: a network (`\\host\share`) or device path could leak credentials to another
+/// machine or freeze while it does not answer.
 pub fn existing(path: &str) -> Result<&Path> {
     let path = Path::new(path);
-    if path.is_absolute() && path.exists() {
+    if path.is_absolute() && on_a_drive(path) && path.exists() {
         Ok(path)
     } else {
         Err(AppError::Invalid("this file no longer exists".into()))
     }
+}
+
+#[cfg(windows)]
+fn on_a_drive(path: &Path) -> bool {
+    use std::path::{Component, Prefix};
+
+    matches!(
+        path.components().next(),
+        Some(Component::Prefix(prefix)) if matches!(prefix.kind(), Prefix::Disk(_))
+    )
+}
+
+#[cfg(not(windows))]
+fn on_a_drive(_path: &Path) -> bool {
+    true
 }
 
 /// Opens a file or folder with its default program.

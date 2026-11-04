@@ -258,7 +258,7 @@ The language appears in Settings and in the tray at the next build. No code chan
   - The scan runs on background-priority threads, 30 s after a start at login. The cache loads first, so search works at once.
   - `notify` adds new files as they appear; a full rescan runs every 6 hours, or at once from Settings, and drops removed files. Results whose file is gone are never shown.
   - Excluded folders stay out of search but still count in FileSize, as one entry holding their total size.
-  - FileSize works out folder sizes, kinds of content (by place and extension) and the largest files in one pass over the index each time a folder opens (`usage.rs`). Windows, Program Files, profiles, `AppData` and game libraries are protected: they never go to the Recycle Bin, and Rust checks it again before moving anything.
+  - FileSize works out folder sizes, kinds of content (by place and extension) and the largest files in one pass over the index each time a folder opens (`usage.rs`). Windows, Program Files, profiles, `AppData`, game libraries and what sits directly inside them are protected: they never go to the Recycle Bin, and Rust checks it again before moving anything. Only fixed drives have a Recycle Bin, so items elsewhere are refused; if the shell still cannot recycle an item (larger than the bin), it asks before deleting for good. Open and reveal accept only indexed items on a drive letter.
   - Search splits the query into words that must all match, in parallel with `rayon` and `memchr`. Exact names rank first, then names that start with the query, then the most recently modified.
 
 ## Releasing

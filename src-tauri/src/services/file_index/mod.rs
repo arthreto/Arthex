@@ -76,36 +76,54 @@ impl FileIndex {
 
     /// The entry of an indexed path.
     pub fn find(&self, path: &Path) -> Option<u32> {
+        self.find_in(&self.read(), path)
+    }
+
+    /// Whether an indexed item may go to the Recycle Bin: `None` when it is not indexed.
+    /// Finding and checking under one lock keeps a scan from swapping the entry in between.
+    pub fn may_remove(&self, path: &Path) -> Option<bool> {
+        let index = self.read();
+        let at = self.find_in(&index, path)?;
+        Some(!index.is_protected(at))
+    }
+
+    /// Hides an item sent to the Recycle Bin, and everything inside it, until the next scan.
+    pub fn remove(&self, path: &Path) {
+        let mut index = self.index.write().unwrap_or_else(PoisonError::into_inner);
+        if let Some(at) = self.find_in(&index, path) {
+            index.remove(at);
+        }
+    }
+
+    /// Whether a folder lies under one of the indexed roots.
+    pub fn covers(&self, path: &Path) -> bool {
+        config::roots(&self.config())
+            .iter()
+            .any(|root| path.starts_with(root))
+    }
+
+    fn find_in(&self, index: &Index, path: &Path) -> Option<u32> {
         let folder = self.folders().get(&key(path)).copied();
-        if let Some(folder) = folder.filter(|&at| key_matches(&self.read(), at, path)) {
+        if let Some(folder) = folder.filter(|&at| same_path(index, at, path)) {
             return Some(folder);
         }
         let parent_path = path.parent()?;
-        let parent = *self.folders().get(&key(parent_path))?;
-        let name = fold(&path.file_name()?.to_string_lossy());
-        let index = self.read();
-        if !key_matches(&index, parent, parent_path) {
+        let parent = self.folders().get(&key(parent_path)).copied()?;
+        if !same_path(index, parent, parent_path) {
             return None;
         }
+        let name = path.file_name()?.to_string_lossy().to_lowercase();
         index
             .entries()
             .iter()
             .enumerate()
             .skip(parent as usize + 1)
-            .find(|(_, entry)| {
+            .find(|&(position, entry)| {
                 entry.parent == parent
                     && !entry.is_removed()
-                    && index.folded_name(entry) == name.as_bytes()
+                    && u32::try_from(position).is_ok_and(|at| index.name(at).to_lowercase() == name)
             })
             .and_then(|(position, _)| u32::try_from(position).ok())
-    }
-
-    /// Hides an entry sent to the Recycle Bin until the next scan.
-    pub fn remove(&self, index: u32) {
-        self.index
-            .write()
-            .unwrap_or_else(PoisonError::into_inner)
-            .remove(index);
     }
 
     /// Asks the background thread for a full scan now.
@@ -174,15 +192,16 @@ impl FileIndex {
 }
 
 /// Folders are found by a hash of their folded path, which takes far less memory than the
-/// paths themselves; `find` checks the path, so a collision can never return the wrong entry.
+/// paths themselves; lookups check the path, so a collision can never return the wrong entry.
 fn key(path: &Path) -> u64 {
     let mut hasher = DefaultHasher::new();
     fold(&path.to_string_lossy()).hash(&mut hasher);
     hasher.finish()
 }
 
-fn key_matches(index: &Index, at: u32, path: &Path) -> bool {
-    fold(&index.path(at).to_string_lossy()) == fold(&path.to_string_lossy())
+/// Windows paths ignore case but not accents: "été" and "ete" are two files.
+fn same_path(index: &Index, at: u32, path: &Path) -> bool {
+    index.path(at).to_string_lossy().to_lowercase() == path.to_string_lossy().to_lowercase()
 }
 
 pub fn setup(app: &AppHandle) -> Result<()> {
@@ -256,9 +275,16 @@ fn keep_up_to_date(app: &AppHandle, generation: u64) {
         if let Err(error) = store::save(&files.cache_path, &index) {
             tracing::warn!(%error, "could not save the file index");
         }
+        // Turning the module off during the save must not bring the index and watcher back.
+        if !current() {
+            return;
+        }
         files.replace_index(index);
         app.emit(UPDATED, ()).ok();
         let handle = app.clone();
+        if !current() {
+            return;
+        }
         *files.watcher.lock().unwrap_or_else(PoisonError::into_inner) =
             watch::start(&roots, move |paths| handle.state::<FileIndex>().add(paths));
         if !wait(RESCAN_EVERY, current, || {

@@ -1,9 +1,11 @@
+use std::path::PathBuf;
+
 use tauri::{AppHandle, Manager};
 
 use super::{FileHit, Status, search, status};
 use crate::{
     app::{
-        Result,
+        AppError, Result,
         dialogs::{blocking, pick_folder},
         overlay,
     },
@@ -18,19 +20,31 @@ pub async fn file_search_query(app: AppHandle, query: String) -> Result<Vec<File
     blocking(move || search(&app.state::<FileIndex>(), &query, LIMIT)).await
 }
 
+/// Opens a search result. Only indexed items, so the command cannot start any file.
 #[tauri::command]
-pub fn file_search_open(app: AppHandle, path: String) -> Result<()> {
-    paths::open(&app, paths::existing(&path)?)?;
+pub async fn file_search_open(app: AppHandle, path: String) -> Result<()> {
+    let handle = app.clone();
+    blocking(move || paths::open(&handle, &indexed(&handle, &path)?)).await??;
     overlay::hide(&app);
     Ok(())
 }
 
 /// Opens the folder of a result in the file manager, with the item selected.
 #[tauri::command]
-pub fn file_search_reveal(app: AppHandle, path: String) -> Result<()> {
-    paths::reveal(&app, paths::existing(&path)?)?;
+pub async fn file_search_reveal(app: AppHandle, path: String) -> Result<()> {
+    let handle = app.clone();
+    blocking(move || paths::reveal(&handle, &indexed(&handle, &path)?)).await??;
     overlay::hide(&app);
     Ok(())
+}
+
+fn indexed(app: &AppHandle, path: &str) -> Result<PathBuf> {
+    let path = paths::existing(path)?.to_path_buf();
+    if app.state::<FileIndex>().find(&path).is_some() {
+        Ok(path)
+    } else {
+        Err(AppError::Invalid("this item is not indexed".into()))
+    }
 }
 
 #[tauri::command]

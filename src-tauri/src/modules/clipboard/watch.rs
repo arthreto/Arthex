@@ -176,6 +176,10 @@ unsafe fn unicode_text() -> Option<String> {
             return None;
         }
         let units = GlobalSize(handle) / 2;
+        // UTF-8 never takes fewer bytes than UTF-16 units, so this many units is too large.
+        if units > super::MAX_BYTES + 1 {
+            return None;
+        }
         let data = GlobalLock(handle).cast::<u16>();
         if data.is_null() {
             return None;
