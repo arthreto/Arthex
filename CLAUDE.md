@@ -97,12 +97,14 @@ These come from the owner's feedback on the mockup. Do not reintroduce what was 
 | Search          | < 50 ms per keystroke                                             |
 | Installer       | < 10 MB                                                           |
 
+CI measures the installer, the program and the memory used on Windows at every push (summary of the `windows` job). Check them after any change that could weigh on them.
+
 ## Roadmap
 
 0. Mockup — done.
 1. Skeleton: shell, UI kit, i18n, themes, settings, tray, autostart, overlay window, CI — done.
 2. Onboarding, Shift + Win hook and recorder, "All pages" hub with Customize — done.
-3. Home: website and software shortcuts, recent apps.
+3. Home: website and software shortcuts (edit, delete with undo, reorder), recent apps, Settings → Features — done.
 4. Search: file index, app launcher, calculator, system commands (including scheduled shutdown).
 5. FileSize: tree, treemap, largest files, Recycle Bin.
 6. Clipboard history and Markdown notes.
