@@ -42,6 +42,24 @@ pub fn scan(roots: &[PathBuf], exclusions: &Exclusions, stop: &AtomicBool) -> Op
     Some(index)
 }
 
+/// A folder that appeared while the index runs, as a part to append under its parent.
+pub fn subtree(path: &Path, name: &str, exclusions: &Exclusions) -> Index {
+    let stop = AtomicBool::new(false);
+    if exclusions.excludes(path) {
+        let mut part = Index::default();
+        part.push(&Item {
+            name,
+            parent: NO_PARENT,
+            is_dir: true,
+            summary: true,
+            size: folder_size(path, &stop),
+            modified: fs::metadata(path).map_or(0, |meta| modified(&meta)),
+        });
+        return part;
+    }
+    scan_folder(path, name, PARALLEL_DEPTH, exclusions, &stop)
+}
+
 /// Returns a part whose first entry is this folder.
 fn scan_folder(
     path: &Path,

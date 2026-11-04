@@ -129,6 +129,14 @@ impl Index {
         &self.entries
     }
 
+    /// Refreshes a file that changed on disk.
+    pub fn update(&mut self, index: u32, size: u64, modified: u32) {
+        if let Some(entry) = self.entries.get_mut(index as usize) {
+            entry.size = size;
+            entry.modified = modified;
+        }
+    }
+
     /// Hides an entry, and so everything inside it, until the next scan.
     pub fn remove(&mut self, index: u32) {
         if let Some(entry) = self.entries.get_mut(index as usize) {

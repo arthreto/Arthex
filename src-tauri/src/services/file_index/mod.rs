@@ -9,12 +9,12 @@ mod usage;
 mod watch;
 
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     fs,
     hash::{DefaultHasher, Hash, Hasher},
     path::{Path, PathBuf},
     sync::{
-        Mutex, MutexGuard, PoisonError, RwLock, RwLockReadGuard,
+        Mutex, MutexGuard, PoisonError, RwLock, RwLockReadGuard, RwLockWriteGuard,
         atomic::{AtomicBool, AtomicU64, Ordering},
     },
     thread,
@@ -153,41 +153,109 @@ impl FileIndex {
         Ok(())
     }
 
-    /// Places files that just appeared under their folder, if it is indexed.
-    fn add(&self, paths: Vec<PathBuf>) {
+    fn write(&self) -> RwLockWriteGuard<'_, Index> {
+        self.index.write().unwrap_or_else(PoisonError::into_inner)
+    }
+
+    /// Brings changed paths up to date: what still exists is added or refreshed, what is gone
+    /// is hidden. One pass over the index serves the whole batch, so an editor that saves
+    /// through a temporary file never leaves duplicates.
+    fn apply(&self, mut paths: Vec<PathBuf>) {
         let exclusions = Exclusions::new(&self.config().exclusions);
+        // Parents before their content, so a new folder is placed (and scanned) first.
+        paths.sort_by_key(|path| path.components().count());
+        let known = self.known(&paths);
+        let mut scanned: Vec<PathBuf> = Vec::new();
         for path in paths {
-            let (Some(parent), Some(name)) = (path.parent(), path.file_name()) else {
-                continue;
-            };
-            let Ok(meta) = fs::symlink_metadata(&path) else {
-                continue;
-            };
-            if meta.file_type().is_symlink()
-                || exclusions.excludes(parent)
-                || (meta.is_dir() && exclusions.excludes(&path))
-            {
+            if scanned.iter().any(|folder| path.starts_with(folder)) {
                 continue;
             }
-            let Some(&parent) = self.folders().get(&key(parent)) else {
-                continue;
-            };
-            let at = self
-                .index
-                .write()
-                .unwrap_or_else(PoisonError::into_inner)
-                .push(&Item {
-                    name: &name.to_string_lossy(),
-                    parent,
-                    is_dir: meta.is_dir(),
-                    summary: false,
-                    size: if meta.is_dir() { 0 } else { meta.len() },
-                    modified: scan::modified(&meta),
-                });
-            if meta.is_dir() {
-                self.folders().insert(key(&path), at);
+            let meta = fs::symlink_metadata(&path)
+                .ok()
+                .filter(|meta| !meta.file_type().is_symlink());
+            match (known.get(&path), meta) {
+                (Some(&at), Some(meta)) if meta.is_file() => {
+                    self.write().update(at, meta.len(), scan::modified(&meta));
+                }
+                (Some(&at), None) => self.write().remove(at),
+                (None, Some(meta)) => {
+                    let placed = self.place(&path, &meta, &exclusions);
+                    if placed && meta.is_dir() {
+                        scanned.push(path);
+                    }
+                }
+                _ => {}
             }
         }
+    }
+
+    /// The live entries of the given paths, found in one pass.
+    fn known(&self, paths: &[PathBuf]) -> HashMap<PathBuf, u32> {
+        let mut wanted: HashMap<(u32, String), &PathBuf> = HashMap::new();
+        for path in paths {
+            if let (Some(parent), Some(name)) = (path.parent(), path.file_name())
+                && let Some(parent) = self.folders().get(&key(parent)).copied()
+            {
+                wanted.insert((parent, name.to_string_lossy().to_lowercase()), path);
+            }
+        }
+        let parents: HashSet<u32> = wanted.keys().map(|(parent, _)| *parent).collect();
+        let index = self.read();
+        let mut found = HashMap::new();
+        for (position, entry) in index.entries().iter().enumerate() {
+            if entry.is_removed() || !parents.contains(&entry.parent) {
+                continue;
+            }
+            let Ok(at) = u32::try_from(position) else {
+                break;
+            };
+            if let Some(path) = wanted.get(&(entry.parent, index.name(at).to_lowercase())) {
+                found.insert((*path).clone(), at);
+            }
+        }
+        found
+    }
+
+    /// Adds a new file, or a new folder with its content, under its indexed parent.
+    fn place(&self, path: &Path, meta: &fs::Metadata, exclusions: &Exclusions) -> bool {
+        let (Some(parent_path), Some(name)) = (path.parent(), path.file_name()) else {
+            return false;
+        };
+        let Some(parent) = self.folders().get(&key(parent_path)).copied() else {
+            return false;
+        };
+        let name = name.to_string_lossy();
+        if !meta.is_dir() {
+            self.write().push(&Item {
+                name: &name,
+                parent,
+                is_dir: false,
+                summary: false,
+                size: meta.len(),
+                modified: scan::modified(meta),
+            });
+            return true;
+        }
+        let part = scan::subtree(path, &name, exclusions);
+        let start = {
+            let mut index = self.write();
+            let start = index.len();
+            index.append(part, parent);
+            start
+        };
+        let index = self.read();
+        for at in start..index.len() {
+            let Ok(at) = u32::try_from(at) else {
+                break;
+            };
+            if index
+                .entry(at)
+                .is_some_and(|entry| entry.is_dir() && !entry.is_summary())
+            {
+                self.folders().insert(key(&index.path(at)), at);
+            }
+        }
+        true
     }
 }
 
@@ -286,7 +354,9 @@ fn keep_up_to_date(app: &AppHandle, generation: u64) {
             return;
         }
         *files.watcher.lock().unwrap_or_else(PoisonError::into_inner) =
-            watch::start(&roots, move |paths| handle.state::<FileIndex>().add(paths));
+            watch::start(&roots, move |paths| {
+                handle.state::<FileIndex>().apply(paths);
+            });
         if !wait(RESCAN_EVERY, current, || {
             files.rescan.swap(false, Ordering::Relaxed)
         }) && !current()
@@ -310,4 +380,78 @@ fn wait(duration: Duration, current: impl Fn() -> bool, wake: impl Fn() -> bool)
         thread::sleep(Duration::from_millis(500));
     }
     current()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn indexed(root: &Path) -> FileIndex {
+        let config = Config {
+            folders: Vec::new(),
+            exclusions: Vec::new(),
+        };
+        let files = FileIndex {
+            config_path: root.join("config.json"),
+            cache_path: root.join("index.bin"),
+            config: Mutex::new(config),
+            index: RwLock::default(),
+            folders: Mutex::default(),
+            watcher: Mutex::default(),
+            generation: AtomicU64::new(0),
+            running: AtomicBool::new(false),
+            cancel: AtomicBool::new(false),
+            rescan: AtomicBool::new(false),
+        };
+        let index = scan::scan(
+            &[root.to_path_buf()],
+            &Exclusions::new(&[]),
+            &AtomicBool::new(false),
+        )
+        .unwrap();
+        files.replace_index(index);
+        files
+    }
+
+    fn live(files: &FileIndex, name: &str) -> Vec<u64> {
+        let index = files.read();
+        index
+            .entries()
+            .iter()
+            .enumerate()
+            .filter(|(at, entry)| {
+                !entry.is_removed() && index.name(u32::try_from(*at).unwrap()) == name
+            })
+            .map(|(_, entry)| entry.size)
+            .collect()
+    }
+
+    #[test]
+    fn follows_saves_deletions_and_new_folders_without_duplicates() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path();
+        fs::write(root.join("report.docx"), b"12").unwrap();
+        let files = indexed(root);
+
+        // An editor saving through a temporary file.
+        fs::write(root.join("report.tmp"), b"12345").unwrap();
+        fs::rename(root.join("report.tmp"), root.join("report.docx")).unwrap();
+        files.apply(vec![root.join("report.tmp"), root.join("report.docx")]);
+        assert_eq!(live(&files, "report.docx"), [5]);
+        assert_eq!(live(&files, "report.tmp"), Vec::<u64>::new());
+
+        fs::create_dir_all(root.join("new/inner")).unwrap();
+        fs::write(root.join("new/inner/photo.jpg"), b"123").unwrap();
+        files.apply(vec![
+            root.join("new/inner/photo.jpg"),
+            root.join("new"),
+            root.join("new/inner"),
+        ]);
+        assert_eq!(live(&files, "photo.jpg"), [3]);
+        assert_eq!(live(&files, "inner").len(), 1);
+
+        fs::remove_file(root.join("report.docx")).unwrap();
+        files.apply(vec![root.join("report.docx")]);
+        assert_eq!(live(&files, "report.docx"), Vec::<u64>::new());
+    }
 }
