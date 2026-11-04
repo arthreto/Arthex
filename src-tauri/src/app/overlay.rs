@@ -5,7 +5,7 @@ use std::{
 
 use tauri::{AppHandle, Emitter, Manager, WebviewWindow, Window, WindowEvent};
 
-use super::events;
+use super::{events, hotkey};
 
 pub const LABEL: &str = "main";
 
@@ -53,6 +53,8 @@ pub fn hide(app: &AppHandle) {
     let Some(window) = app.get_webview_window(LABEL) else {
         return;
     };
+    // A recording left running would keep hiding every key press from the whole system.
+    hotkey::record(false);
     if let Some(timeline) = app.try_state::<Timeline>() {
         Timeline::mark(&timeline.hidden_at);
     }

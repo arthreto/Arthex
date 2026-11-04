@@ -5,7 +5,7 @@ use serde::Serialize;
 use serde_json::Value;
 use tauri::AppHandle;
 
-use super::{Result, i18n, overlay, settings::Settings, system};
+use super::{Result, hotkey, i18n, overlay, settings::Settings, system};
 
 #[tauri::command]
 pub fn settings_get(app: AppHandle) -> Settings {
@@ -20,6 +20,12 @@ pub fn settings_update(app: AppHandle, patch: Value) -> Result<Settings> {
 #[tauri::command]
 pub fn overlay_hide(app: AppHandle) {
     overlay::hide(&app);
+}
+
+/// Returns `false` where the interface has to read the keys itself.
+#[tauri::command]
+pub fn hotkey_record(active: bool) -> bool {
+    hotkey::record(active)
 }
 
 #[derive(Serialize)]

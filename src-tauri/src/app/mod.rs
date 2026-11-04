@@ -2,6 +2,7 @@ pub mod autostart;
 pub mod commands;
 mod error;
 mod events;
+mod hotkey;
 mod i18n;
 mod logging;
 pub mod overlay;
@@ -28,6 +29,7 @@ pub fn setup(app: &AppHandle) -> Result<()> {
     autostart::apply(app, settings.autostart);
     tray::create(app)?;
     overlay::prepare(app);
+    hotkey::start(app, &settings.hotkey);
     if !autostart::launched_at_startup() {
         overlay::show(app);
     }
@@ -39,7 +41,7 @@ pub fn settings(app: &AppHandle) -> Settings {
     app.state::<AppState>().settings.get()
 }
 
-/// Saves a partial update, then applies its side effects (startup entry, tray menu) and tells the UI.
+/// Saves a partial update, then applies its side effects (startup entry, hotkey, tray menu) and tells the UI.
 pub fn update_settings(app: &AppHandle, patch: &Value) -> Result<Settings> {
     let store = &app.state::<AppState>().settings;
     let before = store.get();
@@ -48,10 +50,13 @@ pub fn update_settings(app: &AppHandle, patch: &Value) -> Result<Settings> {
     if before.autostart != after.autostart {
         autostart::apply(app, after.autostart);
     }
-    if before.autostart != after.autostart || before.language != after.language {
-        if let Err(error) = tray::refresh(app) {
-            tracing::warn!(%error, "could not refresh the tray menu");
-        }
+    if before.hotkey != after.hotkey {
+        hotkey::apply(app, &after.hotkey);
+    }
+    if (before.autostart != after.autostart || before.language != after.language)
+        && let Err(error) = tray::refresh(app)
+    {
+        tracing::warn!(%error, "could not refresh the tray menu");
     }
     app.emit(events::SETTINGS_CHANGED, &after)?;
     Ok(after)

@@ -152,12 +152,14 @@ Events go from Rust to the interface.
 - Shell events are declared in `src-tauri/src/app/events.rs` and in `events` in `src/core/api.ts`.
 - Module events are named `<id>://<event>`.
 
-| Event                     | Payload    | Meaning                           |
-| ------------------------- | ---------- | --------------------------------- |
-| `overlay://shown`         | none       | the overlay was just shown        |
-| `settings://changed`      | `Settings` | settings changed, from any source |
-| `app://navigate`          | target id  | open `hub`, `settings` or a page  |
-| `app://confirm-uninstall` | none       | the tray asked to uninstall       |
+| Event                     | Payload    | Meaning                                           |
+| ------------------------- | ---------- | ------------------------------------------------- |
+| `overlay://shown`         | none       | the overlay was just shown                        |
+| `settings://changed`      | `Settings` | settings changed, from any source                 |
+| `app://navigate`          | target id  | open `hub`, `settings` or a page                  |
+| `app://confirm-uninstall` | none       | the tray asked to uninstall                       |
+| `hotkey://held`           | key names  | modifiers held while recording (Windows)          |
+| `hotkey://recorded`       | key names  | recording finished, `[]` when cancelled (Windows) |
 
 ## Settings
 

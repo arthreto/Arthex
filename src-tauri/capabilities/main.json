@@ -2,13 +2,16 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "main",
   "description": "What the overlay window is allowed to call.",
-  "windows": ["main"],
+  "windows": [
+    "main"
+  ],
   "permissions": [
     "core:event:allow-listen",
     "core:event:allow-unlisten",
     "allow-settings-get",
     "allow-settings-update",
     "allow-overlay-hide",
+    "allow-hotkey-record",
     "allow-app-info",
     "allow-app-open-data-dir",
     "allow-app-uninstall"

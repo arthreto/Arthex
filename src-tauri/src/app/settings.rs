@@ -8,13 +8,11 @@ use std::{
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-use super::{AppError, Result};
+use super::{AppError, Result, hotkey::Hotkey};
 
 const VERSION: u32 = 1;
 const HOME: &str = "home";
 const MAX_TAB_BAR: usize = 6;
-const MAX_HOTKEY_KEYS: usize = 4;
-
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Theme {
@@ -62,7 +60,6 @@ impl Default for Settings {
 impl Settings {
     /// Repairs anything a hand-edited file or a buggy client could break.
     fn normalize(&mut self) {
-        let defaults = Self::default();
         self.version = VERSION;
 
         if self
@@ -81,17 +78,9 @@ impl Settings {
         dedupe_ids(&mut self.favorites);
         self.modules.retain(|id, _| id != HOME && is_module_id(id));
 
-        let mut keys = Vec::with_capacity(self.hotkey.len());
-        for key in self.hotkey.drain(..) {
-            if is_key_name(&key) && !keys.contains(&key) {
-                keys.push(key);
-            }
-        }
-        self.hotkey = if keys.is_empty() || keys.len() > MAX_HOTKEY_KEYS {
-            defaults.hotkey
-        } else {
-            keys
-        };
+        self.hotkey = Hotkey::parse(&self.hotkey)
+            .unwrap_or(Hotkey::DEFAULT)
+            .names();
     }
 }
 
@@ -118,10 +107,6 @@ fn is_language_code(code: &str) -> bool {
         && code
             .bytes()
             .all(|byte| byte.is_ascii_alphanumeric() || byte == b'-')
-}
-
-fn is_key_name(key: &str) -> bool {
-    (1..=16).contains(&key.len()) && key.bytes().all(|byte| byte.is_ascii_alphanumeric())
 }
 
 /// Owns `settings.json`. Every write replaces the file atomically.
@@ -179,6 +164,9 @@ impl SettingsStore {
 
         let mut next: Settings = serde_json::from_value(Value::Object(merged))
             .map_err(|error| AppError::InvalidSettings(error.to_string()))?;
+        if Hotkey::parse(&next.hotkey).is_none() {
+            return Err(AppError::InvalidSettings("unusable hotkey".into()));
+        }
         next.normalize();
         write_atomic(&self.path, &serde_json::to_vec_pretty(&next)?)?;
         *current = next.clone();
@@ -261,26 +249,28 @@ mod tests {
     }
 
     #[test]
-    fn invalid_hotkey_falls_back_to_default() {
-        let (_dir, store) = store();
-        assert_eq!(
-            store.update(&json!({ "hotkey": [] })).unwrap().hotkey,
-            ["Shift", "Win"]
-        );
-        assert_eq!(
-            store
-                .update(&json!({ "hotkey": ["a", "b", "c", "d", "e"] }))
-                .unwrap()
-                .hotkey,
-            ["Shift", "Win"]
-        );
-        assert_eq!(
-            store
-                .update(&json!({ "hotkey": ["Ctrl", "Space", "Ctrl"] }))
-                .unwrap()
-                .hotkey,
-            ["Ctrl", "Space"]
-        );
+    fn hotkey_is_validated_and_ordered() {
+        let (dir, store) = store();
+        for bad in [
+            json!([]),
+            json!(["Shift"]),
+            json!(["A"]),
+            json!(["Ctrl", "Space", "Ctrl"]),
+        ] {
+            assert!(store.update(&json!({ "hotkey": bad })).is_err());
+        }
+        let saved = store
+            .update(&json!({ "hotkey": ["Space", "Ctrl"] }))
+            .unwrap();
+        assert_eq!(saved.hotkey, ["Ctrl", "Space"]);
+
+        fs::write(
+            dir.path().join("settings.json"),
+            r#"{ "hotkey": ["Nope"] }"#,
+        )
+        .unwrap();
+        let reloaded = SettingsStore::load(dir.path().join("settings.json"));
+        assert_eq!(reloaded.get().hotkey, ["Shift", "Win"]);
     }
 
     #[test]

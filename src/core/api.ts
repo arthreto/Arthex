@@ -12,6 +12,8 @@ export const commands = {
   settingsGet: () => invoke<Settings>('settings_get'),
   settingsUpdate: (patch: SettingsPatch) => invoke<Settings>('settings_update', { patch }),
   overlayHide: () => invoke<null>('overlay_hide'),
+  /** Resolves to `false` where the interface has to read the keys itself (macOS, Linux). */
+  hotkeyRecord: (active: boolean) => invoke<boolean>('hotkey_record', { active }),
   appInfo: () => invoke<AppInfo>('app_info'),
   appOpenDataDir: () => invoke<null>('app_open_data_dir'),
   appUninstall: () => invoke<null>('app_uninstall'),
@@ -23,6 +25,8 @@ export const events = {
   settingsChanged: 'settings://changed',
   navigate: 'app://navigate',
   confirmUninstall: 'app://confirm-uninstall',
+  hotkeyHeld: 'hotkey://held',
+  hotkeyRecorded: 'hotkey://recorded',
 } as const;
 
 export function on<T>(event: string, handler: (payload: T) => void): Promise<UnlistenFn> {
