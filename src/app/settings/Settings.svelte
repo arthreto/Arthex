@@ -1,8 +1,11 @@
 <script lang="ts">
   import type { Component } from 'svelte';
   import { t, type ShellKey } from '../../core/i18n';
+  import Button from '../../ui/Button.svelte';
   import Icon from '../../ui/Icon.svelte';
   import type { IconName } from '../../ui/icons';
+  import { navigation } from '../navigation.svelte';
+  import FeaturesSettings from './FeaturesSettings.svelte';
   import GeneralSettings from './GeneralSettings.svelte';
   import HotkeySettings from './HotkeySettings.svelte';
 
@@ -11,11 +14,20 @@
     title: ShellKey;
     icon: IconName;
     component: Component;
+    /** A button next to the section title. */
+    action?: { label: ShellKey; run: () => void };
   }
 
   const sections: Section[] = [
     { id: 'general', title: 'settings.sections.general', icon: 'sliders', component: GeneralSettings },
     { id: 'hotkey', title: 'settings.sections.hotkey', icon: 'keyboard', component: HotkeySettings },
+    {
+      id: 'features',
+      title: 'settings.sections.features',
+      icon: 'toggle',
+      component: FeaturesSettings,
+      action: { label: 'settings.features.managePages', run: () => navigation.open({ kind: 'hub' }) },
+    },
   ];
 
   let currentId = $state('general');
@@ -38,7 +50,13 @@
   {#if current}
     {@const Body = current.component}
     <div class="content scroll">
-      <h3>{t(current.title)}</h3>
+      <div class="title">
+        <h3>{t(current.title)}</h3>
+        {#if current.action}
+          {@const action = current.action}
+          <Button size="small" onclick={action.run}>{t(action.label)}</Button>
+        {/if}
+      </div>
       <Body />
     </div>
   {/if}
@@ -90,6 +108,13 @@
     display: flex;
     flex-direction: column;
     gap: 14px;
+  }
+
+  .title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
   }
 
   h3 {

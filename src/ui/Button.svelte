@@ -5,7 +5,7 @@
   interface Props extends HTMLButtonAttributes {
     variant?: 'default' | 'primary' | 'danger';
     /** `large` is the 48 px pill of full-screen flows such as the first launch. */
-    size?: 'default' | 'large';
+    size?: 'small' | 'default' | 'large';
     children: Snippet;
   }
 
@@ -54,6 +54,12 @@
 
   .danger:hover:not(:disabled) {
     background: var(--danger-hover);
+  }
+
+  .small {
+    height: 28px;
+    padding: 0 12px;
+    font-size: 12px;
   }
 
   .large {

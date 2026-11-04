@@ -24,6 +24,8 @@ export interface ModuleManifest {
   page?: Lazy;
   /** A card on Home, shown while the module is enabled. */
   widget?: { slot: WidgetSlot; component: Lazy };
+  /** A small control shown next to the module's switch in Settings ("Clear history"). */
+  settingsAction?: Lazy;
 }
 
 export function defineModule(manifest: ModuleManifest): ModuleManifest {

@@ -20,6 +20,11 @@ export function loadPage(id: string): Promise<Loaded> | null {
   return once(`page:${id}`, getModule(id)?.page);
 }
 
+/** Loads the control a module shows next to its switch in Settings, once. */
+export function loadSettingsAction(id: string): Promise<Loaded> | null {
+  return once(`action:${id}`, getModule(id)?.settingsAction);
+}
+
 /** Loads the Home card of a module once. */
 export function loadWidget(id: string): Promise<Loaded> | null {
   return once(`widget:${id}`, getModule(id)?.widget?.component);

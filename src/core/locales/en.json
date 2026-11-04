@@ -63,7 +63,8 @@
     "label": "Settings sections",
     "sections": {
       "general": "General",
-      "hotkey": "Keyboard shortcut"
+      "hotkey": "Keyboard shortcut",
+      "features": "Features"
     },
     "general": {
       "language": "Language",
@@ -109,6 +110,11 @@
         "taskView": "Task View",
         "clipboard": "clipboard history"
       }
+    },
+    "features": {
+      "turnOn": "Turn on {name}",
+      "turnOff": "Turn off {name}",
+      "managePages": "Manage pages"
     }
   },
   "uninstall": {
@@ -167,5 +173,8 @@
   "files": {
     "programs": "Programs",
     "images": "Images"
+  },
+  "time": {
+    "dayAt": "{day}, {time}"
   }
 }

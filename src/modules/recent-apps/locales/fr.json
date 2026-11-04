@@ -1,0 +1,8 @@
+{
+  "name": "Apps récentes",
+  "description": "Les dernières apps utilisées, sur l’accueil.",
+  "title": "Applications récentes",
+  "running": "Ouverte",
+  "clear": "Effacer l’historique",
+  "cleared": "Historique des applications effacé"
+}
