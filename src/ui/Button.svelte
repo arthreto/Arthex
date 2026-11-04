@@ -4,13 +4,15 @@
 
   interface Props extends HTMLButtonAttributes {
     variant?: 'default' | 'primary' | 'danger';
+    /** `large` is the 48 px pill of full-screen flows such as the first launch. */
+    size?: 'default' | 'large';
     children: Snippet;
   }
 
-  let { variant = 'default', type = 'button', children, ...rest }: Props = $props();
+  let { variant = 'default', size = 'default', type = 'button', children, ...rest }: Props = $props();
 </script>
 
-<button class="button {variant}" {type} {...rest}>{@render children()}</button>
+<button class="button {variant} {size}" {type} {...rest}>{@render children()}</button>
 
 <style>
   .button {
@@ -52,6 +54,15 @@
 
   .danger:hover:not(:disabled) {
     background: var(--danger-hover);
+  }
+
+  .large {
+    height: 48px;
+    padding: 0 24px;
+    border-radius: 24px;
+    gap: 10px;
+    font-size: 15.5px;
+    font-weight: 600;
   }
 
   .button:disabled {

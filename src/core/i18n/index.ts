@@ -1,5 +1,5 @@
 import type en from '../locales/en.json';
-import { register } from './catalog';
+import { message, register } from './catalog';
 import { translate } from './i18n.svelte';
 import type { MessageKey, MessageTree, MessageValues } from './types';
 
@@ -26,6 +26,11 @@ export type ShellKey = MessageKey<typeof en>;
 
 export function t(key: ShellKey, values?: MessageValues): string {
   return translate(key, values);
+}
+
+/** A shell message in a given language, whatever the active one (the greetings of the first launch). */
+export function textIn(locale: string, key: ShellKey): string {
+  return message(locale, key) ?? translate(key);
 }
 
 /** Typed translator scoped to a module's own `locales/<lang>.json`. */

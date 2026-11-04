@@ -117,7 +117,7 @@
       {:else}
         {#each keys as key, index (key)}
           {#if index > 0}<span class="plus">+</span>{/if}
-          <Keycap large>{keyLabel(key)}</Keycap>
+          <Keycap size="m">{keyLabel(key)}</Keycap>
         {/each}
         <span class="change">{t('settings.hotkey.change')}</span>
       {/if}

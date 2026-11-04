@@ -110,5 +110,43 @@
     "autostart": "Launch at startup",
     "uninstall": "Uninstall…",
     "quit": "Quit Arthex"
+  },
+  "onboarding": {
+    "hello": "Hello",
+    "welcome": "Welcome",
+    "start": "Get started",
+    "step": "Step {n} of {total}",
+    "back": "Back",
+    "next": "Continue",
+    "finish": "Finish",
+    "language": {
+      "title": "Choose your language",
+      "subtitle": "You can change it anytime in settings.",
+      "system": "Your system language"
+    },
+    "theme": {
+      "title": "Choose your theme",
+      "subtitle": "You can change it later."
+    },
+    "startup": {
+      "title": "Start Arthex with Windows?",
+      "subtitle": "It starts quietly, ready as soon as you press {keys}.",
+      "yes": "Yes, start with Windows",
+      "no": "No, I’ll start it myself",
+      "recommended": "Recommended"
+    },
+    "done": {
+      "title": "You’re all set!",
+      "subtitle": "Open Arthex from anywhere with this shortcut.",
+      "open": "Open Arthex"
+    },
+    "recap": {
+      "language": "Language",
+      "theme": "Theme",
+      "startup": "Startup",
+      "on": "on",
+      "off": "off",
+      "separator": ": "
+    }
   }
 }

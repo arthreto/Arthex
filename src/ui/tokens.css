@@ -45,6 +45,10 @@
   );
   --shadow-dialog: 0 24px 64px rgba(0, 0, 0, 0.5);
   --shadow-search: 0 10px 34px rgba(0, 0, 0, 0.28);
+  --shadow-chosen: 0 10px 34px rgba(76, 194, 255, 0.18);
+  --shadow-logo: 0 18px 40px rgba(88, 70, 255, 0.35);
+  --glow-1: rgba(76, 194, 255, 0.2);
+  --glow-2: rgba(167, 139, 250, 0.16);
 
   --tint-blue: #4cc2ff;
   --tint-amber: #fbbf24;
@@ -88,6 +92,10 @@
   );
   --shadow-dialog: 0 24px 64px rgba(17, 24, 39, 0.18);
   --shadow-search: 0 10px 30px rgba(17, 24, 39, 0.1);
+  --shadow-chosen: 0 10px 30px rgba(0, 103, 192, 0.14);
+  --shadow-logo: 0 18px 40px rgba(88, 70, 255, 0.22);
+  --glow-1: rgba(0, 103, 192, 0.13);
+  --glow-2: rgba(124, 58, 237, 0.1);
 
   --tint-blue: #0067c0;
   --tint-amber: #b45309;

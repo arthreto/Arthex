@@ -5,6 +5,7 @@
   import { resolveLocale, setLocale } from '../core/i18n';
   import { settings } from '../core/settings/settings.svelte';
   import Toast from '../ui/Toast.svelte';
+  import Onboarding from './onboarding/Onboarding.svelte';
   import Overlay from './Overlay.svelte';
 
   let systemLocale = $state<string | null>(null);
@@ -26,6 +27,10 @@
 </script>
 
 {#if settings.loaded}
-  <Overlay />
+  {#if settings.value.onboarded}
+    <Overlay />
+  {:else}
+    <Onboarding {systemLocale} />
+  {/if}
 {/if}
 <Toast />
