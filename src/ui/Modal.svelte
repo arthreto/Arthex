@@ -2,6 +2,7 @@
   import type { Snippet } from 'svelte';
   import { t } from '../core/i18n';
   import IconButton from './IconButton.svelte';
+  import { focusTrap } from './focusTrap';
 
   interface Props {
     title: string;
@@ -26,6 +27,7 @@
   <div
     class="dialog enter"
     role="dialog"
+    use:focusTrap
     aria-modal="true"
     aria-labelledby={titleId}
     tabindex="-1"

@@ -3,6 +3,7 @@
   import type { WhatsNew } from '../core/api';
   import { getLocale, t } from '../core/i18n';
   import Button from '../ui/Button.svelte';
+  import { focusTrap } from '../ui/focusTrap';
   import { releaseNotes, type NoteKind } from './releaseNotes';
 
   let { notes, onclose }: { notes: WhatsNew; onclose: () => void } = $props();
@@ -27,6 +28,7 @@
   <div
     class="dialog enter"
     role="dialog"
+    use:focusTrap
     aria-modal="true"
     aria-labelledby={titleId}
     tabindex="-1"
