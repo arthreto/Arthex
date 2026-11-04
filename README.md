@@ -40,19 +40,9 @@ Languages: English and French.
 <table>
   <tr>
     <td width="50%"><img src="docs/images/search.webp" alt="Search results with a preview pane"><br><sub><b>Search</b>: apps, files and folders, with a preview</sub></td>
-    <td width="50%"><img src="docs/images/all-pages.webp" alt="All pages launcher"><br><sub><b>All pages</b>: every page in one launcher</sub></td>
-  </tr>
-  <tr>
-    <td><img src="docs/images/filesize.webp" alt="FileSize: folder sizes and a treemap of drive C:"><br><sub><b>FileSize</b>: see what takes up space</sub></td>
-    <td><img src="docs/images/notes.webp" alt="Markdown notes with a to-do checklist"><br><sub><b>Notes</b>: quick Markdown notes with checkboxes</sub></td>
-  </tr>
-  <tr>
-    <td><img src="docs/images/onboarding.webp" alt="First launch: choose your language"><br><sub><b>First launch</b>: language, theme and startup</sub></td>
-    <td><img src="docs/images/settings.webp" alt="Settings, General section"><br><sub><b>Settings</b></sub></td>
+    <td width="50%"><img src="docs/images/filesize.webp" alt="FileSize: folder sizes and a treemap of drive C:"><br><sub><b>FileSize</b>: see what takes up space</sub></td>
   </tr>
 </table>
-
-<sub>Screenshots show the validated design. Some pages are still in development.</sub>
 
 ## Installation
 

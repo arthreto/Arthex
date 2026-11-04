@@ -16,7 +16,7 @@ Arthex is a fast, secure overlay utility. **Shift + Win** opens a full-screen tr
 3. **Every release has a changelog** as its description, in English and French, in the format given in `docs/DEVELOPMENT.md` → Releasing. Users see it in "What's new" at their next launch, so a release without one is a broken release.
 4. **English everywhere** in the repository: code, comments, commits, README, this file. The interface is translated through i18n. The owner writes in French; answer them in French.
 5. **Three markdown files only**, each with one role. No other markdown file.
-   - `README.md`: presentation, installation and credits, for users.
+   - `README.md`: presentation, installation and credits, for users. Screenshots: one large Home image, then Search and FileSize only, in English, over a desktop wallpaper.
    - `docs/DEVELOPMENT.md`: how the code works and how to extend it, for developers. Update it in the same commit as any change it describes.
    - `CLAUDE.md`: the project rules.
 6. **Run the checks** from `docs/DEVELOPMENT.md` → Checks before every commit.
@@ -47,6 +47,7 @@ These come from the owner's feedback on the mockup. Do not reintroduce what was 
 - Features without a page (calculator, system commands, app launcher, file search…) are toggled in **Settings → Features**, not in the hub.
 - Logo at the top left, next to the search bar. Layout from top to bottom: search bar, tab bar, page content, keyboard hints.
 - Animations are short (opacity and scale) and respect "Reduce motion".
+- **Nothing that looks generated:** no imitation Windows icons or fake system UI in the mockup or the screenshots. Where a sample app icon is needed, use Arthex's own icon. No meta text such as "validated design" or "mockup" in anything users read.
 - **Nothing is hard-coded:**
   - visible strings go through i18n;
   - colours go through the tokens in `src/ui/tokens.css`, in both dark and light themes.
