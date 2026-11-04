@@ -47,7 +47,7 @@ These come from the owner's feedback on the mockup. Do not reintroduce what was 
 - Features without a page (calculator, system commands, app launcher, file search…) are toggled in **Settings → Features**, not in the hub.
 - Logo at the top left, next to the search bar. Layout from top to bottom: search bar, tab bar, page content, keyboard hints.
 - Animations are short (opacity and scale) and respect "Reduce motion".
-- **Nothing that looks generated:** no imitation Windows icons or fake system UI in the mockup or the screenshots. Where a sample app icon is needed, use Arthex's own icon. No meta text such as "validated design" or "mockup" in anything users read.
+- **Nothing that looks generated:** no imitation Windows icons or fake system UI in the mockup or the screenshots. Sample sites and apps always show their real icon (or Arthex's own icon), never coloured letters or made-up icons. No meta text such as "validated design" or "mockup" in anything users read.
 - **Nothing is hard-coded:**
   - visible strings go through i18n;
   - colours go through the tokens in `src/ui/tokens.css`, in both dark and light themes.
