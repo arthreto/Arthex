@@ -13,12 +13,39 @@ class ShortcutsState {
     return this.#loading;
   }
 
-  async addSite(url: string, name: string | null, icon: string | null): Promise<void> {
-    this.items = await shortcutsApi.addSite(url, name, icon);
+  async saveSite(id: string | null, url: string, name: string | null, icon: string | null): Promise<void> {
+    this.items = await shortcutsApi.saveSite(id, url, name, icon);
   }
 
-  async addApp(path: string, name: string | null): Promise<void> {
-    this.items = await shortcutsApi.addApp(path, name);
+  async saveApp(id: string | null, path: string, name: string | null): Promise<void> {
+    this.items = await shortcutsApi.saveApp(id, path, name);
+  }
+
+  /** Removes a shortcut and returns a function that puts it back. */
+  async remove(shortcut: Shortcut): Promise<() => Promise<void>> {
+    const index = this.items.findIndex((item) => item.id === shortcut.id);
+    this.items = await shortcutsApi.remove(shortcut.id);
+    return async () => {
+      this.items = await shortcutsApi.restore(shortcut, index);
+    };
+  }
+
+  /** Moves `id` to the place of `targetId`, before it when moving back, after it when moving on. */
+  async move(id: string, targetId: string): Promise<void> {
+    const ids = this.items.map((item) => item.id);
+    const from = ids.indexOf(id);
+    const to = ids.indexOf(targetId);
+    if (from === -1 || to === -1 || from === to) return;
+    ids.splice(from, 1);
+    ids.splice(to, 0, id);
+    const previous = this.items;
+    this.items = ids.flatMap((itemId) => previous.filter((item) => item.id === itemId));
+    try {
+      this.items = await shortcutsApi.reorder(ids);
+    } catch (error) {
+      this.items = previous;
+      throw error;
+    }
   }
 }
 

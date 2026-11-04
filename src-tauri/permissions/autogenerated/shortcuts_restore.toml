@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-shortcuts-restore"
+description = "Enables the shortcuts_restore command without any pre-configured scope."
+commands.allow = ["shortcuts_restore"]
+
+[[permission]]
+identifier = "deny-shortcuts-restore"
+description = "Denies the shortcuts_restore command without any pre-configured scope."
+commands.deny = ["shortcuts_restore"]

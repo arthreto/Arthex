@@ -6,7 +6,8 @@
   },
   "common": {
     "cancel": "Cancel",
-    "close": "Close"
+    "close": "Close",
+    "undo": "Undo"
   },
   "keys": {
     "shift": "Shift",

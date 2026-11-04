@@ -16,7 +16,9 @@
     "search": "Search for an app…",
     "installed": "Installed apps",
     "none": "No app found.",
-    "browse": "Browse for another program…"
+    "browse": "Browse for another program…",
+    "editTitle": "Edit shortcut",
+    "save": "Save"
   },
   "errors": {
     "missing": "Enter the site address.",
@@ -26,5 +28,10 @@
   },
   "added": "Shortcut “{name}” added, its icon is fetched automatically",
   "addedApp": "Shortcut “{name}” added",
-  "iconChosen": "Icon chosen"
+  "iconChosen": "Icon chosen",
+  "menu": "Shortcut {name}",
+  "edit": "Edit",
+  "delete": "Delete",
+  "edited": "Shortcut “{name}” edited",
+  "deleted": "Shortcut “{name}” deleted"
 }

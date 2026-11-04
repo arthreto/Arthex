@@ -8,19 +8,24 @@
   import Modal from '../../ui/Modal.svelte';
   import Segmented from '../../ui/Segmented.svelte';
   import TextField from '../../ui/TextField.svelte';
-  import { shortcutsApi, type Program } from './api';
+  import { shortcutsApi, type Program, type Shortcut } from './api';
   import { t } from './i18n';
   import { shortcuts } from './shortcuts.svelte';
   import { guessName, siteProblem } from './site';
 
-  let { onclose }: { onclose: () => void } = $props();
+  /** Without `editing`, the dialog adds a new shortcut. */
+  let { editing = null, onclose }: { editing?: Shortcut | null; onclose: () => void } = $props();
 
   type Kind = 'site' | 'app';
 
   const formId = $props.id();
-  let kind = $state<Kind>('site');
-  let address = $state('');
-  let name = $state('');
+  // The dialog is created for one shortcut, so its fields start from it once.
+  // svelte-ignore state_referenced_locally
+  let kind = $state<Kind>(editing?.kind ?? 'site');
+  // svelte-ignore state_referenced_locally
+  let address = $state(editing?.kind === 'site' ? shortAddress(editing.url) : '');
+  // svelte-ignore state_referenced_locally
+  let name = $state(editing?.kind === 'site' ? editing.name : '');
   let icon = $state<string | null>(null);
   let query = $state('');
   let programs = $state<Program[] | null>(null);
@@ -32,9 +37,16 @@
     { value: 'site' as const, label: t('dialog.site') },
     { value: 'app' as const, label: t('dialog.app') },
   ]);
+  /** `https://github.com/` reads better as `github.com`; Rust adds the https:// back. */
+  function shortAddress(url: string): string {
+    return url.replace(/^https:\/\//i, '').replace(/\/$/, '');
+  }
+
   const placeholder = $derived(guessName(address) || 'YouTube');
   const taken = $derived(
-    new Set(shortcuts.items.flatMap((item) => (item.kind === 'app' ? [item.path] : []))),
+    new Set(
+      shortcuts.items.flatMap((item) => (item.kind === 'app' && item.id !== editing?.id ? [item.path] : [])),
+    ),
   );
   const choices = $derived(
     (programs ?? []).filter(
@@ -56,8 +68,15 @@
         programs = [];
         fail(failure);
       }
+      if (editing?.kind === 'app') {
+        const path = editing.path;
+        picked = programs.find((program) => program.path === path) ?? null;
+      }
     }
   }
+
+  // svelte-ignore state_referenced_locally
+  if (editing?.kind === 'app') void choose('app');
 
   async function pickIcon() {
     try {
@@ -93,13 +112,15 @@
     }
     saving = true;
     try {
+      const id = editing?.id ?? null;
+      const shown = kind === 'site' ? name.trim() || guessName(address) : (picked?.name ?? '');
       if (kind === 'site') {
-        await shortcuts.addSite(address, name.trim() || null, icon);
-        toast.show(t('added', { name: name.trim() || guessName(address) }));
+        await shortcuts.saveSite(id, address, name.trim() || null, icon);
       } else if (picked) {
-        await shortcuts.addApp(picked.path, null);
-        toast.show(t('addedApp', { name: picked.name }));
+        await shortcuts.saveApp(id, picked.path, null);
       }
+      if (editing) toast.show(t('edited', { name: shown }));
+      else toast.show(t(kind === 'site' ? 'added' : 'addedApp', { name: shown }));
       onclose();
     } catch (failure) {
       fail(failure);
@@ -109,8 +130,10 @@
   }
 </script>
 
-<Modal title={t('dialog.title')} {onclose}>
-  <Segmented label={t('dialog.type')} options={kinds} value={kind} onchange={choose} />
+<Modal title={t(editing ? 'dialog.editTitle' : 'dialog.title')} {onclose}>
+  {#if !editing}
+    <Segmented label={t('dialog.type')} options={kinds} value={kind} onchange={choose} />
+  {/if}
   <form id={formId} class="fields" onsubmit={submit} oninput={() => (error = null)}>
     {#if kind === 'site'}
       <TextField label={t('dialog.address')} bind:value={address} placeholder="youtube.com" autofocus />
@@ -155,7 +178,9 @@
   {/if}
   {#snippet actions()}
     <Button onclick={onclose}>{shellT('common.cancel')}</Button>
-    <Button variant="primary" type="submit" form={formId} disabled={saving}>{t('dialog.submit')}</Button>
+    <Button variant="primary" type="submit" form={formId} disabled={saving}
+      >{t(editing ? 'dialog.save' : 'dialog.submit')}</Button
+    >
   {/snippet}
 </Modal>
 

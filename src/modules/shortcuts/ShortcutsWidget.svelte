@@ -5,12 +5,17 @@
   import { toast } from '../../core/toast.svelte';
   import Icon from '../../ui/Icon.svelte';
   import Keycap from '../../ui/Keycap.svelte';
-  import AddShortcutDialog from './AddShortcutDialog.svelte';
+  import Menu from '../../ui/Menu.svelte';
+  import MenuItem from '../../ui/MenuItem.svelte';
   import { MAX_SHORTCUTS, shortcutsApi, type Shortcut } from './api';
   import { t } from './i18n';
+  import ShortcutDialog from './ShortcutDialog.svelte';
   import { shortcuts } from './shortcuts.svelte';
 
-  let adding = $state(false);
+  /** The dialog: closed, adding (`editing: null`) or editing one shortcut. */
+  let dialog = $state<{ editing: Shortcut | null } | null>(null);
+  let menu = $state<{ shortcut: Shortcut; x: number; y: number } | null>(null);
+  let dragged = $state<string | null>(null);
 
   const full = $derived(shortcuts.items.length >= MAX_SHORTCUTS);
   const columns = $derived(Math.min(10, Math.max(8, shortcuts.items.length + 1)));
@@ -19,12 +24,52 @@
     void shortcuts.load();
   });
 
+  function fail(error: unknown) {
+    toast.show(shellT('errors.generic', { message: errorMessage(error) }));
+  }
+
   async function open(shortcut: Shortcut) {
     try {
       await shortcutsApi.open(shortcut.id);
     } catch (error) {
-      toast.show(shellT('errors.generic', { message: errorMessage(error) }));
+      fail(error);
     }
+  }
+
+  function openMenu(event: MouseEvent, shortcut: Shortcut) {
+    event.preventDefault();
+    const fromKeyboard = event.clientX === 0 && event.clientY === 0;
+    const tile = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    menu = {
+      shortcut,
+      x: fromKeyboard ? tile.left : event.clientX,
+      y: fromKeyboard ? tile.bottom : event.clientY,
+    };
+  }
+
+  function edit(shortcut: Shortcut) {
+    menu = null;
+    dialog = { editing: shortcut };
+  }
+
+  async function remove(shortcut: Shortcut) {
+    menu = null;
+    try {
+      const undo = await shortcuts.remove(shortcut);
+      toast.show(t('deleted', { name: shortcut.name }), {
+        label: shellT('common.undo'),
+        run: () => void undo().catch(fail),
+      });
+    } catch (error) {
+      fail(error);
+    }
+  }
+
+  function drop(event: DragEvent, target: Shortcut) {
+    event.preventDefault();
+    const id = dragged;
+    dragged = null;
+    if (id) shortcuts.move(id, target.id).catch(fail);
   }
 
   function onkeydown(event: KeyboardEvent) {
@@ -50,8 +95,15 @@
     {#each shortcuts.items as shortcut (shortcut.id)}
       <button
         class="tile"
+        class:dragged={dragged === shortcut.id}
         title={shortcut.kind === 'site' ? shortcut.url : shortcut.path}
+        draggable="true"
         onclick={() => open(shortcut)}
+        oncontextmenu={(event) => openMenu(event, shortcut)}
+        ondragstart={() => (dragged = shortcut.id)}
+        ondragend={() => (dragged = null)}
+        ondragover={(event) => event.preventDefault()}
+        ondrop={(event) => drop(event, shortcut)}
       >
         {#if shortcut.icon}
           <img src={shortcut.icon} alt="" width="46" height="46" />
@@ -62,7 +114,7 @@
       </button>
     {/each}
     {#if !full}
-      <button class="tile add" onclick={() => (adding = true)}>
+      <button class="tile add" onclick={() => (dialog = { editing: null })}>
         <Icon name="plus" size={22} stroke={2} />
         <span class="name">{t('add')}</span>
       </button>
@@ -70,8 +122,16 @@
   </div>
 </section>
 
-{#if adding}
-  <AddShortcutDialog onclose={() => (adding = false)} />
+{#if menu}
+  {@const target = menu.shortcut}
+  <Menu x={menu.x} y={menu.y} label={t('menu', { name: target.name })} onclose={() => (menu = null)}>
+    <MenuItem icon="edit" onclick={() => edit(target)}>{t('edit')}</MenuItem>
+    <MenuItem icon="trash" danger onclick={() => remove(target)}>{t('delete')}</MenuItem>
+  </Menu>
+{/if}
+
+{#if dialog}
+  <ShortcutDialog editing={dialog.editing} onclose={() => (dialog = null)} />
 {/if}
 
 <style>
@@ -151,6 +211,10 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     font-size: 13px;
+  }
+
+  .dragged {
+    opacity: 0.4;
   }
 
   .add {

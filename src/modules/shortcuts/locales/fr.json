@@ -16,7 +16,9 @@
     "search": "Rechercher un logiciel…",
     "installed": "Logiciels installés",
     "none": "Aucun logiciel trouvé.",
-    "browse": "Parcourir un autre programme…"
+    "browse": "Parcourir un autre programme…",
+    "editTitle": "Modifier le raccourci",
+    "save": "Enregistrer"
   },
   "errors": {
     "missing": "Indique l’adresse du site.",
@@ -26,5 +28,10 @@
   },
   "added": "Raccourci « {name} » ajouté, son icône est récupérée automatiquement",
   "addedApp": "Raccourci « {name} » ajouté",
-  "iconChosen": "Icône choisie"
+  "iconChosen": "Icône choisie",
+  "menu": "Raccourci {name}",
+  "edit": "Modifier",
+  "delete": "Supprimer",
+  "edited": "Raccourci « {name} » modifié",
+  "deleted": "Raccourci « {name} » supprimé"
 }

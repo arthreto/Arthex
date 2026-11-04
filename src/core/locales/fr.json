@@ -6,7 +6,8 @@
   },
   "common": {
     "cancel": "Annuler",
-    "close": "Fermer"
+    "close": "Fermer",
+    "undo": "Annuler"
   },
   "keys": {
     "shift": "Shift",

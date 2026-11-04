@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-shortcuts-save-site"
+description = "Enables the shortcuts_save_site command without any pre-configured scope."
+commands.allow = ["shortcuts_save_site"]
+
+[[permission]]
+identifier = "deny-shortcuts-save-site"
+description = "Denies the shortcuts_save_site command without any pre-configured scope."
+commands.deny = ["shortcuts_save_site"]
