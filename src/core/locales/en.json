@@ -1,0 +1,63 @@
+{
+  "$meta": { "code": "en", "name": "English", "nativeName": "English" },
+  "common": { "cancel": "Cancel", "close": "Close" },
+  "keys": {
+    "shift": "Shift",
+    "win": "Win",
+    "ctrl": "Ctrl",
+    "alt": "Alt",
+    "enter": "Enter",
+    "escape": "Esc",
+    "tab": "Tab"
+  },
+  "search": {
+    "label": "Search",
+    "placeholder": "Search files, apps, sites…    = calculate    > command",
+    "clear": "Clear search",
+    "noResults": "No results for “{query}”."
+  },
+  "tabs": { "label": "Pinned pages", "hub": "All pages", "settings": "Settings" },
+  "hints": {
+    "navigate": "Navigate",
+    "open": "Open",
+    "openFolder": "Open folder",
+    "switchTab": "Switch tab",
+    "close": "Close"
+  },
+  "hub": {
+    "title": "All pages",
+    "open": "Open {name}",
+    "pin": "Pin {name} to the top",
+    "unpin": "Unpin {name}",
+    "pinned": "{name} pinned to the top",
+    "unpinned": "{name} unpinned",
+    "off": "{name} is turned off."
+  },
+  "settings": {
+    "label": "Settings sections",
+    "sections": { "general": "General" },
+    "general": {
+      "language": "Language",
+      "theme": "Theme",
+      "themes": { "system": "System", "dark": "Dark", "light": "Light" },
+      "autostart": "Launch Arthex when Windows starts",
+      "reduceMotion": "Reduce motion",
+      "version": "Arthex {version}",
+      "data": "Data",
+      "uninstall": "Uninstall…"
+    }
+  },
+  "uninstall": {
+    "title": "Uninstall Arthex?",
+    "body": "Arthex, its keyboard shortcut and its startup entry will be removed. The uninstaller will ask whether to also delete your notes and shortcuts.",
+    "confirm": "Uninstall"
+  },
+  "errors": { "generic": "Something went wrong: {message}" },
+  "tray": {
+    "open": "Open Arthex",
+    "settings": "Settings",
+    "autostart": "Launch at startup",
+    "uninstall": "Uninstall…",
+    "quit": "Quit Arthex"
+  }
+}

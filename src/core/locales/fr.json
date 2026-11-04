@@ -1,0 +1,63 @@
+{
+  "$meta": { "code": "fr", "name": "French", "nativeName": "Français" },
+  "common": { "cancel": "Annuler", "close": "Fermer" },
+  "keys": {
+    "shift": "Shift",
+    "win": "Win",
+    "ctrl": "Ctrl",
+    "alt": "Alt",
+    "enter": "Entrée",
+    "escape": "Échap",
+    "tab": "Tab"
+  },
+  "search": {
+    "label": "Rechercher",
+    "placeholder": "Rechercher fichiers, apps, sites…    = calcul    > commande",
+    "clear": "Effacer la recherche",
+    "noResults": "Aucun résultat pour « {query} »."
+  },
+  "tabs": { "label": "Pages épinglées", "hub": "Toutes les pages", "settings": "Paramètres" },
+  "hints": {
+    "navigate": "Naviguer",
+    "open": "Ouvrir",
+    "openFolder": "Ouvrir le dossier",
+    "switchTab": "Changer d'onglet",
+    "close": "Fermer"
+  },
+  "hub": {
+    "title": "Toutes les pages",
+    "open": "Ouvrir {name}",
+    "pin": "Épingler {name} en tête de liste",
+    "unpin": "Désépingler {name}",
+    "pinned": "{name} épinglée en tête de liste",
+    "unpinned": "{name} désépinglée",
+    "off": "{name} est désactivée."
+  },
+  "settings": {
+    "label": "Sections des paramètres",
+    "sections": { "general": "Général" },
+    "general": {
+      "language": "Langue",
+      "theme": "Thème",
+      "themes": { "system": "Système", "dark": "Sombre", "light": "Clair" },
+      "autostart": "Lancer Arthex au démarrage de Windows",
+      "reduceMotion": "Réduire les animations",
+      "version": "Arthex {version}",
+      "data": "Données",
+      "uninstall": "Désinstaller…"
+    }
+  },
+  "uninstall": {
+    "title": "Désinstaller Arthex ?",
+    "body": "Arthex, son raccourci clavier et son démarrage automatique seront supprimés. Le désinstalleur te demandera si tu veux aussi effacer tes notes et tes raccourcis.",
+    "confirm": "Désinstaller"
+  },
+  "errors": { "generic": "Une erreur est survenue : {message}" },
+  "tray": {
+    "open": "Ouvrir Arthex",
+    "settings": "Paramètres",
+    "autostart": "Lancer au démarrage",
+    "uninstall": "Désinstaller…",
+    "quit": "Quitter Arthex"
+  }
+}
