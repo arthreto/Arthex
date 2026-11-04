@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-recent-apps-list"
+description = "Enables the recent_apps_list command without any pre-configured scope."
+commands.allow = ["recent_apps_list"]
+
+[[permission]]
+identifier = "deny-recent-apps-list"
+description = "Denies the recent_apps_list command without any pre-configured scope."
+commands.deny = ["recent_apps_list"]

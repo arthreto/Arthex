@@ -37,6 +37,12 @@ pub struct Settings {
     pub modules: BTreeMap<String, bool>,
 }
 
+impl Settings {
+    pub fn is_module_enabled(&self, id: &str) -> bool {
+        self.modules.get(id) != Some(&false)
+    }
+}
+
 impl Default for Settings {
     fn default() -> Self {
         Self {

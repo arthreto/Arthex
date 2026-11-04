@@ -2,7 +2,7 @@ pub mod autostart;
 pub mod commands;
 pub mod dialogs;
 mod error;
-mod events;
+pub mod events;
 mod hotkey;
 mod i18n;
 mod logging;
@@ -16,7 +16,8 @@ use serde_json::Value;
 use tauri::{AppHandle, Emitter, Manager};
 
 pub use error::{AppError, Result};
-use settings::{Settings, SettingsStore};
+pub use settings::Settings;
+use settings::SettingsStore;
 
 pub struct AppState {
     settings: SettingsStore,

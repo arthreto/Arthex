@@ -21,6 +21,9 @@
     "allow-shortcuts-programs",
     "allow-shortcuts-browse-program",
     "allow-shortcuts-pick-icon",
-    "allow-shortcuts-open"
+    "allow-shortcuts-open",
+    "allow-recent-apps-list",
+    "allow-recent-apps-open",
+    "allow-recent-apps-clear"
   ]
 }

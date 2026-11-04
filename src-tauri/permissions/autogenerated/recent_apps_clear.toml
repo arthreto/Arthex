@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-recent-apps-clear"
+description = "Enables the recent_apps_clear command without any pre-configured scope."
+commands.allow = ["recent_apps_clear"]
+
+[[permission]]
+identifier = "deny-recent-apps-clear"
+description = "Denies the recent_apps_clear command without any pre-configured scope."
+commands.deny = ["recent_apps_clear"]
