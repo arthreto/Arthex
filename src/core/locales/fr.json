@@ -180,5 +180,12 @@
   },
   "time": {
     "dayAt": "{day}, {time}"
+  },
+  "schedule": {
+    "notice": {
+      "shutdown": "L’ordinateur s’éteindra dans 5 minutes. Ouvre Arthex pour annuler.",
+      "restart": "L’ordinateur redémarrera dans 5 minutes. Ouvre Arthex pour annuler.",
+      "sleep": "L’ordinateur se mettra en veille dans 5 minutes. Ouvre Arthex pour annuler."
+    }
   }
 }

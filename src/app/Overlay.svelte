@@ -3,12 +3,13 @@
   import logo from '../assets/logo.png';
   import { commands, events, on } from '../core/api';
   import { t } from '../core/i18n';
-  import { tabBarIds } from '../core/modules';
+  import { badgeModules, tabBarIds } from '../core/modules';
   import { settings } from '../core/settings/settings.svelte';
   import Hub from './Hub.svelte';
   import KeyHints from './KeyHints.svelte';
   import { navigation } from './navigation.svelte';
   import PageView from './PageView.svelte';
+  import { loadBadge } from './pages';
   import SearchBar from './SearchBar.svelte';
   import SearchResults from './SearchResults.svelte';
   import { search } from './search.svelte';
@@ -75,6 +76,16 @@
     </div>
     <SearchBar bind:this={searchBar} />
     <TabBar />
+    <div class="badges">
+      {#each badgeModules(settings.value) as module (module.id)}
+        {#await loadBadge(module.id) then loaded}
+          {#if loaded}
+            {@const Badge = loaded.default}
+            <Badge />
+          {/if}
+        {/await}
+      {/each}
+    </div>
     <main class="content">
       {#if search.active}
         <SearchResults />
@@ -129,6 +140,14 @@
 
   .brand img {
     display: block;
+  }
+
+  .badges {
+    position: absolute;
+    right: 0;
+    top: 77px;
+    display: flex;
+    gap: 8px;
   }
 
   .content {

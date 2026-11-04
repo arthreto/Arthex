@@ -27,6 +27,8 @@ export interface ModuleManifest {
   widget?: { slot: WidgetSlot; component: Lazy };
   /** A small control shown next to the module's switch in Settings ("Clear history"). */
   settingsAction?: Lazy;
+  /** A small status at the top right of the overlay, such as the planned shutdown. */
+  badge?: Lazy;
   /** Results this module adds to the search, while it is enabled. */
   search?: SearchProvider;
 }

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-system-schedule"
+description = "Enables the system_schedule command without any pre-configured scope."
+commands.allow = ["system_schedule"]
+
+[[permission]]
+identifier = "deny-system-schedule"
+description = "Denies the system_schedule command without any pre-configured scope."
+commands.deny = ["system_schedule"]

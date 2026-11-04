@@ -3,6 +3,7 @@
 pub mod apps;
 pub mod recent_apps;
 pub mod shortcuts;
+pub mod system;
 
 use tauri::{AppHandle, Listener};
 
@@ -11,6 +12,7 @@ use crate::app::{self, Result, Settings, events};
 pub fn setup(app: &AppHandle) -> Result<()> {
     apps::setup(app);
     shortcuts::setup(app)?;
+    system::setup(app);
     recent_apps::setup(app)?;
     sync(app, &app::settings(app));
     let handle = app.clone();

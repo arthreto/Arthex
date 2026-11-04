@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-system-schedule-cancel"
+description = "Enables the system_schedule_cancel command without any pre-configured scope."
+commands.allow = ["system_schedule_cancel"]
+
+[[permission]]
+identifier = "deny-system-schedule-cancel"
+description = "Denies the system_schedule_cancel command without any pre-configured scope."
+commands.deny = ["system_schedule_cancel"]

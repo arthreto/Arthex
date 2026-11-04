@@ -15,7 +15,8 @@ pub fn run() {
             Some(vec![app::autostart::LAUNCH_ARG]),
         ))
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_dialog::init());
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_notification::init());
     #[cfg(not(windows))]
     let builder = builder.plugin(tauri_plugin_global_shortcut::Builder::new().build());
 
@@ -39,6 +40,11 @@ pub fn run() {
             modules::shortcuts::commands::shortcuts_pick_icon,
             modules::shortcuts::commands::shortcuts_open,
             modules::apps::commands::apps_list,
+            modules::system::commands::system_run,
+            modules::system::commands::system_recycle_bin_size,
+            modules::system::commands::system_schedule,
+            modules::system::commands::system_schedule_cancel,
+            modules::system::commands::system_schedule_get,
             modules::apps::commands::apps_open,
             modules::recent_apps::commands::recent_apps_list,
             modules::recent_apps::commands::recent_apps_open,

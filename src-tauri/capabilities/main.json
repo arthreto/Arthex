@@ -29,6 +29,11 @@
     "allow-recent-apps-open",
     "allow-recent-apps-clear",
     "allow-apps-list",
-    "allow-apps-open"
+    "allow-apps-open",
+    "allow-system-run",
+    "allow-system-recycle-bin-size",
+    "allow-system-schedule",
+    "allow-system-schedule-cancel",
+    "allow-system-schedule-get"
   ]
 }

@@ -1,5 +1,6 @@
 // Checks that every translation matches the English reference, or scaffolds a new language.
 // Usage: node scripts/i18n.js check | node scripts/i18n.js new <code>
+import { parse } from '@formatjs/icu-messageformat-parser';
 import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -23,11 +24,17 @@ function flatten(tree, prefix = '', into = new Map()) {
   return into;
 }
 
-const variables = (message) =>
-  [...message.matchAll(/\{\s*(\w+)/g)]
-    .map((m) => m[1])
-    .sort()
-    .join(',');
+/** Names of the ICU arguments of a message, including those inside plural and select choices. */
+function collect(elements, into) {
+  for (const element of elements) {
+    if (typeof element.value === 'string' && element.type !== 0 && element.type !== 7)
+      into.add(element.value);
+    for (const option of Object.values(element.options ?? {})) collect(option.value, into);
+  }
+  return into;
+}
+
+const variables = (message) => [...collect(parse(message), new Set())].sort().join(',');
 
 function check() {
   const problems = [];

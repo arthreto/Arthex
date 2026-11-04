@@ -1,0 +1,72 @@
+{
+  "name": "System commands",
+  "description": "Sleep, lock, scheduled shutdown…",
+  "group": "System commands",
+  "kind": "System command",
+  "subtitle": "System command",
+  "subtitleConfirm": "System command · asks for confirmation",
+  "windowsShortcut": "Windows shortcut",
+  "none": "None",
+  "confirmation": "Confirmation",
+  "confirmYes": "Yes, asked before acting",
+  "confirmNo": "No",
+  "run": "Run",
+  "commands": {
+    "lock": { "name": "Lock the session", "keywords": "lock session verrouiller bloquer", "hint": "Win + L" },
+    "sleep": { "name": "Sleep", "keywords": "sleep suspend veille dormir", "hint": "" },
+    "restart": {
+      "name": "Restart",
+      "keywords": "restart reboot redemarrer",
+      "hint": "",
+      "confirm": "Restart the computer? Open apps will be closed."
+    },
+    "shutdown": {
+      "name": "Shut down",
+      "keywords": "shut down power off eteindre arreter",
+      "hint": "",
+      "confirm": "Shut down the computer? Open apps will be closed."
+    },
+    "signOut": {
+      "name": "Sign out",
+      "keywords": "sign out log off deconnecter deconnexion",
+      "hint": "",
+      "confirm": "Close your Windows session? Open apps will be closed."
+    },
+    "emptyRecycleBin": {
+      "name": "Empty the Recycle Bin",
+      "keywords": "recycle bin trash empty corbeille vider",
+      "hint": "",
+      "confirm": "Empty the Recycle Bin? {size} will be deleted for good."
+    },
+    "taskManager": {
+      "name": "Task Manager",
+      "keywords": "task manager processes gestionnaire taches",
+      "hint": "Ctrl + Shift + Esc"
+    },
+    "windowsSettings": {
+      "name": "Windows Settings",
+      "keywords": "windows settings parametres reglages",
+      "hint": "Win + I"
+    }
+  },
+  "schedule": {
+    "name": "Schedule shutdown",
+    "keywords": "schedule shutdown timer later restart sleep planifier arret minuteur",
+    "idle": "Shut down, restart or sleep later",
+    "planned": "{action, select, shutdown {Shutdown} restart {Restart} other {Sleep}} planned at {time}",
+    "meta": "Scheduled",
+    "actions": { "shutdown": "Shut down", "restart": "Restart", "sleep": "Sleep" },
+    "inMode": "In…",
+    "atMode": "At a set time",
+    "minutes": "Duration in minutes",
+    "time": "Time",
+    "summary": "The computer will {action, select, shutdown {shut down} restart {restart} other {go to sleep}} at {time}{tomorrow, select, yes { tomorrow} other {}}, in {duration}.",
+    "submit": "Schedule",
+    "plannedAt": "{action, select, shutdown {Shutdown} restart {Restart} other {Sleep}} planned at",
+    "left": "in {duration}",
+    "cancel": "Cancel the schedule",
+    "done": "{action, select, shutdown {Shutdown} restart {Restart} other {Sleep}} scheduled for {time}{tomorrow, select, yes { tomorrow} other {}}. A notification will warn you 5 min before.",
+    "cancelled": "Schedule cancelled",
+    "pill": "{action, select, shutdown {Shutdown} restart {Restart} other {Sleep}} at {time}"
+  }
+}

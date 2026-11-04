@@ -25,6 +25,11 @@ export function loadSettingsAction(id: string): Promise<Loaded> | null {
   return once(`action:${id}`, getModule(id)?.settingsAction);
 }
 
+/** Loads the status a module shows at the top right of the overlay, once. */
+export function loadBadge(id: string): Promise<Loaded> | null {
+  return once(`badge:${id}`, getModule(id)?.badge);
+}
+
 /** Loads the Home card of a module once. */
 export function loadWidget(id: string): Promise<Loaded> | null {
   return once(`widget:${id}`, getModule(id)?.widget?.component);

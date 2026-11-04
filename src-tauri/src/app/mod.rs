@@ -4,7 +4,7 @@ pub mod dialogs;
 mod error;
 pub mod events;
 mod hotkey;
-mod i18n;
+pub mod i18n;
 mod logging;
 pub mod overlay;
 mod settings;

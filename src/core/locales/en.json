@@ -180,5 +180,12 @@
   },
   "time": {
     "dayAt": "{day}, {time}"
+  },
+  "schedule": {
+    "notice": {
+      "shutdown": "The computer shuts down in 5 minutes. Open Arthex to cancel.",
+      "restart": "The computer restarts in 5 minutes. Open Arthex to cancel.",
+      "sleep": "The computer goes to sleep in 5 minutes. Open Arthex to cancel."
+    }
   }
 }

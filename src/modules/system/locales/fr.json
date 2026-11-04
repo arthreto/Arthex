@@ -1,0 +1,76 @@
+{
+  "name": "Commandes système",
+  "description": "Veille, verrouillage, arrêt planifié…",
+  "group": "Commandes système",
+  "kind": "Commande système",
+  "subtitle": "Commande système",
+  "subtitleConfirm": "Commande système · demande une confirmation",
+  "windowsShortcut": "Raccourci Windows",
+  "none": "Aucun",
+  "confirmation": "Confirmation",
+  "confirmYes": "Oui, demandée avant d’agir",
+  "confirmNo": "Non",
+  "run": "Exécuter",
+  "commands": {
+    "lock": {
+      "name": "Verrouiller la session",
+      "keywords": "verrouiller bloquer lock session",
+      "hint": "Win + L"
+    },
+    "sleep": { "name": "Mettre en veille", "keywords": "veille dormir sleep suspend", "hint": "" },
+    "restart": {
+      "name": "Redémarrer",
+      "keywords": "redemarrer restart reboot",
+      "hint": "",
+      "confirm": "Redémarrer l’ordinateur ? Les applications ouvertes seront fermées."
+    },
+    "shutdown": {
+      "name": "Éteindre",
+      "keywords": "eteindre arreter shutdown power off",
+      "hint": "",
+      "confirm": "Éteindre l’ordinateur ? Les applications ouvertes seront fermées."
+    },
+    "signOut": {
+      "name": "Se déconnecter",
+      "keywords": "deconnecter deconnexion sign out log off",
+      "hint": "",
+      "confirm": "Fermer ta session Windows ? Les applications ouvertes seront fermées."
+    },
+    "emptyRecycleBin": {
+      "name": "Vider la corbeille",
+      "keywords": "corbeille vider recycle bin trash empty",
+      "hint": "",
+      "confirm": "Vider la corbeille ? {size} seront supprimés définitivement."
+    },
+    "taskManager": {
+      "name": "Gestionnaire des tâches",
+      "keywords": "gestionnaire taches processus task manager",
+      "hint": "Ctrl + Maj + Échap"
+    },
+    "windowsSettings": {
+      "name": "Paramètres Windows",
+      "keywords": "parametres reglages windows settings",
+      "hint": "Win + I"
+    }
+  },
+  "schedule": {
+    "name": "Planifier l’arrêt",
+    "keywords": "planifier arret eteindre minuteur programmer plus tard redemarrer veille timer schedule",
+    "idle": "Éteindre, redémarrer ou mettre en veille plus tard",
+    "planned": "{action, select, shutdown {Arrêt} restart {Redémarrage} other {Mise en veille}} prévu à {time}",
+    "meta": "Planifié",
+    "actions": { "shutdown": "Éteindre", "restart": "Redémarrer", "sleep": "Veille" },
+    "inMode": "Dans…",
+    "atMode": "À une heure précise",
+    "minutes": "Durée en minutes",
+    "time": "Heure",
+    "summary": "L’ordinateur {action, select, shutdown {s’éteindra} restart {redémarrera} other {se mettra en veille}} à {time}{tomorrow, select, yes { demain} other {}}, dans {duration}.",
+    "submit": "Planifier",
+    "plannedAt": "{action, select, shutdown {Arrêt} restart {Redémarrage} other {Mise en veille}} prévu à",
+    "left": "dans {duration}",
+    "cancel": "Annuler la planification",
+    "done": "{action, select, shutdown {Arrêt} restart {Redémarrage} other {Mise en veille}} planifié à {time}{tomorrow, select, yes { demain} other {}}. Une notification te préviendra 5 min avant.",
+    "cancelled": "Planification annulée",
+    "pill": "{action, select, shutdown {Arrêt} restart {Redémarrage} other {Mise en veille}} à {time}"
+  }
+}

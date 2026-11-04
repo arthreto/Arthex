@@ -19,3 +19,21 @@ export function formatWhen(time: number, now = Date.now(), locale = getLocale())
   }
   return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' }).format(date);
 }
+
+const UNITS = ['byte', 'kilobyte', 'megabyte', 'gigabyte', 'terabyte'] as const;
+
+/** "1.2 GB" / "1,2 Go", counted in 1024 steps like File Explorer. */
+export function formatBytes(bytes: number, locale = getLocale()): string {
+  let value = Math.max(0, bytes);
+  let unit = 0;
+  while (value >= 1024 && unit < UNITS.length - 1) {
+    value /= 1024;
+    unit += 1;
+  }
+  return new Intl.NumberFormat(locale, {
+    style: 'unit',
+    unit: UNITS[unit],
+    unitDisplay: 'short',
+    maximumFractionDigits: unit < 2 ? 0 : 1,
+  }).format(value);
+}

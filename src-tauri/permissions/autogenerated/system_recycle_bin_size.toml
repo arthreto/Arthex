@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-system-recycle-bin-size"
+description = "Enables the system_recycle_bin_size command without any pre-configured scope."
+commands.allow = ["system_recycle_bin_size"]
+
+[[permission]]
+identifier = "deny-system-recycle-bin-size"
+description = "Denies the system_recycle_bin_size command without any pre-configured scope."
+commands.deny = ["system_recycle_bin_size"]
