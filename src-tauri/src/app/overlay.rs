@@ -273,13 +273,19 @@ fn fitted(area: PhysicalSize<u32>, screen: PhysicalSize<u32>) -> PhysicalSize<u3
 }
 
 /// A borderless window lets the desktop show through only once the DWM frame covers all of it;
-/// without that, Windows fills what the page leaves transparent with black. Behind it goes the
-/// plain blur, untinted, so only the veil of the page darkens it, as in the mockup: the acrylic
-/// of Windows 11 adds its own dark tint and hides the desktop.
+/// without that, Windows fills what the page leaves transparent with black. Windows 11 then puts
+/// its acrylic behind it: the plain blur alone leaves the window black there. Older versions,
+/// which lack that backdrop, get the plain blur instead.
 #[cfg(windows)]
 fn see_through(window: &WebviewWindow) {
     use tauri::window::{Effect, EffectsBuilder};
-    use windows_sys::Win32::{Graphics::Dwm::DwmExtendFrameIntoClientArea, UI::Controls::MARGINS};
+    use windows_sys::Win32::{
+        Graphics::Dwm::{
+            DWMSBT_TRANSIENTWINDOW, DWMWA_SYSTEMBACKDROP_TYPE, DwmExtendFrameIntoClientArea,
+            DwmSetWindowAttribute,
+        },
+        UI::Controls::MARGINS,
+    };
 
     let Ok(hwnd) = window.hwnd() else {
         return;
@@ -290,10 +296,23 @@ fn see_through(window: &WebviewWindow) {
         cyTopHeight: -1,
         cyBottomHeight: -1,
     };
-    // SAFETY: a DWM call on our own window, with margins that outlive it.
-    let frame = unsafe { DwmExtendFrameIntoClientArea(hwnd.0, &raw const whole) };
-    let blur = window.set_effects(EffectsBuilder::new().effect(Effect::Blur).build());
-    tracing::debug!(frame, blur = blur.is_ok(), "overlay backdrop");
+    let backdrop = DWMSBT_TRANSIENTWINDOW;
+    // SAFETY: DWM calls on our own window, with values that outlive the calls.
+    let (frame, acrylic) = unsafe {
+        (
+            DwmExtendFrameIntoClientArea(hwnd.0, &raw const whole),
+            DwmSetWindowAttribute(
+                hwnd.0,
+                DWMWA_SYSTEMBACKDROP_TYPE.cast_unsigned(),
+                (&raw const backdrop).cast(),
+                u32::try_from(size_of_val(&backdrop)).unwrap_or_default(),
+            ),
+        )
+    };
+    tracing::debug!(frame, acrylic, "overlay backdrop");
+    if acrylic != 0 {
+        let _ = window.set_effects(EffectsBuilder::new().effect(Effect::Blur).build());
+    }
 }
 
 #[cfg(not(windows))]
