@@ -79,6 +79,8 @@ export const commands = {
   modulesList: () => invoke<InstalledModule[]>('modules_list'),
   /** Reads the signed catalog online. Empty while nothing is published. */
   modulesCatalog: () => invoke<ModuleOffer[]>('modules_catalog'),
+  /** The last catalog read, without the network. */
+  modulesCatalogKept: () => invoke<ModuleOffer[] | null>('modules_catalog_kept'),
   /** Installs or updates a module of the catalog. */
   modulesInstall: (id: string) => invoke<InstalledModule>('modules_install', { id }),
   /** Asks for a `.arthex` file, then installs it. `null` when the user cancels. */

@@ -1,8 +1,9 @@
 //! The catalog: a signed `catalog.json` published next to the packages in the releases of the
 //! modules repository. It is fetched when the Catalog tab opens or the user checks for updates,
-//! and once at launch to update installed modules when updates install automatically.
+//! and once at launch to update installed modules when updates install automatically. The last one
+//! is kept on disk, so that the tab shows it at once while the network answers.
 
-use std::{collections::BTreeMap, time::Duration};
+use std::{collections::BTreeMap, fs, path::PathBuf, thread, time::Duration};
 
 use semver::Version;
 use serde::{Deserialize, Serialize};
@@ -17,6 +18,8 @@ use crate::app::{self, AppError, Result, is_module_id};
 
 const BASE: &str = "https://github.com/arthreto/arthex-modules/releases/latest/download/";
 const MAX_CATALOG_BYTES: u64 = 4 * 1024 * 1024;
+const CATALOG_FILE: &str = "catalog.json";
+const SIGNATURE_FILE: &str = "catalog.json.sig";
 
 /// More would not be categories any more.
 const MAX_TAGS: usize = 8;
@@ -122,18 +125,66 @@ fn download(agent: &ureq::Agent, file: &str, limit: u64) -> Result<Option<Vec<u8
 
 fn fetch(app: &AppHandle, agent: &ureq::Agent) -> Result<Vec<Entry>> {
     let key = public_key(app)?;
-    let Some(catalog) = download(agent, "catalog.json", MAX_CATALOG_BYTES)? else {
+    let (catalog, signature) = thread::scope(|scope| {
+        let signature = scope.spawn(|| download(agent, SIGNATURE_FILE, 4096));
+        (
+            download(agent, CATALOG_FILE, MAX_CATALOG_BYTES),
+            signature.join(),
+        )
+    });
+    let Some(catalog) = catalog? else {
         return Ok(Vec::new());
     };
-    let signature = download(agent, "catalog.json.sig", 4096)?
+    let signature = signature
+        .map_err(|_| AppError::Failed("the download of the signature stopped".into()))??
         .ok_or_else(|| AppError::Invalid("the catalog is not signed".into()))?;
-    package::verify_signature(&catalog, &signature, &key)?;
-    let catalog: Catalog = serde_json::from_slice(&catalog)?;
+    let entries = read_signed(&catalog, &signature, &key)?;
+    keep(app, &catalog, &signature);
+    Ok(entries)
+}
+
+fn read_signed(catalog: &[u8], signature: &[u8], key: &str) -> Result<Vec<Entry>> {
+    package::verify_signature(catalog, signature, key)?;
+    let catalog: Catalog = serde_json::from_slice(catalog)?;
     Ok(catalog
         .modules
         .into_iter()
         .filter(Entry::is_valid)
         .collect())
+}
+
+fn kept_dir(app: &AppHandle) -> Result<PathBuf> {
+    Ok(app.path().app_local_data_dir()?.join("module-catalog"))
+}
+
+fn keep(app: &AppHandle, catalog: &[u8], signature: &[u8]) {
+    let kept = kept_dir(app).and_then(|dir| {
+        fs::create_dir_all(&dir)?;
+        fs::write(dir.join(CATALOG_FILE), catalog)?;
+        fs::write(dir.join(SIGNATURE_FILE), signature)?;
+        Ok(())
+    });
+    if let Err(error) = kept {
+        tracing::warn!(%error, "could not keep the module catalog");
+    }
+}
+
+/// The last catalog read, if any. It is checked like a download: any program can write to its folder.
+pub fn kept_offers(app: &AppHandle) -> Result<Option<Vec<Offer>>> {
+    let dir = kept_dir(app)?;
+    let (Ok(catalog), Ok(signature)) = (
+        fs::read(dir.join(CATALOG_FILE)),
+        fs::read(dir.join(SIGNATURE_FILE)),
+    ) else {
+        return Ok(None);
+    };
+    match read_signed(&catalog, &signature, &public_key(app)?) {
+        Ok(entries) => Ok(Some(to_offers(app, entries))),
+        Err(error) => {
+            tracing::warn!(%error, "the kept module catalog is unusable");
+            Ok(None)
+        }
+    }
 }
 
 fn is_newer(candidate: &str, current: &str) -> bool {
@@ -153,9 +204,12 @@ fn state(entry: &Entry, installed: Option<&Installed>) -> OfferState {
 }
 
 pub fn offers(app: &AppHandle) -> Result<Vec<Offer>> {
-    let entries = fetch(app, &agent())?;
+    Ok(to_offers(app, fetch(app, &agent())?))
+}
+
+fn to_offers(app: &AppHandle, entries: Vec<Entry>) -> Vec<Offer> {
     let host = app.state::<ModuleHost>();
-    Ok(entries
+    entries
         .into_iter()
         .filter_map(|entry| {
             let size = entry.package()?.size;
@@ -171,7 +225,7 @@ pub fn offers(app: &AppHandle) -> Result<Vec<Offer>> {
                 size,
             })
         })
-        .collect())
+        .collect()
 }
 
 /// Installs or updates a module from the catalog. The package is checked like any other.

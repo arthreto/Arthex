@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-modules-catalog-kept"
+description = "Enables the modules_catalog_kept command without any pre-configured scope."
+commands.allow = ["modules_catalog_kept"]
+
+[[permission]]
+identifier = "deny-modules-catalog-kept"
+description = "Denies the modules_catalog_kept command without any pre-configured scope."
+commands.deny = ["modules_catalog_kept"]

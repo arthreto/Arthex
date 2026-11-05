@@ -22,6 +22,7 @@
     "allow-updates-whats-new",
     "allow-modules-list",
     "allow-modules-catalog",
+    "allow-modules-catalog-kept",
     "allow-modules-install",
     "allow-modules-install-file",
     "allow-modules-uninstall",

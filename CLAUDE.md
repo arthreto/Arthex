@@ -28,7 +28,7 @@ These come from the owner's feedback on the mockup. Do not reintroduce what was 
 
 - **No superfluous text.** No explanatory subtitles, no "nothing is ever written to disk", no "no telemetry" taglines. A label says what a control does, nothing more.
 - **No "AI-looking" gadgets:**
-  - no shimmer or shine;
+  - no shimmer or shine, except on content that is still loading (`ui/Skeleton.svelte`);
   - no glass or gradient buttons;
   - no gradient icon tiles, no glowing halos;
   - no decorative previews.

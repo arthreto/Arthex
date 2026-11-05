@@ -22,6 +22,12 @@ pub async fn modules_catalog(app: AppHandle) -> Result<Vec<catalog::Offer>> {
     blocking(move || catalog::offers(&app)).await?
 }
 
+/// The last catalog read, without the network.
+#[tauri::command]
+pub async fn modules_catalog_kept(app: AppHandle) -> Result<Option<Vec<catalog::Offer>>> {
+    blocking(move || catalog::kept_offers(&app)).await?
+}
+
 /// Installs or updates a module from the catalog.
 #[tauri::command]
 pub async fn modules_install(app: AppHandle, id: String) -> Result<Installed> {

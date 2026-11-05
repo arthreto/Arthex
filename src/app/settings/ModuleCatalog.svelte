@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import { commands, errorMessage, type InstalledModule, type ModuleOffer } from '../../core/api';
   import { moduleText, t } from '../../core/i18n';
   import {
@@ -21,9 +21,11 @@
   import { icons } from '../../ui/icons';
   import Panel from '../../ui/Panel.svelte';
   import Segmented from '../../ui/Segmented.svelte';
+  import Skeleton from '../../ui/Skeleton.svelte';
   import TextField from '../../ui/TextField.svelte';
   import ToggleChip from '../../ui/ToggleChip.svelte';
   import { moduleHost } from '../moduleHost.svelte';
+  import { modulesView } from './modulesView.svelte';
   import { knownElements, pickTexts, summary, tintOf } from './moduleSummary';
   import UninstallModuleDialog from './UninstallModuleDialog.svelte';
 
@@ -43,14 +45,26 @@
     state: ModuleOffer['state'] | 'dev';
   }
 
-  /** `null` while the catalog loads. */
-  let offers = $state<ModuleOffer[] | null>(null);
+  const CHIP_WIDTHS = ['152px', '86px', '112px', '74px', '98px'];
+  const ROW_WIDTHS = [
+    { name: '140px', description: '62%', meta: '38%' },
+    { name: '108px', description: '48%', meta: '30%' },
+    { name: '176px', description: '70%', meta: '42%' },
+  ];
+  const ARRIVAL_STEP_MS = 40;
+  const MAX_ARRIVAL_STEPS = 8;
+
+  let arriving = false;
+  let arrived = 0;
+
   let failed = $state(false);
   let query = $state('');
   let filter = $state<Element | 'all'>('all');
   let tag = $state<Tag | null>(null);
   let busy = $state<string | null>(null);
   let checking = $state(false);
+  /** The kept catalog answers within a frame or two: the shimmer would only flash before it. */
+  let lookedForKept = $state(false);
   let uninstalling = $state<Row | null>(null);
 
   const filters = $derived([
@@ -100,7 +114,7 @@
       : t('settings.modules.version', { version });
 
   const allRows = $derived.by(() => {
-    const listed = (offers ?? []).map(offerRow);
+    const listed = (modulesView.offers ?? []).map(offerRow);
     const others = moduleHost.installed
       .filter((module) => !listed.some((row) => row.id === module.id))
       .map(installedRow);
@@ -109,6 +123,8 @@
 
   /** Only the categories that hold a module, so the row stays short. */
   const tags = $derived(TAGS.filter((name) => allRows.some((row) => row.tags.includes(name))));
+
+  const loading = $derived(modulesView.offers === null);
 
   const rows = $derived(
     allRows.filter(
@@ -119,14 +135,29 @@
     ),
   );
 
+  const nothing = $derived(!loading && rows.length === 0);
+  const placeholders = $derived(loading && lookedForKept);
+
+  /** The rows that come with the first answer of the catalog appear one after the other. */
+  function arrive(row: HTMLElement) {
+    if (!arriving) return;
+    const delay = Math.min(arrived, MAX_ARRIVAL_STEPS) * ARRIVAL_STEP_MS;
+    arrived += 1;
+    row.style.animation = `fade-in var(--motion-base) ease-out ${delay}ms both`;
+    row.addEventListener('animationend', () => (row.style.animation = ''), { once: true });
+  }
+
   async function refresh() {
     failed = false;
+    arriving = loading;
     try {
-      offers = await commands.modulesCatalog();
+      modulesView.offers = await commands.modulesCatalog();
     } catch {
       failed = true;
-      offers = [];
+      modulesView.offers ??= [];
     }
+    await tick();
+    arriving = false;
   }
 
   async function checkUpdates() {
@@ -149,7 +180,9 @@
   }
 
   function markOffer(id: string, state: ModuleOffer['state']) {
-    offers = (offers ?? []).map((offer) => (offer.id === id ? { ...offer, state } : offer));
+    modulesView.offers = (modulesView.offers ?? []).map((offer) =>
+      offer.id === id ? { ...offer, state } : offer,
+    );
   }
 
   function report(error: unknown) {
@@ -179,7 +212,7 @@
       const installed = await commands.modulesInstallFile();
       if (!installed) return;
       await moduleHost.load();
-      const offer = offers?.find((candidate) => candidate.id === installed.id);
+      const offer = modulesView.offers?.find((candidate) => candidate.id === installed.id);
       if (offer?.version === installed.version) markOffer(installed.id, 'installed');
       toast.show(t('settings.modules.installed', { name: installedRow(installed).name }));
     } catch (error) {
@@ -199,7 +232,16 @@
     }
   }
 
-  onMount(() => void refresh());
+  async function showKept() {
+    const kept = await commands.modulesCatalogKept().catch(() => null);
+    modulesView.offers ??= kept;
+    lookedForKept = true;
+  }
+
+  onMount(async () => {
+    if (loading) await showKept();
+    await refresh();
+  });
 </script>
 
 <div class="bar">
@@ -222,7 +264,13 @@
   value={filter}
   onchange={(value) => (filter = value)}
 />
-{#if tags.length > 0}
+{#if placeholders}
+  <div class="tags">
+    {#each CHIP_WIDTHS as width, index (index)}
+      <Skeleton {width} height="28px" radius="var(--radius-pill)" />
+    {/each}
+  </div>
+{:else if tags.length > 0}
   <div class="tags" role="group" aria-label={t('settings.modules.categories')}>
     <ToggleChip label={t('settings.modules.allTags')} pressed={tag === null} onclick={() => (tag = null)} />
     {#each tags as name (name)}
@@ -235,9 +283,7 @@
   </div>
 {/if}
 
-{#if offers === null}
-  <EmptyState icon={icons.modules} title={t('settings.modules.loading')} />
-{:else if rows.length === 0 && narrowed}
+{#if nothing && narrowed}
   <EmptyState
     icon={icons.search}
     title={query.trim()
@@ -247,11 +293,11 @@
   >
     <Button onclick={showAll}>{t('settings.modules.showAll')}</Button>
   </EmptyState>
-{:else if rows.length === 0 && failed}
+{:else if nothing && failed}
   <EmptyState icon={icons.refresh} title={t('settings.modules.failed')}>
     <Button onclick={refresh}>{t('settings.modules.retry')}</Button>
   </EmptyState>
-{:else if rows.length === 0}
+{:else if nothing}
   <EmptyState icon={icons.modules} title={t('settings.modules.empty')} />
 {:else}
   {#if failed}
@@ -260,9 +306,12 @@
       <Button size="small" onclick={refresh}>{t('settings.modules.retry')}</Button>
     </div>
   {/if}
+  {#if placeholders}
+    <span class="visually-hidden" role="status">{t('settings.modules.loading')}</span>
+  {/if}
   <Panel list>
     {#each rows as row (row.id)}
-      <div class="row">
+      <div class="row" use:arrive>
         <span class="icon" style:color="var(--tint-{row.tint})">
           <Icon path={row.icon} size={20} />
         </span>
@@ -293,6 +342,19 @@
         {/if}
       </div>
     {/each}
+    {#if placeholders}
+      {#each ROW_WIDTHS as widths, index (index)}
+        <div class="row">
+          <Skeleton width="40px" height="40px" radius="12px" />
+          <span class="text placeholder">
+            <Skeleton width={widths.name} height="14px" />
+            <Skeleton width={widths.description} height="12px" />
+            <Skeleton width={widths.meta} height="10px" />
+          </span>
+          <Skeleton width="92px" height="32px" radius="var(--radius-pill)" />
+        </div>
+      {/each}
+    {/if}
   </Panel>
 {/if}
 
@@ -365,6 +427,10 @@
     display: flex;
     flex-direction: column;
     gap: 3px;
+  }
+
+  .placeholder {
+    gap: 8px;
   }
 
   .name {

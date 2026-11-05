@@ -1,2 +1,8 @@
-/** The tab of Settings → Modules, shared by its title row and its body. */
-export const modulesView = $state<{ tab: 'installed' | 'catalog' }>({ tab: 'installed' });
+import type { ModuleOffer } from '../../core/api';
+
+/** What Settings → Modules keeps while the overlay closes, which rebuilds its content. */
+export const modulesView = $state<{
+  tab: 'installed' | 'catalog';
+  /** `null` until the catalog has loaded once. */
+  offers: ModuleOffer[] | null;
+}>({ tab: 'installed', offers: null });

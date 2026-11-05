@@ -4,6 +4,13 @@ mod services;
 
 use tauri_plugin_autostart::MacosLauncher;
 
+fn setup(tauri_app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
+    app::setup(tauri_app.handle())?;
+    modules::setup(tauri_app.handle())?;
+    services::module_host::setup(tauri_app.handle())?;
+    Ok(())
+}
+
 pub fn run() {
     let builder = tauri::Builder::default()
         // Must stay first: a second launch only reopens the overlay of the running instance.
@@ -42,6 +49,7 @@ pub fn run() {
             app::commands::updates_whats_new,
             services::module_host::commands::modules_list,
             services::module_host::commands::modules_catalog,
+            services::module_host::commands::modules_catalog_kept,
             services::module_host::commands::modules_install,
             services::module_host::commands::modules_install_file,
             services::module_host::commands::modules_uninstall,
@@ -97,12 +105,7 @@ pub fn run() {
             modules::recent_apps::commands::recent_apps_clear,
             modules::web_search::commands::web_search_open,
         ])
-        .setup(|tauri_app| {
-            app::setup(tauri_app.handle())?;
-            modules::setup(tauri_app.handle())?;
-            services::module_host::setup(tauri_app.handle())?;
-            Ok(())
-        })
+        .setup(setup)
         .on_window_event(app::overlay::on_window_event)
         .on_page_load(app::overlay::on_page_load)
         .run(tauri::generate_context!())
