@@ -20,6 +20,7 @@ export { default as MenuItem } from '../src/ui/MenuItem.svelte';
 export { default as Modal } from '../src/ui/Modal.svelte';
 export { default as Panel } from '../src/ui/Panel.svelte';
 export { default as Segmented } from '../src/ui/Segmented.svelte';
+export { default as Skeleton } from '../src/ui/Skeleton.svelte';
 export { default as Switch } from '../src/ui/Switch.svelte';
 export { default as TextField } from '../src/ui/TextField.svelte';
 export { default as ToggleChip } from '../src/ui/ToggleChip.svelte';
