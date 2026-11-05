@@ -17,7 +17,10 @@ class Updates {
       this.version = found.version;
       this.status = 'available';
     });
-    void on<UpdateProgress>(events.updateProgress, (progress) => (this.progress = progress));
+    void on<UpdateProgress>(events.updateProgress, (progress) => {
+      this.progress = progress;
+      this.status = 'installing';
+    });
   }
 
   get busy(): boolean {

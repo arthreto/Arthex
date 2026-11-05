@@ -45,6 +45,9 @@ struct Progress {
 #[derive(Default)]
 pub struct Updates {
     found: Mutex<Option<Update>>,
+    /// One download at a time: two would send their progress to the same bar, which would jump
+    /// back and forth when the user installs what the check at launch is already installing.
+    installing: tauri::async_runtime::Mutex<()>,
 }
 
 /// Builds without a public key (development, forks) never look for updates.
@@ -88,8 +91,9 @@ pub async fn check(app: &AppHandle) -> Result<Option<Available>> {
 
 /// Downloads, checks and installs the update found by the last check, then restarts.
 pub async fn install(app: &AppHandle) -> Result<()> {
-    let update = app
-        .state::<Updates>()
+    let state = app.state::<Updates>();
+    let _only_one = state.installing.lock().await;
+    let update = state
         .found
         .lock()
         .unwrap_or_else(PoisonError::into_inner)
@@ -137,13 +141,14 @@ pub fn start(app: &AppHandle) {
         std::thread::sleep(FIRST_CHECK);
         tauri::async_runtime::block_on(async {
             match check(&app).await {
-                Ok(Some(_)) if settings(&app).auto_update => {
-                    if let Err(error) = install(&app).await {
-                        tracing::warn!(%error, "could not install the update");
-                    }
-                }
                 Ok(Some(available)) => {
-                    app.emit(AVAILABLE, available).ok();
+                    app.emit(AVAILABLE, &available).ok();
+                    if settings(&app).auto_update
+                        && let Err(error) = install(&app).await
+                    {
+                        tracing::warn!(%error, "could not install the update");
+                        app.emit(AVAILABLE, available).ok();
+                    }
                 }
                 Ok(None) => {}
                 Err(error) => tracing::warn!(%error, "could not check for updates"),
