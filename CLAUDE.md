@@ -120,7 +120,6 @@ Ideas for later, never started without the owner's go-ahead:
 - web search keywords;
 - unit and currency converter;
 - colour picker;
-- screenshot OCR;
 - system monitor;
 - work profiles;
 - text snippets;
