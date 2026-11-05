@@ -14,7 +14,7 @@ use std::{
     collections::BTreeMap,
     fs,
     path::{Path, PathBuf},
-    sync::{Mutex, PoisonError, RwLock},
+    sync::{PoisonError, RwLock},
     time::Duration,
 };
 
@@ -60,25 +60,9 @@ pub struct ModuleHost {
     installed: RwLock<BTreeMap<String, Installed>>,
     programs: program::Programs,
     opened: opened::Opened,
-    /// The module whose page a right-click action asked for, until the interface takes it.
-    pending_page: Mutex<Option<String>>,
 }
 
 impl ModuleHost {
-    fn set_pending_page(&self, id: &str) {
-        *self
-            .pending_page
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner) = Some(id.to_string());
-    }
-
-    fn take_pending_page(&self) -> Option<String> {
-        self.pending_page
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .take()
-    }
-
     fn installed(&self) -> std::sync::RwLockReadGuard<'_, BTreeMap<String, Installed>> {
         self.installed
             .read()
@@ -112,7 +96,6 @@ pub fn setup(app: &AppHandle) -> Result<()> {
         installed: RwLock::new(installed),
         programs: program::Programs::default(),
         opened: opened::Opened::default(),
-        pending_page: Mutex::default(),
     });
     let args: Vec<String> = std::env::args().collect();
     open_from_args(app, &args);

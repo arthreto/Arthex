@@ -87,12 +87,6 @@ pub async fn modules_call(
 }
 
 /// The `.arthex` file opened from Explorer, waiting for the user's answer.
-/// The module whose page a right-click action asked for, once.
-#[tauri::command]
-pub fn modules_pending_page(app: AppHandle) -> Option<String> {
-    app.state::<ModuleHost>().take_pending_page()
-}
-
 #[tauri::command]
 pub fn modules_opened(app: AppHandle) -> Result<Option<opened::InstallRequest>> {
     opened::pending(&app)

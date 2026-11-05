@@ -11,16 +11,14 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Manager};
 
 use super::{ModuleHost, package::is_safe_path, program};
-use crate::app::{self, Element, Settings, is_module_id, overlay};
+use crate::app::{self, Element, Settings, is_module_id};
 
 const VERB_PREFIX: &str = "Arthex.";
 const ARGUMENT: &str = "--module-action";
 const METHOD: &str = "contextMenu";
-/// Sent when an action asks for its module's page; the interface then asks `modules_pending_page`.
-pub const OPEN_PAGE: &str = "modules://open-page";
 pub const MAX_ACTIONS: usize = 16;
 const MAX_SUBMENU: usize = 32;
 const MAX_LABEL_CHARS: usize = 64;
@@ -59,9 +57,6 @@ pub struct Action {
     /// Choices shown under this entry, which then runs nothing by itself.
     #[serde(default)]
     pub submenu: Vec<SubAction>,
-    /// Opens the overlay on the module's page when the action runs.
-    #[serde(default)]
-    pub open_page: bool,
     /// By language code.
     pub labels: BTreeMap<String, String>,
 }
@@ -419,11 +414,11 @@ fn run(app: &AppHandle, module: &str, action: &str, path: &str) -> app::Result<(
             .find(|entry| entry.id == id && entry.is_valid() && entry.runs(choice))
     });
     let enabled = app::settings(app).is_element_enabled(module, Element::ContextMenu);
-    let (Some(entry), true) = (entry, enabled) else {
+    if entry.is_none() || !enabled {
         return Err(app::AppError::Invalid(format!(
             "{module} has no action {action}"
         )));
-    };
+    }
     let path = plain_path(&Path::new(path).canonicalize()?);
     program::call(
         app,
@@ -431,11 +426,6 @@ fn run(app: &AppHandle, module: &str, action: &str, path: &str) -> app::Result<(
         METHOD,
         json!({ "action": action, "path": path.display().to_string() }),
     )?;
-    if entry.open_page {
-        host.set_pending_page(module);
-        overlay::show(app);
-        app.emit(OPEN_PAGE, ())?;
-    }
     Ok(())
 }
 
@@ -473,7 +463,6 @@ mod tests {
             extensions: Vec::new(),
             icon: None,
             submenu: Vec::new(),
-            open_page: false,
             labels: BTreeMap::from([
                 ("en".to_string(), "Compress".to_string()),
                 ("fr".to_string(), "Compresser".to_string()),

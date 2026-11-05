@@ -49,14 +49,6 @@ class ModuleHost {
     }
   }
 
-  /** Opens the page a right-click action asked for, once its module is loaded. */
-  async openPendingPage(): Promise<void> {
-    const page = await commands.modulesPendingPage().catch(() => null);
-    if (!page) return;
-    search.clear();
-    navigation.openTarget(page);
-  }
-
   /** Loads every installed module again. A newer call wins over a slower, older one. */
   async load(): Promise<void> {
     const run = ++this.#run;

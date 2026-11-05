@@ -31,7 +31,6 @@
     "allow-modules-hide-overlay",
     "allow-modules-show-overlay",
     "allow-modules-opened",
-    "allow-modules-pending-page",
     "allow-modules-answer-opened",
     "allow-shortcuts-list",
     "allow-shortcuts-save",
