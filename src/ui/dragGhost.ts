@@ -1,6 +1,10 @@
-/** A transparent pixel: the drag shows no image of its own. */
-const NOTHING = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-let nothing: HTMLImageElement | undefined;
+/**
+ * A transparent pixel: the drag shows no image of its own. It loads ahead of the first drag: an
+ * image still loading when the drag starts is ignored, and the browser draws its own.
+ */
+const nothing = Object.assign(new Image(), {
+  src: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
+});
 
 /**
  * Starts a drag that shows a copy of `source` under the pointer. The image the browser draws is
@@ -8,7 +12,6 @@ let nothing: HTMLImageElement | undefined;
  */
 export function dragWithGhost(event: DragEvent, source: HTMLElement): void {
   if (!event.dataTransfer) return;
-  nothing ??= Object.assign(new Image(), { src: NOTHING });
   event.dataTransfer.setDragImage(nothing, 0, 0);
 
   const rect = source.getBoundingClientRect();
