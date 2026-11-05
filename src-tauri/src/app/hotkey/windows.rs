@@ -13,7 +13,8 @@ use windows_sys::Win32::{
     System::LibraryLoader::GetModuleHandleW,
     UI::{
         Input::KeyboardAndMouse::{
-            INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_KEYUP, SendInput,
+            GetAsyncKeyState, INPUT, INPUT_0, INPUT_KEYBOARD, KEYBDINPUT, KEYEVENTF_KEYUP,
+            SendInput,
         },
         WindowsAndMessaging::{
             CallNextHookEx, GetMessageW, HC_ACTION, KBDLLHOOKSTRUCT, MSG, SetWindowsHookExW,
@@ -22,12 +23,17 @@ use windows_sys::Win32::{
     },
 };
 
-use super::machine::{Machine, Signal};
+use super::{
+    keys::{Key, Mods, classify},
+    machine::{Machine, Signal},
+};
 
 /// Tags the events Arthex injects, so its own hook ignores them.
 const OWN_INPUT: usize = 0x4152_5448;
 /// An unassigned virtual key: pressing it counts as "using" Win or Alt, so their release opens nothing.
 const MASK_KEY: u16 = 0xE8;
+/// Left and right Shift, Ctrl, Alt and Win.
+const MODIFIER_KEYS: [u16; 8] = [0xA0, 0xA1, 0xA2, 0xA3, 0xA4, 0xA5, 0x5B, 0x5C];
 
 type Notify = Box<dyn Fn(Signal) + Send + Sync>;
 
@@ -90,11 +96,12 @@ unsafe extern "system" fn keyboard_proc(code: i32, wparam: WPARAM, lparam: LPARA
         if event.dwExtraInfo != OWN_INPUT {
             let down = matches!(u32::try_from(wparam), Ok(WM_KEYDOWN | WM_SYSKEYDOWN));
             let vk = u16::try_from(event.vkCode).unwrap_or_default();
-            let reaction = hook
-                .machine
-                .lock()
-                .unwrap_or_else(PoisonError::into_inner)
-                .on_key(vk, down);
+            let mut machine = hook.machine.lock().unwrap_or_else(PoisonError::into_inner);
+            if down && matches!(classify(vk), Key::Modifier(_)) {
+                machine.sync(physical_modifiers());
+            }
+            let reaction = machine.on_key(vk, down);
+            drop(machine);
             if reaction.mask {
                 press_mask_key();
             }
@@ -108,6 +115,22 @@ unsafe extern "system" fn keyboard_proc(code: i32, wparam: WPARAM, lparam: LPARA
     }
     // SAFETY: passes the event on unchanged, as every hook must.
     unsafe { CallNextHookEx(ptr::null_mut(), code, wparam, lparam) }
+}
+
+/// The modifiers down before the event the hook is handling: Windows updates its key state
+/// only once every hook has let the event through.
+fn physical_modifiers() -> Mods {
+    let mut mods = Mods::default();
+    for vk in MODIFIER_KEYS {
+        // SAFETY: reads the key state; no pointer involved.
+        let state = unsafe { GetAsyncKeyState(i32::from(vk)) };
+        if state < 0
+            && let Key::Modifier(modifier) = classify(vk)
+        {
+            mods.insert(modifier);
+        }
+    }
+    mods
 }
 
 fn press_mask_key() {

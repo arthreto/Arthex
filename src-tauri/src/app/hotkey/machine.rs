@@ -59,6 +59,16 @@ impl Machine {
         self.recording = active.then(Mods::default);
     }
 
+    /// The modifiers Windows says are down, just before a modifier is pressed. The hook may miss
+    /// a key-up as the focus moves to the overlay: the chord would then never end, and the next
+    /// press would be ignored. A recording hides key presses from Windows, so it keeps its own.
+    pub fn sync(&mut self, physical: Mods) {
+        if self.recording.is_none() && self.held != physical {
+            self.held = physical;
+            self.chord = Chord::default();
+        }
+    }
+
     pub fn on_key(&mut self, vk: u16, down: bool) -> Reaction {
         let key = classify(vk);
         if let Key::Modifier(mods) = key {
@@ -232,6 +242,34 @@ mod tests {
             ),
             1
         );
+    }
+
+    #[test]
+    fn a_missed_key_up_does_not_swallow_the_next_press() {
+        let mut m = machine(&["Shift", "Win"]);
+        // Shift is released, but the hook never hears it.
+        assert_eq!(
+            fires(&mut m, &[(SHIFT, true), (WIN, true), (WIN, false)]),
+            1
+        );
+        m.sync(Mods::default());
+        assert_eq!(
+            fires(
+                &mut m,
+                &[(SHIFT, true), (WIN, true), (WIN, false), (SHIFT, false)]
+            ),
+            1
+        );
+    }
+
+    #[test]
+    fn sync_agrees_with_a_normal_press() {
+        let mut m = machine(&["Shift", "Win"]);
+        m.sync(Mods::default());
+        assert!(m.on_key(SHIFT, true).signal.is_none());
+        m.sync(Mods::SHIFT);
+        assert!(m.on_key(WIN, true).mask);
+        assert_eq!(m.on_key(WIN, false).signal, Some(Signal::Fire));
     }
 
     #[test]
