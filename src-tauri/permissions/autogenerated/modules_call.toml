@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-modules-call"
+description = "Enables the modules_call command without any pre-configured scope."
+commands.allow = ["modules_call"]
+
+[[permission]]
+identifier = "deny-modules-call"
+description = "Denies the modules_call command without any pre-configured scope."
+commands.deny = ["modules_call"]

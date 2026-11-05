@@ -43,6 +43,10 @@ export interface HostApi {
   closeTool(): void;
   /** `hub`, `settings` or a page id. */
   navigate(target: string): void;
+  /** Calls the module's program, which starts if needed. */
+  call(id: string, method: string, params?: unknown): Promise<unknown>;
+  /** Hears an event of the module's program; returns what stops listening. */
+  listen(id: string, event: string, handler: (payload: unknown) => void): () => void;
 }
 
 const SLOTS: readonly WidgetSlot[] = ['top', 'main', 'side'];

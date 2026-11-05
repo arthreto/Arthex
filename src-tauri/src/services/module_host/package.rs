@@ -44,6 +44,15 @@ pub struct ModuleInfo {
     pub elements: Vec<String>,
 }
 
+impl ModuleInfo {
+    pub fn elements(&self) -> Vec<Element> {
+        self.elements
+            .iter()
+            .filter_map(|name| Element::parse(name))
+            .collect()
+    }
+}
+
 pub struct Package {
     pub info: ModuleInfo,
     pub files: BTreeMap<String, Vec<u8>>,
@@ -231,7 +240,7 @@ mod tests {
     fn opens_a_signed_package() {
         let package = open(&signed(&[], INDEX_JS), KEY).unwrap();
         assert_eq!(package.info.id, "sample");
-        assert_eq!(package.info.elements, ["tool"]);
+        assert_eq!(package.info.elements(), [Element::Tool]);
         assert_eq!(package.files.len(), 2);
     }
 

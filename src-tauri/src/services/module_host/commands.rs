@@ -2,6 +2,7 @@
 
 use std::fs;
 
+use serde_json::Value;
 use tauri::{AppHandle, Manager};
 
 use super::{Installed, ModuleHost, catalog, package::MAX_PACKAGE_BYTES};
@@ -44,4 +45,15 @@ pub async fn modules_install_file(app: AppHandle) -> Result<Option<Installed>> {
 #[tauri::command]
 pub fn modules_uninstall(app: AppHandle, id: String, delete_data: bool) -> Result<()> {
     super::uninstall(&app, &id, delete_data)
+}
+
+/// Relays a call of a module's interface to its program.
+#[tauri::command]
+pub async fn modules_call(
+    app: AppHandle,
+    id: String,
+    method: String,
+    params: Value,
+) -> Result<Value> {
+    blocking(move || super::call(&app, &id, &method, params)).await?
 }

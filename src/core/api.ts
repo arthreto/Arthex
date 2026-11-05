@@ -70,6 +70,9 @@ export const commands = {
   modulesInstallFile: () => invoke<InstalledModule | null>('modules_install_file'),
   modulesUninstall: (id: string, deleteData: boolean) =>
     invoke<null>('modules_uninstall', { id, deleteData }),
+  /** Relays a call to the program of an installed module, starting it if needed. */
+  modulesCall: (id: string, method: string, params: unknown) =>
+    invoke<unknown>('modules_call', { id, method, params: params ?? null }),
 };
 
 /** Event names shared with `src-tauri/src/app/events.rs`. */

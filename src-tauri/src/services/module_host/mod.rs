@@ -5,6 +5,7 @@
 mod catalog;
 pub mod commands;
 mod package;
+mod program;
 pub mod protocol;
 
 use std::{
@@ -17,12 +18,13 @@ use std::{
 
 use serde::Serialize;
 use serde_json::Value;
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Emitter, Listener, Manager};
 
-use crate::app::{self, AppError, Result};
+use crate::app::{self, AppError, Result, Settings, events};
 use package::{ENTRY, INFO, ModuleInfo};
 
 pub use package::HOST_API;
+pub use program::call;
 
 pub const SCHEME: &str = "arthex-module";
 /// Sent after a module was installed, updated or uninstalled.
@@ -53,6 +55,7 @@ pub struct ModuleHost {
     /// `<data>/module-data/<id>/`: what each module keeps, which survives updates.
     data: PathBuf,
     installed: RwLock<BTreeMap<String, Installed>>,
+    programs: program::Programs,
 }
 
 impl ModuleHost {
@@ -87,6 +90,15 @@ pub fn setup(app: &AppHandle) -> Result<()> {
         dir,
         data,
         installed: RwLock::new(installed),
+        programs: program::Programs::default(),
+    });
+
+    program::sync(app, &app::settings(app));
+    let handle = app.clone();
+    app.listen_any(events::SETTINGS_CHANGED, move |event| {
+        if let Ok(settings) = serde_json::from_str::<Settings>(event.payload()) {
+            program::sync(&handle, &settings);
+        }
     });
 
     let handle = app.clone();
@@ -162,6 +174,7 @@ pub fn install(app: &AppHandle, bytes: &[u8], expected: Option<&str>) -> Result<
         return Err(AppError::Invalid(format!("{id} is being developed")));
     }
 
+    host.programs.stop(&id);
     let target = host.dir.join(&id);
     let staging = host.dir.join(format!("{id}.new"));
     let previous = host.dir.join(format!("{id}.old"));
@@ -188,6 +201,7 @@ pub fn install(app: &AppHandle, bytes: &[u8], expected: Option<&str>) -> Result<
     let installed = describe(&target, package.info, false);
     host.installed_mut().insert(id.clone(), installed.clone());
     tracing::info!(module = %id, version = %installed.version, "module installed");
+    program::sync(app, &app::settings(app));
     app.emit(CHANGED, ()).ok();
     Ok(installed)
 }
@@ -197,6 +211,7 @@ pub fn uninstall(app: &AppHandle, id: &str, delete_data: bool) -> Result<()> {
     let Some(installed) = host.get(id).filter(|module| !module.dev) else {
         return Err(AppError::Invalid(format!("{id} is not installed")));
     };
+    host.programs.stop(id);
     fs::remove_dir_all(&installed.dir)?;
     host.installed_mut().remove(id);
     if delete_data {

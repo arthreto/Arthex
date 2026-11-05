@@ -42,6 +42,7 @@ pub fn run() {
             services::module_host::commands::modules_install,
             services::module_host::commands::modules_install_file,
             services::module_host::commands::modules_uninstall,
+            services::module_host::commands::modules_call,
             modules::shortcuts::commands::shortcuts_list,
             modules::shortcuts::commands::shortcuts_save_site,
             modules::shortcuts::commands::shortcuts_save_app,

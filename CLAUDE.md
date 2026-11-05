@@ -77,7 +77,7 @@ These come from the owner's feedback on the mockup. Do not reintroduce what was 
 
 - **Minimal capabilities:** only our commands and the plugin permissions actually used. No `shell` plugin.
 - **Strict CSP:** no remote content in the webview. Installed modules are served from the app's own folder through the `arthex-module` protocol.
-- **Installable modules are signed** with the update key. Rust checks the signature and every file of a package before writing anything.
+- **Installable modules are signed** with the update key. Rust checks the signature and every file of a package before writing anything. A module's program runs only while its module is active, without arguments or window, and the app only relays its messages.
 - Every system action is a typed Rust command with validated input:
   - URLs are `http`/`https` only;
   - paths are canonicalised and must exist;

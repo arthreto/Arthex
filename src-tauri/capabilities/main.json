@@ -23,6 +23,7 @@
     "allow-modules-install",
     "allow-modules-install-file",
     "allow-modules-uninstall",
+    "allow-modules-call",
     "allow-shortcuts-list",
     "allow-shortcuts-save-site",
     "allow-shortcuts-save-app",

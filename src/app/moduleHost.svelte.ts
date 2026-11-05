@@ -1,4 +1,4 @@
-import { commands, type InstalledModule } from '../core/api';
+import { commands, on, type InstalledModule } from '../core/api';
 import { getLocale, registerModule, translate } from '../core/i18n';
 import { registry, type ModuleManifest } from '../core/modules';
 import { adopt, type HostApi } from '../core/modules/foreign';
@@ -83,6 +83,11 @@ export function installHostApi(): void {
     navigate(target) {
       search.clear();
       navigation.openTarget(target);
+    },
+    call: (id, method, params) => commands.modulesCall(id, method, params),
+    listen(id, event, handler) {
+      const listening = on<unknown>(`${id}://${event}`, handler);
+      return () => void listening.then((unlisten) => unlisten());
     },
   };
   Object.defineProperty(window, '__ARTHEX__', { value: Object.freeze(api) });
