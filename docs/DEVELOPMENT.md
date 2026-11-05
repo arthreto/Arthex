@@ -386,7 +386,7 @@ npx @tauri-apps/cli signer generate -w %USERPROFILE%\.tauri\arthex.key
 Then, for each release:
 
 1. Set the same version in `package.json`, `src-tauri/Cargo.toml` and `src-tauri/tauri.conf.json`.
-2. Write the changelog (format below) as the message of an annotated tag on `main`, then push the tag:
+2. Write an annotated tag on `main`, then push it. Its message is a title line (`vX.Y.Z`), an empty line, then the changelog (format below): the workflow reads only what follows the title, and refuses a changelog that starts on the first line.
 
    ```bash
    git tag -a --cleanup=verbatim vX.Y.Z
