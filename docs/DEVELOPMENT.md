@@ -79,6 +79,7 @@ Reuse these instead of writing your own.
 | Text                                                                   | `t('key')` from `src/core/i18n` (shell) or the module's `i18n.ts`                         |
 | A module's name or description                                         | `moduleText(id, 'name' \| 'description')` from `src/core/i18n`                            |
 | A button, switch, modal, panel, chip, card, checkbox, file icon, field | `src/ui/`                                                                                 |
+| An empty list or a list with no match                                  | `EmptyState` from `src/ui/`: a centred pictogram, a title, a line and a button            |
 | Colours, radii, veil                                                   | the tokens in `src/ui/tokens.css`                                                         |
 | Match text against a search                                            | `matchesAll` and `normalize` from `src/core/text.ts` (case and accents ignored)           |
 | Show a time ("2 min ago"), a size ("1.2 GB") or a share                | `formatWhen`, `formatBytes` and `formatPercent` from `src/core/format.ts`                 |
@@ -105,7 +106,7 @@ manifest.ts          what the module is (id, icon, tint, order) and the elements
 <Name>Widget.svelte  its card on Home, if any (`widget: { slot: 'top' | 'main' | 'side', component }`)
 <Name>Tool.svelte    its tool, if any (`tool`), receiving an optional `input`
 <Action>.svelte      a control next to its first switch in Settings → Modules, if any (`settingsAction`)
-<Name>Settings.svelte  a section of its own in Settings, if any (`settingsSection: { component, action? }`)
+<Name>Settings.svelte  a section of its own in Settings, if any (`settingsSection: { component, action? }`; `action.hidden()` hides its button, when the empty section already offers it)
 <Name>Pill.svelte    a small status at the top right of the overlay, if any (`badge`)
 search.ts            its search results, if any (`search`, see Search below)
 locales/<lang>.json  its text: at least "name" and "description", plus "keywords" that help find its tool

@@ -56,7 +56,7 @@
         title: moduleText(module.id, 'name'),
         icon: { path: module.icon },
         body: { load: () => loadSettingsSection(module.id) },
-        action: action && { label: action.label(), run: action.run },
+        action: action && !action.hidden?.() ? { label: action.label(), run: action.run } : undefined,
       };
     }),
     {

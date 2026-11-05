@@ -93,6 +93,8 @@
     "home": "Home",
     "search": "Search",
     "editNamed": "Edit {name}",
-    "deleteNamed": "Delete {name}"
+    "deleteNamed": "Delete {name}",
+    "emptyTitle": "No shortcuts",
+    "emptyText": "A site, an app, a folder or a command, one click away on Home or in the search."
   }
 }

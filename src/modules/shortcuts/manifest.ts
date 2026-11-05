@@ -2,6 +2,7 @@ import { defineModule } from '../../core/modules/manifest';
 import { editor } from './editor.svelte';
 import { t } from './i18n';
 import { createShortcutSearch, shortcutsSearch } from './search';
+import { shortcuts } from './shortcuts.svelte';
 
 export default defineModule({
   id: 'shortcuts',
@@ -12,6 +13,11 @@ export default defineModule({
   search: [shortcutsSearch, createShortcutSearch],
   settingsSection: {
     component: () => import('./ShortcutsSettings.svelte'),
-    action: { label: () => t('settings.new'), run: () => editor.add() },
+    action: {
+      label: () => t('settings.new'),
+      run: () => editor.add(),
+      // The empty list offers the same button.
+      hidden: () => shortcuts.loaded && shortcuts.items.length === 0,
+    },
   },
 });

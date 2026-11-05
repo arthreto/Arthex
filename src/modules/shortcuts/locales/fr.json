@@ -93,6 +93,8 @@
     "home": "Accueil",
     "search": "Recherche",
     "editNamed": "Modifier {name}",
-    "deleteNamed": "Supprimer {name}"
+    "deleteNamed": "Supprimer {name}",
+    "emptyTitle": "Aucun raccourci",
+    "emptyText": "Un site, une app, un dossier ou une commande, à un clic de l’accueil ou de la recherche."
   }
 }

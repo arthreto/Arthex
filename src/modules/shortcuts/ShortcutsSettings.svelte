@@ -4,6 +4,7 @@
   import { t as shellT } from '../../core/i18n';
   import { toast } from '../../core/toast.svelte';
   import Button from '../../ui/Button.svelte';
+  import EmptyState from '../../ui/EmptyState.svelte';
   import IconButton from '../../ui/IconButton.svelte';
   import Panel from '../../ui/Panel.svelte';
   import { targetText, type Shortcut } from './api';
@@ -12,6 +13,7 @@
   import ShortcutDialog from './ShortcutDialog.svelte';
   import ShortcutIcon from './ShortcutIcon.svelte';
   import { shortcuts } from './shortcuts.svelte';
+  import manifest from './manifest';
 
   onMount(() => {
     void shortcuts.load();
@@ -65,6 +67,15 @@
       </div>
     {/each}
   </Panel>
+{:else if shortcuts.loaded}
+  <EmptyState
+    icon={manifest.icon}
+    tint="var(--tint-mint)"
+    title={t('settings.emptyTitle')}
+    text={t('settings.emptyText')}
+  >
+    <Button variant="primary" onclick={() => editor.add()}>{t('settings.new')}</Button>
+  </EmptyState>
 {/if}
 
 {#if editor.current}

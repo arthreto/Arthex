@@ -2,6 +2,7 @@ import { shortcutsApi, type Draft, type Shortcut } from './api';
 
 class ShortcutsState {
   items = $state<Shortcut[]>([]);
+  loaded = $state(false);
   /** Home shows these, in order; Alt + 1…9 opens them. */
   home = $derived(this.items.filter((item) => item.onHome));
   #loading: Promise<void> | null = null;
@@ -10,6 +11,7 @@ class ShortcutsState {
   load(): Promise<void> {
     this.#loading ??= (async () => {
       this.items = await shortcutsApi.list();
+      this.loaded = true;
       await shortcutsApi.onChanged((list) => (this.items = list));
     })();
     return this.#loading;

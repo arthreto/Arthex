@@ -9,6 +9,7 @@ export { default as Button } from '../src/ui/Button.svelte';
 export { default as CardButton } from '../src/ui/CardButton.svelte';
 export { default as Check } from '../src/ui/Check.svelte';
 export { default as Chip } from '../src/ui/Chip.svelte';
+export { default as EmptyState } from '../src/ui/EmptyState.svelte';
 export { default as FileIcon } from '../src/ui/FileIcon.svelte';
 export { default as Icon } from '../src/ui/Icon.svelte';
 export { default as IconButton } from '../src/ui/IconButton.svelte';

@@ -8,6 +8,7 @@
   import { toast } from '../../core/toast.svelte';
   import Button from '../../ui/Button.svelte';
   import Chip from '../../ui/Chip.svelte';
+  import EmptyState from '../../ui/EmptyState.svelte';
   import Icon from '../../ui/Icon.svelte';
   import { icons } from '../../ui/icons';
   import Panel from '../../ui/Panel.svelte';
@@ -92,6 +93,13 @@
     }
   }
 
+  const narrowed = $derived(query.trim() !== '' || filter !== 'all');
+
+  function showAll() {
+    query = '';
+    filter = 'all';
+  }
+
   function markOffer(id: string, state: ModuleOffer['state']) {
     offers = (offers ?? []).map((offer) => (offer.id === id ? { ...offer, state } : offer));
   }
@@ -164,20 +172,31 @@
   onchange={(value) => (filter = value)}
 />
 
-{#if failed}
-  <div class="notice">
-    {t('settings.modules.failed')}
-    <Button size="small" onclick={refresh}>{t('settings.modules.retry')}</Button>
-  </div>
-{/if}
-
 {#if offers === null}
-  <p class="notice">{t('settings.modules.loading')}</p>
+  <EmptyState icon={icons.modules} title={t('settings.modules.loading')} />
+{:else if rows.length === 0 && narrowed}
+  <EmptyState
+    icon={icons.search}
+    title={query.trim()
+      ? t('settings.modules.noMatch', { query: query.trim() })
+      : t('settings.modules.noneOfKind')}
+    text={t('settings.modules.tryOther')}
+  >
+    <Button onclick={showAll}>{t('settings.modules.showAll')}</Button>
+  </EmptyState>
+{:else if rows.length === 0 && failed}
+  <EmptyState icon={icons.refresh} title={t('settings.modules.failed')}>
+    <Button onclick={refresh}>{t('settings.modules.retry')}</Button>
+  </EmptyState>
 {:else if rows.length === 0}
-  <p class="notice">
-    {t(query.trim() || filter !== 'all' ? 'settings.modules.noMatch' : 'settings.modules.empty')}
-  </p>
+  <EmptyState icon={icons.modules} title={t('settings.modules.empty')} />
 {:else}
+  {#if failed}
+    <div class="notice">
+      {t('settings.modules.failed')}
+      <Button size="small" onclick={refresh}>{t('settings.modules.retry')}</Button>
+    </div>
+  {/if}
   <Panel list>
     {#each rows as row (row.id)}
       <div class="row">

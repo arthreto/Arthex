@@ -28,7 +28,10 @@ export interface InstallableModule {
   tool?: Lazy<ToolProps>;
   badge?: Lazy;
   settingsAction?: Lazy;
-  settingsSection?: { component: Lazy; action?: { label: () => string; run: () => unknown } };
+  settingsSection?: {
+    component: Lazy;
+    action?: { label: () => string; run: () => unknown; hidden?: () => boolean };
+  };
 }
 
 export type DefinedModule = ForeignManifest & { version: string; background: boolean };

@@ -13,7 +13,7 @@ export type ToolProps = { input?: string };
 export interface SettingsSection {
   component: Lazy;
   /** A button next to the section title ("Reindex"). */
-  action?: { label: () => string; run: () => unknown };
+  action?: { label: () => string; run: () => unknown; hidden?: () => boolean };
 }
 
 /** Accent colours defined in `src/ui/tokens.css` (`--tint-<name>`), tuned for both themes. */

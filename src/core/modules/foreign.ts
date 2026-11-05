@@ -25,7 +25,10 @@ export interface ForeignManifest {
   tool?: LazyMount;
   badge?: LazyMount;
   settingsAction?: LazyMount;
-  settingsSection?: { component: LazyMount; action?: { label: () => string; run: () => unknown } };
+  settingsSection?: {
+    component: LazyMount;
+    action?: { label: () => string; run: () => unknown; hidden?: () => boolean };
+  };
 }
 
 /**
