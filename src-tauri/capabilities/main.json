@@ -15,6 +15,7 @@
     "allow-app-info",
     "allow-app-open-data-dir",
     "allow-app-open-log-dir",
+    "allow-app-note-renderer",
     "allow-app-uninstall",
     "allow-updates-check",
     "allow-updates-install",

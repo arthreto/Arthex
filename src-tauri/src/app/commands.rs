@@ -48,6 +48,14 @@ pub fn app_open_data_dir(app: AppHandle) -> Result<()> {
     system::open_data_dir(&app)
 }
 
+/// The graphics the page renders with, for the debug log: software rendering cannot be
+/// see-through.
+#[tauri::command]
+pub fn app_note_renderer(renderer: String) {
+    let renderer: String = renderer.chars().take(200).collect();
+    tracing::debug!(renderer, "webview graphics");
+}
+
 #[tauri::command]
 pub fn app_open_log_dir(app: AppHandle) -> Result<()> {
     system::open_log_dir(&app)

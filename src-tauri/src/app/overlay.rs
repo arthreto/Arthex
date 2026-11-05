@@ -323,10 +323,11 @@ fn see_through(_window: &WebviewWindow) {}
 fn set_resting(window: &WebviewWindow, resting: bool) {
     use webview2_com::{
         Microsoft::Web::WebView2::Win32::{
-            COREWEBVIEW2_MEMORY_USAGE_TARGET_LEVEL_LOW,
-            COREWEBVIEW2_MEMORY_USAGE_TARGET_LEVEL_NORMAL, ICoreWebView2_3, ICoreWebView2_19,
+            COREWEBVIEW2_COLOR, COREWEBVIEW2_MEMORY_USAGE_TARGET_LEVEL_LOW,
+            COREWEBVIEW2_MEMORY_USAGE_TARGET_LEVEL_NORMAL, ICoreWebView2_2, ICoreWebView2_3,
+            ICoreWebView2_19, ICoreWebView2Controller2,
         },
-        TrySuspendCompletedHandler,
+        TrySuspendCompletedHandler, take_pwstr,
     };
     use windows::core::Interface;
 
@@ -341,9 +342,29 @@ fn set_resting(window: &WebviewWindow, resting: bool) {
         unsafe {
             let controller = webview.controller();
             let _ = controller.SetIsVisible(!resting);
+            // What the page leaves transparent shows this colour: it must stay fully transparent,
+            // or the desktop never shows through.
+            if !resting && let Ok(controller) = controller.cast::<ICoreWebView2Controller2>() {
+                let mut color = COREWEBVIEW2_COLOR::default();
+                let _ = controller.DefaultBackgroundColor(&raw mut color);
+                tracing::debug!(alpha = color.A, "webview background");
+                if color.A != 0 {
+                    let _ = controller.SetDefaultBackgroundColor(COREWEBVIEW2_COLOR::default());
+                }
+            }
             let Ok(core) = controller.CoreWebView2() else {
                 return;
             };
+            if !resting
+                && let Ok(environment) = core
+                    .cast::<ICoreWebView2_2>()
+                    .and_then(|core| core.Environment())
+            {
+                let mut version = windows::core::PWSTR::null();
+                if environment.BrowserVersionString(&raw mut version).is_ok() {
+                    tracing::debug!(version = take_pwstr(version), "webview runtime");
+                }
+            }
             if let Ok(core) = core.cast::<ICoreWebView2_19>() {
                 let _ = core.SetMemoryUsageTargetLevel(level);
             }

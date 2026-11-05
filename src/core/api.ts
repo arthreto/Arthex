@@ -69,6 +69,7 @@ export const commands = {
   appInfo: () => invoke<AppInfo>('app_info'),
   appOpenDataDir: () => invoke<null>('app_open_data_dir'),
   appOpenLogDir: () => invoke<null>('app_open_log_dir'),
+  appNoteRenderer: (renderer: string) => invoke<null>('app_note_renderer', { renderer }),
   appUninstall: () => invoke<null>('app_uninstall'),
   /** Fails with `unsupported` in builds without an update key. */
   updatesCheck: () => invoke<UpdateAvailable | null>('updates_check'),

@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-app-note-renderer"
+description = "Enables the app_note_renderer command without any pre-configured scope."
+commands.allow = ["app_note_renderer"]
+
+[[permission]]
+identifier = "deny-app-note-renderer"
+description = "Denies the app_note_renderer command without any pre-configured scope."
+commands.deny = ["app_note_renderer"]
