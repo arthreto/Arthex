@@ -283,6 +283,10 @@
     gap: 10px;
   }
 
+  .bar > :global(.button) {
+    height: 44px;
+  }
+
   .search {
     flex: 1;
     min-width: 0;
