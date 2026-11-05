@@ -2,8 +2,9 @@
 //! relays JSON lines on its standard input and output:
 //!
 //! - to it: `{"type":"init","dataDir","locale"}` first, then `{"type":"call","id","method","params"}`;
-//! - from it: `{"type":"result","id","value"}`, `{"type":"error","id","message"}` and
-//!   `{"type":"event","name","payload"}`, emitted to the interface as `<module id>://<name>`.
+//! - from it: `{"type":"result","id","value"}`, `{"type":"error","id","message"}`,
+//!   `{"type":"event","name","payload"}`, emitted to the interface as `<module id>://<name>`, and
+//!   `{"type":"overlay","visible"}`, which shows or hides the overlay.
 //!
 //! It starts on its first call and stops after a minute without one, or runs as long as its
 //! module is active when it declares `background`. It must exit when its standard input closes.
@@ -26,9 +27,12 @@ use serde_json::{Value, json};
 use tauri::{AppHandle, Emitter, Manager};
 
 use super::{Installed, ModuleHost};
-use crate::app::{self, AppError, Result};
+use crate::app::{self, AppError, Result, overlay};
 
 const CALL_TIMEOUT: Duration = Duration::from_secs(30);
+/// A call with the overlay hidden waits on the user, who may take their time, but the overlay must
+/// come back even if the program never answers.
+const HIDDEN_CALL_TIMEOUT: Duration = Duration::from_secs(600);
 const IDLE: Duration = Duration::from_secs(60);
 const MAX_LINE: u64 = 4 * 1024 * 1024;
 /// A background program that keeps failing is left stopped until the module is turned back on.
@@ -42,6 +46,7 @@ enum Message {
     Result { id: u64, value: Value },
     Error { id: u64, message: String },
     Event { name: String, payload: Value },
+    Overlay { visible: bool },
 }
 
 struct Program {
@@ -188,6 +193,8 @@ fn read(app: &AppHandle, id: &str, program: &Program, stdout: impl Read) {
             Ok(Message::Event { name, payload }) if is_event_name(&name) => {
                 app.emit(&format!("{id}://{name}"), payload).ok();
             }
+            Ok(Message::Overlay { visible: true }) => overlay::show(app),
+            Ok(Message::Overlay { visible: false }) => overlay::hide(app),
             _ => tracing::warn!(module = %id, "module program sent an unknown message"),
         }
     }
@@ -244,6 +251,45 @@ fn ended(app: &AppHandle, id: &str, program: &Arc<Program>) {
 
 /// Relays a call from the module's interface to its program.
 pub fn call(app: &AppHandle, id: &str, method: &str, params: Value) -> Result<Value> {
+    let (module, program) = running(app, id)?;
+    relay(app, &module, &program, method, params, CALL_TIMEOUT)
+}
+
+/// Relays a call with the overlay out of the way, then brings it back whatever happens. This runs
+/// here and not in the module's interface, which is suspended while the overlay is hidden.
+pub fn call_hidden(app: &AppHandle, id: &str, method: &str, params: Value) -> Result<Value> {
+    let (module, program) = running(app, id)?;
+    allow_foreground(&program);
+    overlay::hide_until_gone(app);
+    let reply = relay(app, &module, &program, method, params, HIDDEN_CALL_TIMEOUT);
+    if reply.is_err() {
+        // It may still have windows open over the screen.
+        app.state::<ModuleHost>().programs.stop(id);
+    }
+    overlay::come_back(app);
+    reply
+}
+
+/// Windows lets the foreground program pass the focus on: the module's windows can then get it,
+/// for the keyboard, although the overlay is about to go away.
+#[cfg(windows)]
+fn allow_foreground(program: &Program) {
+    use windows_sys::Win32::UI::WindowsAndMessaging::AllowSetForegroundWindow;
+
+    let child = program
+        .child
+        .lock()
+        .unwrap_or_else(PoisonError::into_inner)
+        .id();
+    // SAFETY: only names a process; a refusal changes nothing.
+    unsafe { AllowSetForegroundWindow(child) };
+}
+
+#[cfg(not(windows))]
+fn allow_foreground(_program: &Program) {}
+
+/// The program of an active module, started if needed.
+fn running(app: &AppHandle, id: &str) -> Result<(Installed, Arc<Program>)> {
     let host = app.state::<ModuleHost>();
     let module = host
         .get(id)
@@ -252,6 +298,18 @@ pub fn call(app: &AppHandle, id: &str, method: &str, params: Value) -> Result<Va
         return Err(AppError::Invalid(format!("{id} is turned off")));
     }
     let program = start(app, &module)?;
+    Ok((module, program))
+}
+
+fn relay(
+    app: &AppHandle,
+    module: &Installed,
+    program: &Arc<Program>,
+    method: &str,
+    params: Value,
+    timeout: Duration,
+) -> Result<Value> {
+    let id = module.id.as_str();
     let call = program.next_call.fetch_add(1, Ordering::Relaxed);
     let (sender, receiver) = mpsc::channel();
     program
@@ -262,22 +320,22 @@ pub fn call(app: &AppHandle, id: &str, method: &str, params: Value) -> Result<Va
     if let Err(error) =
         program.send(&json!({ "type": "call", "id": call, "method": method, "params": params }))
     {
-        answer(&program, call, Err(String::new()));
+        answer(program, call, Err(String::new()));
         return Err(error);
     }
-    let reply = receiver.recv_timeout(CALL_TIMEOUT);
+    let reply = receiver.recv_timeout(timeout);
     *program
         .last_used
         .lock()
         .unwrap_or_else(PoisonError::into_inner) = Instant::now();
     if !module.info.background {
-        stop_when_idle(app, id, &program);
+        stop_when_idle(app, id, program);
     }
     match reply {
         Ok(Ok(value)) => Ok(value),
         Ok(Err(message)) => Err(AppError::Failed(message)),
         Err(mpsc::RecvTimeoutError::Timeout) => {
-            answer(&program, call, Err(String::new()));
+            answer(program, call, Err(String::new()));
             Err(AppError::Failed(format!("{id} did not answer")))
         }
         Err(mpsc::RecvTimeoutError::Disconnected) => Err(AppError::Failed(format!("{id} stopped"))),
@@ -347,6 +405,9 @@ mod tests {
         let event: Message =
             serde_json::from_str(r#"{"type":"event","name":"changed","payload":null}"#).unwrap();
         assert!(matches!(event, Message::Event { .. }));
+        let overlay: Message =
+            serde_json::from_str(r#"{"type":"overlay","visible":true}"#).unwrap();
+        assert!(matches!(overlay, Message::Overlay { visible: true }));
         assert!(serde_json::from_str::<Message>(r#"{"type":"exec","command":"x"}"#).is_err());
     }
 

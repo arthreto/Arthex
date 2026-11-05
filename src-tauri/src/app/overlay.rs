@@ -150,6 +150,79 @@ pub fn hide(app: &AppHandle) {
     });
 }
 
+/// Hides the overlay and returns once the screen really shows what is under it.
+pub fn hide_until_gone(app: &AppHandle) {
+    /// The overlay clears its page first: it takes a moment, and rarely more than a few frames.
+    const HIDING_TRIES: u32 = 40;
+    const HIDING_STEP: Duration = Duration::from_millis(20);
+
+    set_fading(app, false);
+    hide(app);
+    let visible = || {
+        app.get_webview_window(LABEL)
+            .is_some_and(|window| window.is_visible().unwrap_or(false))
+    };
+    for _ in 0..HIDING_TRIES {
+        if !visible() {
+            break;
+        }
+        thread::sleep(HIDING_STEP);
+    }
+    if visible() {
+        conceal(app);
+    }
+    wait_for_screen();
+}
+
+/// Shows the overlay again after `hide_until_gone`.
+pub fn come_back(app: &AppHandle) {
+    set_fading(app, true);
+    show(app);
+}
+
+/// Windows fades a window out after it is hidden: anything reading the screen meanwhile would see
+/// the overlay instead of what is under it.
+#[cfg(windows)]
+fn set_fading(app: &AppHandle, fading: bool) {
+    use windows_sys::Win32::Graphics::Dwm::{
+        DWMWA_TRANSITIONS_FORCEDISABLED, DwmSetWindowAttribute,
+    };
+
+    let Some(Ok(hwnd)) = app.get_webview_window(LABEL).map(|window| window.hwnd()) else {
+        return;
+    };
+    let disabled = i32::from(!fading);
+    // SAFETY: a DWM call on our own window, with a value that outlives it.
+    let _ = unsafe {
+        DwmSetWindowAttribute(
+            hwnd.0,
+            DWMWA_TRANSITIONS_FORCEDISABLED.cast_unsigned(),
+            (&raw const disabled).cast(),
+            u32::try_from(size_of_val(&disabled)).unwrap_or_default(),
+        )
+    };
+}
+
+#[cfg(not(windows))]
+fn set_fading(_app: &AppHandle, _fading: bool) {}
+
+#[cfg(windows)]
+fn wait_for_screen() {
+    use windows_sys::Win32::Graphics::Dwm::DwmFlush;
+
+    const FRAMES: u32 = 3;
+    const SETTLING: Duration = Duration::from_millis(60);
+
+    for _ in 0..FRAMES {
+        // SAFETY: waits for the compositor to present its next frame.
+        let _ = unsafe { DwmFlush() };
+    }
+    thread::sleep(SETTLING);
+}
+
+#[cfg(not(windows))]
+fn wait_for_screen() {}
+
 pub fn conceal(app: &AppHandle) {
     let Some(window) = app.get_webview_window(LABEL) else {
         return;

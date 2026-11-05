@@ -14,6 +14,11 @@ export interface InstallableModule {
   id: string;
   /** Semantic version, raised for each release of the module. */
   version: string;
+  /**
+   * The oldest version of what Arthex offers modules that this one works with: raise it when it
+   * uses something newer, and users of an older Arthex are asked to update only then.
+   */
+  api?: number;
   /** SVG path data of a 24×24 stroked icon. */
   icon: string;
   tint: Tint;
@@ -37,7 +42,12 @@ export interface InstallableModule {
   };
 }
 
-export type DefinedModule = ForeignManifest & { version: string; background: boolean; tags: Tag[] };
+export type DefinedModule = ForeignManifest & {
+  version: string;
+  api: number;
+  background: boolean;
+  tags: Tag[];
+};
 
 /** The module brings its own Svelte: the shell receives functions that mount each view. */
 function mounted<Props extends Record<string, unknown>>(load: Lazy<Props>): () => Promise<Mount> {
@@ -66,6 +76,7 @@ export function defineModule(module: InstallableModule): DefinedModule {
   return {
     id: module.id,
     version: module.version,
+    api: module.api ?? 1,
     icon: module.icon,
     tint: module.tint,
     order: module.order,

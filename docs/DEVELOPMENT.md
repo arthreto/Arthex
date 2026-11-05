@@ -200,13 +200,15 @@ A `.arthex` file can be installed three ways: from the catalog, with "Install fr
   - `defineModule` of the SDK refuses an unknown tag, so `arthex pack` fails. The interface ignores unknown tags of the catalog (`knownTags`).
   - Only the categories that hold a module are offered as filters; the search of the tab matches their names too.
   - To add a category: add its id to `TAGS` and its name to every locale file, in the same commit.
-- **Interface** (`src/app/moduleHost.svelte.ts`): imports each installed `index.js`, checks its export with `adopt` (`src/core/modules/foreign.ts`) and adds the module to the registry. An installed module brings its own Svelte: each of its views is a `mount(target, props)` that `ForeignView` shows. It reaches the shell only through `window.__ARTHEX__` (`HostApi`): translations, toast, tools and navigation.
+- **Interface** (`src/app/moduleHost.svelte.ts`): imports each installed `index.js`, checks its export with `adopt` (`src/core/modules/foreign.ts`) and adds the module to the registry. An installed module brings its own Svelte: each of its views is a `mount(target, props)` that `ForeignView` shows. It reaches the shell only through `window.__ARTHEX__` (`HostApi`): translations, toast, tools, navigation, and hiding or showing the overlay.
 - **Program** (`program.rs`): the system side of a module is a program of its own, built for each platform, that the app relays without knowing what it does.
-  - It talks in JSON lines on its standard input and output. It receives `{"type":"init","dataDir","locale"}`, then `{"type":"call","id","method","params"}`. It answers `{"type":"result","id","value"}` or `{"type":"error","id","message"}`, and may send `{"type":"event","name","payload"}`, which reaches the interface as `<id>://<name>`.
+  - It talks in JSON lines on its standard input and output. It receives `{"type":"init","dataDir","locale"}`, then `{"type":"call","id","method","params"}`. It answers `{"type":"result","id","value"}` or `{"type":"error","id","message"}`, and may send `{"type":"event","name","payload"}`, which reaches the interface as `<id>://<name>`, and `{"type":"overlay","visible"}`, which shows or hides the overlay (`set_overlay_visible` of the crate).
   - The interface calls it with `window.__ARTHEX__.call(id, method, params)` (`modules_call`) and hears its events with `listen`.
+  - `callHidden` (`modules_call_hidden`) hides the overlay, makes the call and brings the overlay back, without the usual 30 s limit. Rust runs all of it, since the page is suspended while the overlay is hidden. The screen then shows what is under the overlay, for a program that reads it; the program can also take the focus, and open windows of its own, as the Color module's picker does.
   - It starts on its first call and stops after a minute without one. With `background`, it runs as long as its module is active and comes back up to 3 times if it stops by itself. It never runs while its module is off, and it is stopped before an update or an uninstall.
-  - It starts without arguments and without a window, in its data folder, and must exit when its standard input closes.
-- **Versions:** `HOST_API` in `package.rs` versions `HostApi`. Only add to it, or raise the version; a module built for a newer one is refused with "Update Arthex first".
+  - It starts without arguments and without a window, in its data folder, and must exit when its standard input closes. A program scaled by Windows sees wrong coordinates: one that reads the screen or opens windows declares itself DPI aware first.
+- **Versions:** `HOST_API` in `package.rs` versions `HostApi`. Only add to it, or raise the version. Each module declares the oldest version it works with (`api` in its manifest, 1 by default), so a new version never forces an update on modules that do not use it. One that asks for more than the app offers is refused with "Update Arthex first".
+- **What goes where:** a feature of a module belongs in the module, with its libraries: the interface's are bundled in its package, the program's are in its `native/` Cargo project. Arthex only offers generic bricks, never a feature of one module, so that using a module costs nothing to those who do not install it.
 - **Development:** a debug build loads unsigned modules from `ARTHEX_DEV_MODULES=<folder>`, one built module per `<folder>/<id>/`. Release builds never do.
 
 ### Make an installable module
@@ -249,7 +251,7 @@ Installable modules live outside this repository, in [`arthreto/arthex-modules`]
    - `npx arthex pack <module> --out dist` (add `--target <rust target>` for each platform when it has a program) writes `<id>-<version>-<platform>.arthex` and its catalog entry;
    - `npx arthex catalog dist` merges the entries into a signed `catalog.json`;
    - publish every `.arthex`, `catalog.json` and `catalog.json.sig` in the latest release of `arthreto/arthex-modules`.
-6. A change to `HostApi` or to what `@arthex/sdk` exports raises `HOST_API` in Rust and `API` in `sdk/cli.js` together.
+6. A change to `HostApi` or to what `@arthex/sdk` exports raises `HOST_API` in Rust and `API` in `sdk/cli.js` together. A module that uses it sets `api` to that version in its `manifest.ts`.
 
 ## Rust commands and events
 
@@ -351,10 +353,6 @@ The language appears in Settings and in the tray at the next build. No code chan
   - A neutral `vkE8` key press is injected so that releasing Win does not open the Start menu.
   - The hook can miss a key-up while the focus moves to the overlay. Before each modifier press, the machine takes the modifiers Windows says are down (`GetAsyncKeyState`) and starts over if they differ, so the next press is never lost.
   - The hook callback does O(1) work. Windows silently removes slow hooks.
-- **Screen colour picker** (`src-tauri/src/services/screen_color/`), offered to modules as `pickScreenColor` of `HostApi`:
-  - The overlay hides, then the screens are copied once, so the colour read is free of the fade. The copy stays in memory until the picker closes and is never saved or logged.
-  - Each screen gets a layered window with the fade. Its alpha is never zero, or clicks would go through to the programs below. A small window that lets clicks through follows the cursor with the colour.
-  - A click takes the colour; Escape, a right click or another program taking over cancels. The overlay then comes back.
 - **Taskbar icon** (`src-tauri/src/app/taskbar_search/`, setting `taskbarSearch`, off by default):
   - Windows has no API to add anything to its taskbar or search box. Its only search providers are web ones for the EEA, through an MSIX package and an HTTPS server, which queries must not reach.
   - The icon is a layered window of our own, with no webview, owned by `Shell_TrayWnd`, so it stays above the taskbar and goes with it.

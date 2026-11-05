@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-modules-hide-overlay"
+description = "Enables the modules_hide_overlay command without any pre-configured scope."
+commands.allow = ["modules_hide_overlay"]
+
+[[permission]]
+identifier = "deny-modules-hide-overlay"
+description = "Denies the modules_hide_overlay command without any pre-configured scope."
+commands.deny = ["modules_hide_overlay"]

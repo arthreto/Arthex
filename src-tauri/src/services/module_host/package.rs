@@ -17,7 +17,7 @@ use crate::app::{AppError, Element, Result, is_module_id};
 
 /// Version of what the app offers modules (`window.__ARTHEX__`). A module built for a newer
 /// one is refused; older ones keep working.
-pub const HOST_API: u32 = 2;
+pub const HOST_API: u32 = 3;
 pub const MAX_PACKAGE_BYTES: u64 = 64 * 1024 * 1024;
 const MAX_UNPACKED_BYTES: u64 = 256 * 1024 * 1024;
 const MAX_FILES: usize = 2000;

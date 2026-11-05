@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-modules-call-hidden"
+description = "Enables the modules_call_hidden command without any pre-configured scope."
+commands.allow = ["modules_call_hidden"]
+
+[[permission]]
+identifier = "deny-modules-call-hidden"
+description = "Denies the modules_call_hidden command without any pre-configured scope."
+commands.deny = ["modules_call_hidden"]

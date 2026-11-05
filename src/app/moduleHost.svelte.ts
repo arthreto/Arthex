@@ -78,7 +78,7 @@ export function installHostApi(): void {
     });
   });
   const api: HostApi = {
-    api: 2,
+    api: 3,
     locale: getLocale,
     onLocaleChange(listener) {
       listeners = [...listeners, listener];
@@ -99,7 +99,9 @@ export function installHostApi(): void {
       const listening = on<unknown>(`${id}://${event}`, handler);
       return () => void listening.then((unlisten) => unlisten());
     },
-    pickScreenColor: commands.modulesPickScreenColor,
+    callHidden: (id, method, params) => commands.modulesCallHidden(id, method, params),
+    hideOverlay: () => void commands.modulesHideOverlay(),
+    showOverlay: () => void commands.modulesShowOverlay(),
   };
   Object.defineProperty(window, '__ARTHEX__', { value: Object.freeze(api) });
 }

@@ -18,7 +18,7 @@ import { moduleConfig } from './vite.js';
 import { zip } from './zip.js';
 
 /** `HOST_API` of the app this SDK comes with. */
-const API = 2;
+const API = 3;
 const ELEMENTS = ['page', 'widget', 'search', 'tool'];
 const require = createRequire(import.meta.url);
 
@@ -85,12 +85,13 @@ async function stage(dir, target) {
   for (const field of ['id', 'version', 'icon', 'tint']) {
     if (typeof module?.[field] !== 'string') fail(`manifest.ts must use defineModule (no ${field})`);
   }
+  if (module.api > API) fail(`this module needs API ${module.api}, and this SDK offers ${API}`);
   const native = buildProgram(dir, staging, module.id, target);
   const platform = native ? platformOf(target) : 'any';
   const info = {
     id: module.id,
     version: module.version,
-    api: API,
+    api: module.api,
     platform,
     ...(native && { native }),
     background: module.background,

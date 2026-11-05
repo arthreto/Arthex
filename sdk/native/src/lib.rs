@@ -56,6 +56,14 @@ impl Events {
             &json!({ "type": "event", "name": name, "payload": payload }),
         )
     }
+
+    /// Shows or hides the overlay of Arthex: needs `api: 3` in the module's manifest.
+    pub fn set_overlay_visible(&self, visible: bool) -> io::Result<()> {
+        send(
+            &self.output,
+            &json!({ "type": "overlay", "visible": visible }),
+        )
+    }
 }
 
 /// What Arthex tells the program when it starts.
@@ -223,10 +231,14 @@ mod tests {
                 .events()
                 .emit("ready", json!({ "ok": true }))
                 .unwrap();
+            context.events().set_overlay_visible(true).unwrap();
         });
         assert_eq!(
             serve(module, &format!("{INIT}\n")),
-            [json!({ "type": "event", "name": "ready", "payload": { "ok": true } })]
+            [
+                json!({ "type": "event", "name": "ready", "payload": { "ok": true } }),
+                json!({ "type": "overlay", "visible": true }),
+            ]
         );
     }
 

@@ -5,10 +5,11 @@ use std::fs;
 use serde_json::Value;
 use tauri::{AppHandle, Manager};
 
-use super::{Installed, ModuleHost, catalog, opened, package::MAX_PACKAGE_BYTES};
+use super::{Installed, ModuleHost, catalog, opened, package::MAX_PACKAGE_BYTES, program};
 use crate::app::{
     AppError, Result,
     dialogs::{blocking, pick_file},
+    overlay,
 };
 
 #[tauri::command]
@@ -47,10 +48,25 @@ pub fn modules_uninstall(app: AppHandle, id: String, delete_data: bool) -> Resul
     super::uninstall(&app, &id, delete_data)
 }
 
-/// Hides the overlay while the user takes a colour from the screen, then brings it back.
+/// Relays a call to a module's program with the overlay out of the way, for as long as it takes.
 #[tauri::command]
-pub async fn modules_pick_screen_color(app: AppHandle) -> Result<Option<String>> {
-    blocking(move || crate::services::screen_color::pick(&app)).await
+pub async fn modules_call_hidden(
+    app: AppHandle,
+    id: String,
+    method: String,
+    params: Value,
+) -> Result<Value> {
+    blocking(move || program::call_hidden(&app, &id, &method, params)).await?
+}
+
+#[tauri::command]
+pub fn modules_hide_overlay(app: AppHandle) {
+    overlay::hide(&app);
+}
+
+#[tauri::command]
+pub fn modules_show_overlay(app: AppHandle) {
+    overlay::show(&app);
 }
 
 /// Relays a call of a module's interface to its program.
