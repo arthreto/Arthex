@@ -61,6 +61,7 @@ pub fn run() {
             services::module_host::commands::modules_list,
             services::module_host::commands::modules_catalog,
             services::module_host::commands::modules_catalog_kept,
+            services::module_host::commands::modules_preview,
             services::module_host::commands::modules_install,
             services::module_host::commands::modules_install_file,
             services::module_host::commands::modules_uninstall,

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onMount, tick } from 'svelte';
+  import { onMount } from 'svelte';
   import { commands, errorMessage, type InstalledModule, type ModuleOffer } from '../../core/api';
   import { moduleText, t } from '../../core/i18n';
   import {
@@ -25,6 +25,8 @@
   import TextField from '../../ui/TextField.svelte';
   import ToggleChip from '../../ui/ToggleChip.svelte';
   import { moduleHost } from '../moduleHost.svelte';
+  import { navigation } from '../navigation.svelte';
+  import ModuleDetails from './ModuleDetails.svelte';
   import { modulesView } from './modulesView.svelte';
   import { knownElements, pickTexts, summary, tintOf } from './moduleSummary';
   import UninstallModuleDialog from './UninstallModuleDialog.svelte';
@@ -43,6 +45,8 @@
     /** What an update brings. */
     nextVersion?: string;
     state: ModuleOffer['state'] | 'dev';
+    installed: boolean;
+    offer?: ModuleOffer;
   }
 
   const CHIP_WIDTHS = ['152px', '86px', '112px', '74px', '98px'];
@@ -54,17 +58,14 @@
   const ARRIVAL_STEP_MS = 40;
   const MAX_ARRIVAL_STEPS = 8;
 
-  let arriving = false;
   let arrived = 0;
 
-  let failed = $state(false);
   let query = $state('');
   let filter = $state<Element | 'all'>('all');
   let tag = $state<Tag | null>(null);
   let busy = $state<string | null>(null);
-  let checking = $state(false);
-  /** The kept catalog answers within a frame or two: the shimmer would only flash before it. */
-  let lookedForKept = $state(false);
+  /** The module whose details are open. */
+  let openId = $state<string | null>(null);
   let uninstalling = $state<Row | null>(null);
 
   const filters = $derived([
@@ -87,6 +88,8 @@
       version: installed?.version ?? offer.version,
       nextVersion: offer.state === 'update' ? offer.version : undefined,
       state: installed?.dev ? 'dev' : offer.state,
+      installed: installed !== undefined,
+      offer,
     };
   }
 
@@ -103,6 +106,7 @@
       tags: [...(module?.tags ?? [])],
       version,
       state: dev ? 'dev' : 'installed',
+      installed: true,
     };
   }
 
@@ -136,39 +140,15 @@
   );
 
   const nothing = $derived(!loading && rows.length === 0);
-  const placeholders = $derived(loading && lookedForKept);
+  const placeholders = $derived(loading && modulesView.lookedForKept);
 
   /** The rows that come with the first answer of the catalog appear one after the other. */
   function arrive(row: HTMLElement) {
-    if (!arriving) return;
+    if (!modulesView.arriving) return;
     const delay = Math.min(arrived, MAX_ARRIVAL_STEPS) * ARRIVAL_STEP_MS;
     arrived += 1;
     row.style.animation = `fade-in var(--motion-base) ease-out ${delay}ms both`;
     row.addEventListener('animationend', () => (row.style.animation = ''), { once: true });
-  }
-
-  async function refresh() {
-    failed = false;
-    arriving = loading;
-    try {
-      modulesView.offers = await commands.modulesCatalog();
-    } catch {
-      failed = true;
-      modulesView.offers ??= [];
-    }
-    await tick();
-    arriving = false;
-  }
-
-  async function checkUpdates() {
-    checking = true;
-    await refresh();
-    checking = false;
-    if (failed) return;
-    const count = allRows.filter((row) => row.state === 'update').length;
-    if (count === 0) toast.show(t('settings.modules.upToDate'));
-    else if (count === 1) toast.show(t('settings.modules.updateFound'));
-    else toast.show(t('settings.modules.updatesFound', { count }));
   }
 
   const narrowed = $derived(query.trim() !== '' || filter !== 'all' || tag !== null);
@@ -177,12 +157,6 @@
     query = '';
     filter = 'all';
     tag = null;
-  }
-
-  function markOffer(id: string, state: ModuleOffer['state']) {
-    modulesView.offers = (modulesView.offers ?? []).map((offer) =>
-      offer.id === id ? { ...offer, state } : offer,
-    );
   }
 
   function report(error: unknown) {
@@ -194,7 +168,7 @@
     try {
       await commands.modulesInstall(row.id);
       await moduleHost.load();
-      markOffer(row.id, 'installed');
+      modulesView.markOffer(row.id, 'installed');
       toast.show(
         t(row.state === 'update' ? 'settings.modules.updated' : 'settings.modules.installed', {
           name: row.name,
@@ -213,7 +187,7 @@
       if (!installed) return;
       await moduleHost.load();
       const offer = modulesView.offers?.find((candidate) => candidate.id === installed.id);
-      if (offer?.version === installed.version) markOffer(installed.id, 'installed');
+      if (offer?.version === installed.version) modulesView.markOffer(installed.id, 'installed');
       toast.show(t('settings.modules.installed', { name: installedRow(installed).name }));
     } catch (error) {
       report(error);
@@ -225,22 +199,18 @@
     try {
       await commands.modulesUninstall(row.id, deleteData);
       await moduleHost.load();
-      markOffer(row.id, 'available');
+      modulesView.markOffer(row.id, 'available');
       toast.show(t('settings.modules.uninstalled', { name: row.name }));
     } catch (error) {
       report(error);
     }
   }
 
-  async function showKept() {
-    const kept = await commands.modulesCatalogKept().catch(() => null);
-    modulesView.offers ??= kept;
-    lookedForKept = true;
-  }
+  const toggleDetails = (id: string) => (openId = openId === id ? null : id);
 
   onMount(async () => {
-    if (loading) await showKept();
-    await refresh();
+    if (loading) await modulesView.showKept();
+    await modulesView.load();
   });
 </script>
 
@@ -253,9 +223,6 @@
       bind:value={query}
     />
   </div>
-  <Button disabled={checking} onclick={checkUpdates}>
-    {t(checking ? 'settings.modules.checking' : 'settings.modules.check')}
-  </Button>
   <Button onclick={installFile}>{t('settings.modules.fromFile')}</Button>
 </div>
 <Segmented
@@ -293,17 +260,17 @@
   >
     <Button onclick={showAll}>{t('settings.modules.showAll')}</Button>
   </EmptyState>
-{:else if nothing && failed}
+{:else if nothing && modulesView.failed}
   <EmptyState icon={icons.refresh} title={t('settings.modules.failed')}>
-    <Button onclick={refresh}>{t('settings.modules.retry')}</Button>
+    <Button onclick={() => modulesView.load()}>{t('settings.modules.retry')}</Button>
   </EmptyState>
 {:else if nothing}
   <EmptyState icon={icons.modules} title={t('settings.modules.empty')} />
 {:else}
-  {#if failed}
+  {#if modulesView.failed}
     <div class="notice">
       {t('settings.modules.failed')}
-      <Button size="small" onclick={refresh}>{t('settings.modules.retry')}</Button>
+      <Button size="small" onclick={() => modulesView.load()}>{t('settings.modules.retry')}</Button>
     </div>
   {/if}
   {#if placeholders}
@@ -311,34 +278,58 @@
   {/if}
   <Panel list>
     {#each rows as row (row.id)}
-      <div class="row" use:arrive>
-        <span class="icon" style:color="var(--tint-{row.tint})">
-          <Icon path={row.icon} size={20} />
-        </span>
-        <span class="text">
-          <span class="name">{row.name}</span>
-          {#if row.description}<span class="description">{row.description}</span>{/if}
-          <span class="meta">
-            {[...row.tags.map(tagLabel), summary(row.elements, row.size), versionLabel(row)].join(' · ')}
-          </span>
-        </span>
-        {#if row.state === 'dev'}
-          <Chip label={t('settings.modules.dev')} />
-        {:else if row.state === 'outdated'}
-          <span class="meta">{t('settings.modules.outdated')}</span>
-        {:else}
-          {#if row.state === 'available' || row.state === 'update'}
-            <Button size="small" variant="primary" disabled={busy !== null} onclick={() => install(row)}>
-              {busy === row.id
-                ? t('settings.modules.installing')
-                : t(row.state === 'update' ? 'settings.modules.update' : 'settings.modules.install')}
-            </Button>
+      {@const open = openId === row.id}
+      <div class="entry" use:arrive>
+        <div class="row">
+          <button
+            class="open"
+            aria-expanded={open}
+            aria-label={t(open ? 'settings.modules.hideDetails' : 'settings.modules.showDetails', {
+              name: row.name,
+            })}
+            onclick={() => toggleDetails(row.id)}
+          >
+            <span class="icon" style:color="var(--tint-{row.tint})">
+              <Icon path={row.icon} size={20} />
+            </span>
+            <span class="text">
+              <span class="name">{row.name}</span>
+              {#if row.description}<span class="description">{row.description}</span>{/if}
+              <span class="meta">
+                {[...row.tags.map(tagLabel), summary(row.elements, row.size), versionLabel(row)].join(' · ')}
+              </span>
+            </span>
+            <span class="chevron" class:turned={open} aria-hidden="true">
+              <Icon path="m7 10 5 5 5-5" size={16} stroke={2} />
+            </span>
+          </button>
+          {#if row.state === 'dev'}
+            <Chip label={t('settings.modules.dev')} />
+          {:else}
+            {#if row.state === 'outdated'}
+              <Button
+                size="small"
+                variant="needs-attention"
+                onclick={() => navigation.open({ kind: 'settings', section: 'updates' })}
+              >
+                {t('settings.modules.updateArthex')}
+              </Button>
+            {:else if row.state === 'available' || row.state === 'update'}
+              <Button size="small" variant="primary" disabled={busy !== null} onclick={() => install(row)}>
+                {busy === row.id
+                  ? t('settings.modules.installing')
+                  : t(row.state === 'update' ? 'settings.modules.update' : 'settings.modules.install')}
+              </Button>
+            {/if}
+            {#if row.installed}
+              <Button size="small" disabled={busy !== null} onclick={() => (uninstalling = row)}>
+                {t('settings.modules.uninstall')}
+              </Button>
+            {/if}
           {/if}
-          {#if row.state === 'installed' || row.state === 'update'}
-            <Button size="small" disabled={busy !== null} onclick={() => (uninstalling = row)}>
-              {t('settings.modules.uninstall')}
-            </Button>
-          {/if}
+        </div>
+        {#if open}
+          <ModuleDetails {...row} />
         {/if}
       </div>
     {/each}
@@ -405,8 +396,38 @@
     gap: 14px;
   }
 
+  .entry + .entry,
+  .entry + .row,
   .row + .row {
     border-top: 1px solid var(--border);
+  }
+
+  .open {
+    flex: 1;
+    min-width: 0;
+    margin: -6px 0;
+    padding: 6px 8px 6px 6px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    text-align: left;
+    transition: background-color var(--motion-fast);
+  }
+
+  .open:hover {
+    background: var(--surface-hover);
+  }
+
+  .chevron {
+    flex: none;
+    display: flex;
+    color: var(--text-subtle);
+    transition: transform var(--motion-fast);
+  }
+
+  .chevron.turned {
+    transform: rotate(180deg);
   }
 
   .icon {

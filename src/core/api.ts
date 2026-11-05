@@ -37,10 +37,29 @@ export interface ModuleOffer {
   elements: string[];
   /** Catalog categories; the interface ignores unknown ones. */
   tags: string[];
-  /** Name and description by language code. */
-  texts: Record<string, { name: string; description: string }>;
+  /** By language code. */
+  texts: Record<string, ModuleTexts>;
   size: number;
   state: 'available' | 'installed' | 'update' | 'outdated';
+  /** Where it runs: `any`, or systems such as `windows-x86_64`. */
+  platforms: string[];
+  contextMenu: {
+    id: string;
+    labels: Record<string, string>;
+    submenu: { id: string; label: string }[];
+  }[];
+  /** The day it last changed, as `2026-11-05`. */
+  updated: string | null;
+  hasPreview: boolean;
+}
+
+export interface ModuleTexts {
+  name: string;
+  description: string;
+  keywords?: string;
+  examples?: string[];
+  page?: string;
+  tool?: string;
 }
 
 /** A `.arthex` file opened from Explorer, checked and waiting for the user's answer. */
@@ -81,6 +100,8 @@ export const commands = {
   modulesCatalog: () => invoke<ModuleOffer[]>('modules_catalog'),
   /** The last catalog read, without the network. */
   modulesCatalogKept: () => invoke<ModuleOffer[] | null>('modules_catalog_kept'),
+  /** The image of a module of the catalog, as a data address. */
+  modulesPreview: (id: string) => invoke<string | null>('modules_preview', { id }),
   /** Installs or updates a module of the catalog. */
   modulesInstall: (id: string) => invoke<InstalledModule>('modules_install', { id }),
   /** Asks for a `.arthex` file, then installs it. `null` when the user cancels. */

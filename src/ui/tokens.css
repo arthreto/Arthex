@@ -42,6 +42,9 @@
   --danger-hover: #ae2e33;
   --on-danger: #ffffff;
   --danger-text: #fca5a5;
+  --danger-soft: rgba(252, 165, 165, 0.14);
+  --danger-soft-hover: rgba(252, 165, 165, 0.24);
+  --danger-soft-border: rgba(252, 165, 165, 0.45);
   --success: #4ade80;
   --warning: #fcd38a;
 
@@ -97,6 +100,9 @@
   --danger-hover: #ae2e33;
   --on-danger: #ffffff;
   --danger-text: #b91c1c;
+  --danger-soft: rgba(185, 28, 28, 0.08);
+  --danger-soft-hover: rgba(185, 28, 28, 0.14);
+  --danger-soft-border: rgba(185, 28, 28, 0.4);
   --success: #15803d;
   --warning: #92400e;
 

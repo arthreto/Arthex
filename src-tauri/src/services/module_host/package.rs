@@ -27,11 +27,23 @@ const SIGNATURE: &str = "files.json.sig";
 pub const INFO: &str = "module.json";
 pub const ENTRY: &str = "index.js";
 
-/// The name and description of a module in one language.
+/// The texts of a module in one language.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Texts {
     pub name: String,
     pub description: String,
+    /// What finds it in the search, separated by spaces.
+    #[serde(default)]
+    pub keywords: String,
+    /// What to type to see its search results.
+    #[serde(default)]
+    pub examples: Vec<String>,
+    /// What its page does.
+    #[serde(default)]
+    pub page: String,
+    /// What its tool does.
+    #[serde(default)]
+    pub tool: String,
 }
 
 /// `module.json`, written by `arthex pack`.
@@ -218,7 +230,7 @@ pub fn is_safe_path(path: &str) -> bool {
         })
 }
 
-fn sha256(content: &[u8]) -> String {
+pub fn sha256(content: &[u8]) -> String {
     Sha256::digest(content)
         .iter()
         .fold(String::new(), |mut hex, byte| {

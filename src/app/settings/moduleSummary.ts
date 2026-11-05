@@ -1,11 +1,11 @@
-import type { ModuleOffer } from '../../core/api';
+import type { ModuleOffer, ModuleTexts } from '../../core/api';
 import { formatBytes } from '../../core/format';
 import { getLocale, t } from '../../core/i18n';
 import { ELEMENTS, type Element } from '../../core/modules';
 import { TINTS, type Tint } from '../../core/modules/manifest';
 
-/** The name and description of a module that is not loaded, in the active language if it has it. */
-export function pickTexts(texts: ModuleOffer['texts']): { name: string; description: string } | undefined {
+/** The texts of a module that is not loaded, in the active language if it has it. */
+export function pickTexts(texts: ModuleOffer['texts']): ModuleTexts | undefined {
   return texts[getLocale()] ?? texts['en'] ?? Object.values(texts)[0];
 }
 

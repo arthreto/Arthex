@@ -19,6 +19,7 @@ import { zip } from './zip.js';
 
 /** `HOST_API` of the app this SDK comes with. */
 const API = 5;
+const MAX_PREVIEW_BYTES = 2 * 1024 * 1024;
 const ELEMENTS = ['page', 'widget', 'search', 'tool', 'contextMenu'];
 const require = createRequire(import.meta.url);
 
@@ -136,7 +137,17 @@ async function stage(dir, target) {
     texts: Object.fromEntries(
       Object.entries(module.locales).map(([language, messages]) => [
         language,
-        { name: messages.name ?? module.id, description: messages.description ?? '' },
+        {
+          name: messages.name ?? module.id,
+          description: messages.description ?? '',
+          keywords: messages.keywords ?? '',
+          examples: (messages.catalog?.examples ?? '')
+            .split('|')
+            .map((example) => example.trim())
+            .filter(Boolean),
+          page: messages.catalog?.page ?? '',
+          tool: messages.catalog?.tool ?? '',
+        },
       ]),
     ),
   };
@@ -154,6 +165,29 @@ async function buildUnsigned(args) {
   fs.cpSync(staging, target, { recursive: true });
   fs.rmSync(staging, { recursive: true, force: true });
   console.log(target);
+}
+
+/** Next to the packages, not in them: it is only shown before installing. */
+function packPreview(dir, out, id) {
+  const source = ['webp', 'png', 'jpg']
+    .map((extension) => path.join(dir, `preview.${extension}`))
+    .find((file) => fs.existsSync(file));
+  if (!source) return undefined;
+  const content = fs.readFileSync(source);
+  if (content.length > MAX_PREVIEW_BYTES) fail(`${path.basename(source)} is larger than 2 MB`);
+  const file = `${id}-preview${path.extname(source)}`;
+  fs.writeFileSync(path.join(out, file), content);
+  return { file, sha256: sha256(content) };
+}
+
+/** The day the module's folder last changed. Every release packs all modules again. */
+function lastChange(dir) {
+  try {
+    const day = execFileSync('git', ['log', '-1', '--format=%cs', '--', '.'], { cwd: dir, encoding: 'utf8' });
+    return day.trim() || undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 async function pack(args) {
@@ -179,7 +213,14 @@ async function pack(args) {
   );
   fs.mkdirSync(out, { recursive: true });
   fs.writeFileSync(path.join(out, `${name}.arthex`), archive);
-  const entry = { ...info, file: `${name}.arthex`, size: archive.length };
+  const preview = packPreview(dir, out, module.id);
+  const entry = {
+    ...info,
+    file: `${name}.arthex`,
+    size: archive.length,
+    updated: lastChange(dir),
+    ...(preview && { preview }),
+  };
   fs.writeFileSync(path.join(out, `${name}.json`), JSON.stringify(entry, null, 2));
   fs.rmSync(staging, { recursive: true, force: true });
   console.log(`${name}.arthex`);
@@ -203,8 +244,21 @@ function catalog(args) {
     if (known && newer(known.version, entry.version)) continue;
     const packages = known?.version === entry.version ? known.packages : {};
     packages[entry.platform] = { file: entry.file, size: entry.size };
-    const { id, version, api, icon, tint, elements, tags, texts } = entry;
-    modules.set(id, { id, version, api, icon, tint, elements, tags, texts, packages });
+    const { id, version, api, icon, tint, elements, tags, texts, contextMenu, updated, preview } = entry;
+    modules.set(id, {
+      id,
+      version,
+      api,
+      icon,
+      tint,
+      elements,
+      tags,
+      texts,
+      contextMenu,
+      updated,
+      preview,
+      packages,
+    });
   }
   const file = path.join(dir, 'catalog.json');
   fs.writeFileSync(file, JSON.stringify({ modules: [...modules.values()] }, null, 2));

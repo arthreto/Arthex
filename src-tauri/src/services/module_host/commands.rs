@@ -28,6 +28,12 @@ pub async fn modules_catalog_kept(app: AppHandle) -> Result<Option<Vec<catalog::
     blocking(move || catalog::kept_offers(&app)).await?
 }
 
+/// The image of a module of the catalog.
+#[tauri::command]
+pub async fn modules_preview(app: AppHandle, id: String) -> Result<Option<String>> {
+    blocking(move || catalog::preview(&app, &id)).await?
+}
+
 /// Installs or updates a module from the catalog.
 #[tauri::command]
 pub async fn modules_install(app: AppHandle, id: String) -> Result<Installed> {

@@ -197,7 +197,7 @@ A `.arthex` file can be installed three ways: from the catalog, with "Install fr
   - `index.js` is its interface (its default export comes from `defineModule` of the SDK), `style.css` its styles.
 - **Files:** unpacked in `<local data>/modules/<id>/`, replacing the previous version in one rename. What a module keeps lives in `<data>/module-data/<id>/`, which survives updates; uninstalling deletes it only when the user ticks "Also delete its data".
 - **Serving** (`protocol.rs`): interface files only (`js`, `css`, `json`, `png`, `svg`, `woff2`), at `arthex-module://localhost/<id>/` (`http://arthex-module.localhost/<id>/` on Windows). The CSP allows scripts and styles from there and nowhere else besides the app.
-- **Catalog** (`catalog.rs`): `catalog.json` and `catalog.json.sig` from the latest release of `arthreto/arthex-modules`. They are read when the Catalog tab opens or "Check for updates" is pressed, and 40 s after launch only when modules are installed and updates install automatically. The last pair read is kept in `module-catalog/` and shown at once, signature checked, while the network answers. Each entry gives the module's texts, icon, tint, elements, tags (at most 8) and one package per platform (or `any`).
+- **Catalog** (`catalog.rs`): `catalog.json` and `catalog.json.sig` from the latest release of `arthreto/arthex-modules`. They are read when the Catalog tab opens or ↻ is pressed, and 40 s after launch only when modules are installed and updates install automatically. The last pair read is kept in `module-catalog/` and shown at once, signature checked, while the network answers. Each entry gives the module's texts, icon, tint, elements, tags (at most 8), right-click actions, the date of its last change, its preview image and one package per platform (or `any`). The image is downloaded only when its details are opened (`modules_preview`), and checked against the hash of the signed catalog.
 - **Categories:** the Catalog tab filters by type of element and by category. The categories are the closed list `TAGS` of `src/core/modules/tags.ts`: a module picks among them in `tags` and can never add one.
   - Each one has an English id in code (`math`, `games`…) and its name in every language under `settings.modules.tags.<id>` of `src/core/locales/`.
   - `defineModule` of the SDK refuses an unknown tag, so `arthex pack` fails. The interface ignores unknown tags of the catalog (`knownTags`).
@@ -271,12 +271,16 @@ Installable modules live outside this repository, in [`arthreto/arthex-modules`]
    - A program can come with files: `native/bundle/` is copied next to it, and `native/prepare.mjs`, when present, runs first to fetch them. A package holds 64 MB at most.
    - Windows 11 shows these actions under "Show more options". Its first menu only takes commands of a signed, packaged app, which Arthex is not.
 
-5. Develop it without signing: `npx arthex build <module> --out dev-modules`, then `ARTHEX_DEV_MODULES=<full path of dev-modules> npm run tauri dev`.
-6. Release it, with `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` set as for app releases:
-   - `npx arthex pack <module> --out dist` (add `--target <rust target>` for each platform when it has a program) writes `<id>-<version>-<platform>.arthex` and its catalog entry;
+5. The details shown in the Catalog tab come from the module itself:
+   - version, languages, systems, size, categories, search keywords and right-click actions are read when it is packed, and the date from the last commit of its folder;
+   - `catalog.examples` of its locales lists search examples separated by `|`, and `catalog.page` and `catalog.tool` say what its page and tool do;
+   - a real screenshot named `preview.webp`, `preview.png` or `preview.jpg` next to `manifest.ts`, 2 MB at most, is published beside the package as `<id>-preview.<ext>`. Without one, its icon is shown.
+6. Develop it without signing: `npx arthex build <module> --out dev-modules`, then `ARTHEX_DEV_MODULES=<full path of dev-modules> npm run tauri dev`.
+7. Release it, with `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` set as for app releases:
+   - `npx arthex pack <module> --out dist` (add `--target <rust target>` for each platform when it has a program) writes `<id>-<version>-<platform>.arthex`, its preview and its catalog entry;
    - `npx arthex catalog dist` merges the entries into a signed `catalog.json`;
-   - publish every `.arthex`, `catalog.json` and `catalog.json.sig` in the latest release of `arthreto/arthex-modules`.
-7. A change to `HostApi` or to what `@arthex/sdk` exports raises `HOST_API` in Rust and `API` in `sdk/cli.js` together. A module that uses it sets `api` to that version in its `manifest.ts`.
+   - publish every `.arthex`, every preview, `catalog.json` and `catalog.json.sig` in the latest release of `arthreto/arthex-modules`.
+8. A change to `HostApi` or to what `@arthex/sdk` exports raises `HOST_API` in Rust and `API` in `sdk/cli.js` together. A module that uses it sets `api` to that version in its `manifest.ts`.
 
 ## Rust commands and events
 

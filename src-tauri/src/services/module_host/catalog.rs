@@ -5,12 +5,14 @@
 
 use std::{collections::BTreeMap, fs, path::PathBuf, thread, time::Duration};
 
+use base64::{Engine, engine::general_purpose::STANDARD};
 use semver::Version;
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager};
 
 use super::{
     HOST_API, Installed, ModuleHost,
+    context_menu::Action,
     package::{self, MAX_PACKAGE_BYTES, Texts, current_platform, is_safe_path},
     public_key,
 };
@@ -18,6 +20,7 @@ use crate::app::{self, AppError, Result, is_module_id};
 
 const BASE: &str = "https://github.com/arthreto/arthex-modules/releases/latest/download/";
 const MAX_CATALOG_BYTES: u64 = 4 * 1024 * 1024;
+const MAX_PREVIEW_BYTES: u64 = 2 * 1024 * 1024;
 const CATALOG_FILE: &str = "catalog.json";
 const SIGNATURE_FILE: &str = "catalog.json.sig";
 
@@ -28,6 +31,13 @@ const MAX_TAGS: usize = 8;
 struct PackageFile {
     file: String,
     size: u64,
+}
+
+/// An image of the module, next to the packages. The catalog is signed, so its hash is enough.
+#[derive(Debug, Clone, Deserialize)]
+struct PreviewFile {
+    file: String,
+    sha256: String,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -46,6 +56,14 @@ struct Entry {
     texts: BTreeMap<String, Texts>,
     /// Per platform (`windows-x86_64`), or `any` for a module without a program.
     packages: BTreeMap<String, PackageFile>,
+    /// Its actions in the right-click menu, to show before it is installed.
+    #[serde(default)]
+    context_menu: Vec<Action>,
+    /// The day it last changed, as `2026-11-05`.
+    #[serde(default)]
+    updated: Option<String>,
+    #[serde(default)]
+    preview: Option<PreviewFile>,
 }
 
 impl Entry {
@@ -66,6 +84,20 @@ impl Entry {
                     && !package.file.contains('/')
                     && package.file.ends_with(".arthex")
             })
+            && self.preview.as_ref().is_none_or(|preview| {
+                is_safe_path(&preview.file)
+                    && !preview.file.contains('/')
+                    && preview_type(&preview.file).is_some()
+            })
+    }
+}
+
+fn preview_type(file: &str) -> Option<&'static str> {
+    match file.rsplit('.').next()? {
+        "webp" => Some("image/webp"),
+        "png" => Some("image/png"),
+        "jpg" => Some("image/jpeg"),
+        _ => None,
     }
 }
 
@@ -97,6 +129,11 @@ pub struct Offer {
     texts: BTreeMap<String, Texts>,
     size: u64,
     state: OfferState,
+    /// Where it runs: `any`, or systems such as `windows-x86_64`.
+    platforms: Vec<String>,
+    context_menu: Vec<Action>,
+    updated: Option<String>,
+    has_preview: bool,
 }
 
 fn agent() -> ureq::Agent {
@@ -223,9 +260,40 @@ fn to_offers(app: &AppHandle, entries: Vec<Entry>) -> Vec<Offer> {
                 tags: entry.tags,
                 texts: entry.texts,
                 size,
+                platforms: entry.packages.into_keys().collect(),
+                context_menu: entry
+                    .context_menu
+                    .into_iter()
+                    .filter(Action::is_valid)
+                    .collect(),
+                updated: entry.updated,
+                has_preview: entry.preview.is_some(),
             })
         })
         .collect()
+}
+
+/// The image of a module, as a data address: the interface cannot load a remote one.
+pub fn preview(app: &AppHandle, id: &str) -> Result<Option<String>> {
+    let dir = kept_dir(app)?;
+    let (catalog, signature) = (
+        fs::read(dir.join(CATALOG_FILE))?,
+        fs::read(dir.join(SIGNATURE_FILE))?,
+    );
+    let Some(preview) = read_signed(&catalog, &signature, &public_key(app)?)?
+        .into_iter()
+        .find(|entry| entry.id == id)
+        .and_then(|entry| entry.preview)
+    else {
+        return Ok(None);
+    };
+    let bytes = download(&agent(), &preview.file, MAX_PREVIEW_BYTES)?
+        .ok_or_else(|| AppError::Failed(format!("{} is missing", preview.file)))?;
+    if package::sha256(&bytes) != preview.sha256 {
+        return Err(AppError::Invalid(format!("{} was altered", preview.file)));
+    }
+    Ok(preview_type(&preview.file)
+        .map(|kind| format!("data:{kind};base64,{}", STANDARD.encode(bytes))))
 }
 
 /// Installs or updates a module from the catalog. The package is checked like any other.
@@ -295,6 +363,9 @@ mod tests {
                     size: 1,
                 },
             )]),
+            context_menu: Vec::new(),
+            updated: None,
+            preview: None,
         }
     }
 
