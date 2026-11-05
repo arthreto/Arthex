@@ -149,10 +149,13 @@
   .card {
     position: relative;
     width: 212px;
+    min-height: 220px;
+    display: flex;
   }
 
   .open {
     width: 100%;
+    flex: 1;
     padding: 22px 14px 18px;
     border-radius: var(--radius-xl);
     display: flex;
