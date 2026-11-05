@@ -6,7 +6,7 @@
   import Keycap from '../ui/Keycap.svelte';
   import ResultIcon from './ResultIcon.svelte';
   import SearchPreview from './SearchPreview.svelte';
-  import { search } from './search.svelte';
+  import { MIN_LENGTH, search } from './search.svelte';
 
   const DELAY_MS = 40;
 
@@ -49,7 +49,11 @@
         {#if index === search.selected}<Keycap>{t('keys.enter')}</Keycap>{/if}
       </button>
     {:else}
-      <p class="empty">{t('search.noResults', { query: search.query.trim() })}</p>
+      {#if search.tooShort}
+        <p class="empty">{t('search.tooShort', { count: MIN_LENGTH })}</p>
+      {:else if search.pending === 0}
+        <p class="empty">{t('search.noResults', { query: search.query.trim() })}</p>
+      {/if}
     {/each}
   </div>
   {#if search.current}

@@ -8,7 +8,7 @@ import { toast } from '../core/toast.svelte';
 import { toolSearch } from './toolSearch';
 
 /** Fewer letters bring too many results to be useful, except for commands and calculations. */
-const MIN_LENGTH = 2;
+export const MIN_LENGTH = 2;
 
 class SearchState {
   query = $state('');
@@ -16,7 +16,16 @@ class SearchState {
   selected = $state(0);
   /** A result waiting for the user to confirm its action. */
   confirming = $state<SearchResult | null>(null);
+  /** Providers still answering the current query. */
+  pending = $state(0);
+
   #run = 0;
+
+  /** Too short to search: the view asks for more letters. Commands and calculations always run. */
+  get tooShort(): boolean {
+    const query = parseQuery(this.query);
+    return !query.commandsOnly && query.text.length < MIN_LENGTH && !/\d/.test(query.text);
+  }
 
   get active(): boolean {
     return this.query.trim().length > 0;
@@ -33,31 +42,45 @@ class SearchState {
     this.confirming = null;
   }
 
-  /** Asks every enabled provider; a slower answer to an older query is dropped. */
+  /**
+   * Asks every enabled provider and shows each answer as it comes, so a slow one (the app list
+   * being read) never holds back the others. Answers to an older query are dropped.
+   */
   async update(): Promise<void> {
     const run = ++this.#run;
     const query = parseQuery(this.query);
     this.confirming = null;
-    if (!query.commandsOnly && query.text.length < MIN_LENGTH && !/\d/.test(query.text)) {
+    if (this.tooShort) {
       this.results = [];
+      this.pending = 0;
       return;
     }
-    const answers = await Promise.all(
-      [toolSearch, ...searchProviders(settings.value)].map(async (provider) => {
+    const providers = [toolSearch, ...searchProviders(settings.value)];
+    const answers: Parameters<typeof mergeResults>[0] = [];
+    let first = true;
+    this.pending = providers.length;
+    await Promise.all(
+      providers.map(async (provider) => {
+        let results: SearchResult[] = [];
         try {
-          return {
-            order: provider.order,
-            exclusive: provider.exclusive ?? false,
-            results: await provider.search(query),
-          };
+          results = await provider.search(query);
         } catch {
-          return { order: provider.order, exclusive: false, results: [] };
+          // A failing provider only loses its own group.
         }
+        if (run !== this.#run) return;
+        answers.push({ order: provider.order, exclusive: provider.exclusive ?? false, results });
+        this.pending -= 1;
+        this.#show(mergeResults(answers), first);
+        first = false;
       }),
     );
-    if (run !== this.#run) return;
-    this.results = mergeResults(answers);
-    this.selected = 0;
+  }
+
+  /** Keeps the chosen result chosen when a later answer adds results above it. */
+  #show(results: SearchResult[], fresh: boolean): void {
+    const chosen = fresh ? undefined : this.current?.key;
+    this.results = results;
+    this.selected = Math.max(0, chosen ? results.findIndex((result) => result.key === chosen) : 0);
   }
 
   move(step: number): void {

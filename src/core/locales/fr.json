@@ -23,6 +23,7 @@
     "placeholder": "Rechercher fichiers, apps, sites…    = calcul    > commande",
     "clear": "Effacer la recherche",
     "noResults": "Aucun résultat pour « {query} ».",
+    "tooShort": "Tape au moins {count} caractères",
     "preview": "Aperçu",
     "copyPath": "Copier le chemin",
     "pathCopied": "Chemin copié : {path}",

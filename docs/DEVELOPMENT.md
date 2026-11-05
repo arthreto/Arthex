@@ -137,7 +137,7 @@ A module adds results to the search bar with a `SearchProvider` (`src/core/searc
 - `status` is a component shown above the results while the provider cannot answer fully yet. File search shows the progress of the first indexing there (`file-index://building`): until it ends, no file can be found.
 - A result names its `primary` action (Enter) and may add a `secondary` one (Ctrl + Enter), a `path` to copy, a `confirm` question for actions that cannot be undone, or a `panel` component that replaces the preview buttons.
 
-The shell asks every enabled provider at each keystroke and drops answers to older queries.
+The shell asks every enabled provider at each keystroke and shows each answer as it arrives, so a slow provider never holds back the others; answers to older queries are dropped. Below 2 characters (except commands and calculations), it asks for more instead of searching.
 
 ### Tools
 

@@ -4,14 +4,18 @@ pub mod commands;
 
 use std::{
     path::Path,
-    sync::{Mutex, PoisonError},
+    sync::{
+        Mutex, PoisonError,
+        atomic::{AtomicBool, Ordering},
+    },
+    thread,
     time::{Duration, Instant},
 };
 
 use serde::Serialize;
 use tauri::{AppHandle, Manager};
 
-/// Installed apps change rarely; the list is rebuilt at most this often.
+/// Installed apps change rarely; an older list is rebuilt in the background.
 const FRESH_FOR: Duration = Duration::from_secs(5 * 60);
 
 #[derive(Debug, Clone, Serialize)]
@@ -27,20 +31,41 @@ pub struct App {
 #[derive(Default)]
 pub struct Apps {
     cache: Mutex<Option<(Instant, Vec<App>)>>,
+    refreshing: AtomicBool,
 }
 
 impl Apps {
-    /// Slow the first time (icons are read from the shell): call it off the interface thread.
-    pub fn list(&self) -> Vec<App> {
-        if let Some((built, apps)) = &*self.cache.lock().unwrap_or_else(PoisonError::into_inner)
-            && built.elapsed() < FRESH_FOR
-        {
-            return apps.clone();
+    /// The known apps at once. Only the very first call waits for the shell, which reads the icons:
+    /// call it off the interface thread. A list that got old is rebuilt in the background.
+    pub fn list(app: &AppHandle) -> Vec<App> {
+        let apps = app.state::<Self>();
+        let cached = apps
+            .cache
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .clone();
+        let Some((built, list)) = cached else {
+            return apps.rebuild();
+        };
+        if built.elapsed() >= FRESH_FOR && !apps.refreshing.swap(true, Ordering::SeqCst) {
+            let handle = app.clone();
+            let spawned = thread::Builder::new().name("apps".into()).spawn(move || {
+                let apps = handle.state::<Self>();
+                apps.rebuild();
+                apps.refreshing.store(false, Ordering::SeqCst);
+            });
+            if spawned.is_err() {
+                apps.refreshing.store(false, Ordering::SeqCst);
+            }
         }
-        let apps = build();
+        list
+    }
+
+    fn rebuild(&self) -> Vec<App> {
+        let list = build();
         *self.cache.lock().unwrap_or_else(PoisonError::into_inner) =
-            Some((Instant::now(), apps.clone()));
-        apps
+            Some((Instant::now(), list.clone()));
+        list
     }
 
     fn knows(&self, id: &str) -> bool {

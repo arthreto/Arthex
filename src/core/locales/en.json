@@ -23,6 +23,7 @@
     "placeholder": "Search files, apps, sites…    = calculate    > command",
     "clear": "Clear search",
     "noResults": "No results for “{query}”.",
+    "tooShort": "Type at least {count} characters",
     "preview": "Preview",
     "copyPath": "Copy path",
     "pathCopied": "Path copied: {path}",

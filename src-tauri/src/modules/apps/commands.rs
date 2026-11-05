@@ -6,7 +6,7 @@ use crate::app::{AppError, Result, dialogs::blocking, overlay};
 
 #[tauri::command]
 pub async fn apps_list(app: AppHandle) -> Result<Vec<App>> {
-    blocking(move || app.state::<Apps>().list()).await
+    blocking(move || Apps::list(&app)).await
 }
 
 /// Starts an app from the list, through the shell, as the Start menu does.
