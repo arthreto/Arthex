@@ -195,7 +195,7 @@ A `.arthex` file can be installed three ways: from the catalog, with "Install fr
 
 ### Make an installable module
 
-Installable modules live outside this repository (in `arthreto/arthex-modules`, or anywhere). They use the kit in `sdk/`, which their `package.json` references as `"@arthex/sdk": "file:<path to this repository>/sdk"`, next to `svelte`, `vite`, `@sveltejs/vite-plugin-svelte` and `@tauri-apps/cli`.
+Installable modules live outside this repository, in [`arthreto/arthex-modules`](https://github.com/arthreto/arthex-modules), whose README covers the day-to-day steps. That repository holds this one as a submodule (`arthex/`) and references the kit as `"@arthex/sdk": "file:arthex/sdk"`, next to `svelte`, `vite`, `@sveltejs/vite-plugin-svelte` and `@tauri-apps/cli`, so every module is built with a known version of the SDK. Its CI builds every module, and its Release workflow packs, signs and publishes them with the catalog.
 
 1. A module is a folder like a built-in one. Its `manifest.ts` adds a `version` and its `locales`:
 
