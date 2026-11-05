@@ -71,6 +71,9 @@ impl RecentApps {
     fn load(path: PathBuf) -> Self {
         let mut entries: Vec<Entry> = storage::read_json(&path).unwrap_or_default();
         entries.truncate(MAX);
+        for entry in &mut entries {
+            entry.name = saved_name(&entry.name);
+        }
         Self {
             path,
             history: Mutex::new(History(entries)),
@@ -117,6 +120,11 @@ impl RecentApps {
     }
 }
 
+/// Older versions could save what followed the end of a program's name, after a NUL.
+fn saved_name(name: &str) -> String {
+    name.split('\0').next().unwrap_or(name).trim().to_owned()
+}
+
 pub fn setup(app: &AppHandle) -> Result<()> {
     let path = app.path().app_data_dir()?.join("recent.json");
     app.manage(RecentApps::load(path));
@@ -155,6 +163,15 @@ mod tests {
 
     fn paths(history: &History) -> Vec<&str> {
         history.0.iter().map(|entry| entry.path.as_str()).collect()
+    }
+
+    #[test]
+    fn a_saved_name_loses_what_follows_a_nul() {
+        assert_eq!(
+            saved_name("NVIDIA App\0\08\u{18}\u{1}FileVer"),
+            "NVIDIA App"
+        );
+        assert_eq!(saved_name("Claude"), "Claude");
     }
 
     #[test]

@@ -229,18 +229,21 @@ fn description(path: &str) -> Option<String> {
             &block,
             &format!(r"\StringFileInfo\{language:04x}{code_page:04x}\FileDescription"),
         )?;
-        let units: Vec<u16> = text
-            .as_chunks::<2>()
-            .0
-            .iter()
-            .map(|pair| u16::from_le_bytes(*pair))
-            .collect();
-        let description = String::from_utf16_lossy(&units)
-            .trim_end_matches('\0')
-            .trim()
-            .to_owned();
+        let description = version_text(text);
         (!description.is_empty()).then_some(description)
     }
+}
+
+/// A version string stops at its first NUL: some programs report a length that runs past it.
+fn version_text(bytes: &[u8]) -> String {
+    let units: Vec<u16> = bytes
+        .as_chunks::<2>()
+        .0
+        .iter()
+        .map(|pair| u16::from_le_bytes(*pair))
+        .take_while(|unit| *unit != 0)
+        .collect();
+    String::from_utf16_lossy(&units).trim().to_owned()
 }
 
 /// Reads a value of a version block as bytes.
@@ -265,7 +268,13 @@ unsafe fn query<'a>(block: &'a [u8], name: &str) -> Option<&'a [u8]> {
         } else {
             length as usize
         };
-        Some(std::slice::from_raw_parts(value.cast::<u8>(), bytes))
+        // The reported length comes from the file and may run past the end of the block.
+        let start = value.addr().saturating_sub(block.as_ptr().addr());
+        let available = block.len().saturating_sub(start);
+        Some(std::slice::from_raw_parts(
+            value.cast::<u8>(),
+            bytes.min(available),
+        ))
     }
 }
 
@@ -292,5 +301,24 @@ pub fn bring_to_front(window: isize) -> bool {
             ShowWindow(window, SW_RESTORE);
         }
         SetForegroundWindow(window) != 0
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::version_text;
+
+    fn bytes(text: &str) -> Vec<u8> {
+        text.encode_utf16().flat_map(u16::to_le_bytes).collect()
+    }
+
+    #[test]
+    fn a_version_text_stops_at_its_first_nul() {
+        assert_eq!(version_text(&bytes("NVIDIA App\0\08FileVer")), "NVIDIA App");
+    }
+
+    #[test]
+    fn a_version_text_keeps_accents_and_drops_outer_spaces() {
+        assert_eq!(version_text(&bytes(" Paramètres \0")), "Paramètres");
     }
 }
