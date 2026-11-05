@@ -56,7 +56,7 @@ To uninstall, use the tray menu (**Uninstall…**) or Windows Settings → Apps.
 
 ## Modules
 
-Add only what you need with extra modules, such as a color picker, a unit converter or Discord presence templates. See them all in [arthex-modules](https://github.com/arthreto/arthex-modules).
+Add only what you need with extra modules: a color picker, a unit converter, etc. They are all in the Catalog of Arthex and in [arthex-modules](https://github.com/arthreto/arthex-modules).
 
 - **From Arthex:** open **Settings → Modules → Catalog**, or **Add modules** at the end of All pages, then click **Install**.
 - **From a file:** download a `.arthex` file from the [modules releases](https://github.com/arthreto/arthex-modules/releases) and open it, or use **Install from a file…** in the Catalog.

@@ -17,7 +17,7 @@ Arthex is a fast, secure overlay utility. **Shift + Win** opens a full-screen tr
    - Start the release right after pushing, alongside CI, never after waiting for it: its own Windows build fails on code that does not compile, and then nothing is published.
 4. **English everywhere** in the repository: code, comments, commits, README, this file. The interface is translated through i18n. The owner writes in French; answer them in French.
 5. **Three markdown files only**, each with one role. No other markdown file.
-   - `README.md`: presentation, installation and credits, for users. Screenshots: one large Home image, then Search and FileSize only, in English, over a desktop wallpaper.
+   - `README.md`: presentation, installation and credits, for users. Screenshots: one large Home image, then Search and FileSize only, in English, over a desktop wallpaper. Never list every module: name a few followed by "etc.", or none, so that adding a module changes no README.
    - `docs/DEVELOPMENT.md`: how the code works and how to extend it, for developers. Update it in the same commit as any change it describes.
    - `CLAUDE.md`: the project rules.
 6. **Run the checks** from `docs/DEVELOPMENT.md` → Checks before every commit.
