@@ -80,7 +80,9 @@
   .list {
     flex: 1;
     min-width: 0;
-    padding: 0 12px 12px 0;
+    /* Room for the 4 px focus outline of a result, which the scrolling list would otherwise cut. */
+    padding: 4px 16px 12px 4px;
+    scroll-padding: 4px;
   }
 
   .group {
