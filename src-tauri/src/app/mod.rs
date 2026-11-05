@@ -29,6 +29,7 @@ pub fn setup(app: &AppHandle) -> Result<()> {
     let store = SettingsStore::load(app.path().app_config_dir()?.join("settings.json"));
     let settings = store.get();
     logging::set_debug(settings.debug_log);
+    system::log_display();
     app.manage(AppState { settings: store });
 
     autostart::apply(app, settings.autostart);

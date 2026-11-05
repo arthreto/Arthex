@@ -5,6 +5,44 @@ use tauri_plugin_opener::OpenerExt;
 
 use super::{AppError, Result};
 
+/// Writes what lets the overlay show the desktop through it: Windows may turn the effect off.
+#[cfg(windows)]
+pub fn log_display() {
+    use windows_sys::Win32::{
+        System::Power::{GetSystemPowerStatus, SYSTEM_POWER_STATUS},
+        UI::WindowsAndMessaging::{GetSystemMetrics, SM_REMOTESESSION},
+    };
+    use winreg::{
+        RegKey,
+        enums::{HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE},
+    };
+
+    let build: Option<String> = RegKey::predef(HKEY_LOCAL_MACHINE)
+        .open_subkey(r"SOFTWARE\Microsoft\Windows NT\CurrentVersion")
+        .and_then(|key| key.get_value("CurrentBuildNumber"))
+        .ok();
+    let transparency: Option<u32> = RegKey::predef(HKEY_CURRENT_USER)
+        .open_subkey(r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize")
+        .and_then(|key| key.get_value("EnableTransparency"))
+        .ok();
+    // SAFETY: plain queries; the status is written to a local the call borrows.
+    let (remote, energy_saver) = unsafe {
+        let mut power: SYSTEM_POWER_STATUS = std::mem::zeroed();
+        let saver = GetSystemPowerStatus(&raw mut power) != 0 && power.SystemStatusFlag == 1;
+        (GetSystemMetrics(SM_REMOTESESSION) != 0, saver)
+    };
+    tracing::info!(
+        build = build.as_deref().unwrap_or("unknown"),
+        transparency = ?transparency,
+        remote,
+        energy_saver,
+        "display"
+    );
+}
+
+#[cfg(not(windows))]
+pub fn log_display() {}
+
 pub fn open_data_dir(app: &AppHandle) -> Result<()> {
     let dir = app.path().app_data_dir()?;
     fs::create_dir_all(&dir)?;
