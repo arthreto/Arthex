@@ -1,0 +1,13 @@
+{
+  "name": "Recherche web",
+  "description": "Google, YouTube et les sites connus depuis la barre.",
+  "group": "Web",
+  "site": "Site web",
+  "search": "Recherche web",
+  "searchOn": "Rechercher « {terms} » sur {engine}",
+  "hint": "g, yt, w, gh, ddg devant le texte pour choisir",
+  "open": "Ouvrir",
+  "address": "Adresse",
+  "opening": "Ouverture",
+  "browser": "Navigateur par défaut"
+}

@@ -1,0 +1,13 @@
+{
+  "name": "Web search",
+  "description": "Google, YouTube and well-known sites from the search bar.",
+  "group": "Web",
+  "site": "Website",
+  "search": "Web search",
+  "searchOn": "Search “{terms}” on {engine}",
+  "hint": "g, yt, w, gh, ddg before the text to choose",
+  "open": "Open",
+  "address": "Address",
+  "opening": "Opens in",
+  "browser": "Default browser"
+}

@@ -127,7 +127,7 @@ api.ts               typed wrappers of its Rust commands (if any)
 A module adds results to the search bar with a `SearchProvider` (`src/core/search/types.ts`):
 
 - `search(query)` returns `SearchResult`s, synchronously or not. `query` carries the typed `text`, a `normalized` copy and `commandsOnly` (the query starts with `>`).
-- `order` places its group among the others: calculator 0, tools 5, apps 10, sites 20, system commands 30, files 40.
+- `order` places its group among the others: calculator 0, tools 5, apps 10, sites 20, web 25, system commands 30, files 40.
 - `exclusive: true` hides every other group when it answers (the calculator).
 - A result names its `primary` action (Enter) and may add a `secondary` one (Ctrl + Enter), a `path` to copy, a `confirm` question for actions that cannot be undone, or a `panel` component that replaces the preview buttons.
 

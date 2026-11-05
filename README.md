@@ -24,17 +24,17 @@ It is built for Windows 11. macOS and Linux get a simplified version.
 
 ## Features
 
-|               |                                                                                                                         |
-| ------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| **Search**    | Files and folders (own index, much faster than Windows Search), apps, websites, calculator (`=`), system commands (`>`) |
-| **Home**      | Shortcuts to websites and software, recent apps, storage, notes and last copied item                                    |
-| **FileSize**  | Folder tree, treemap and largest files, with deletion to the Recycle Bin                                                |
-| **Notes**     | Markdown notes (headings, bold, italic, checkboxes) with Preview and Edit modes                                         |
-| **Clipboard** | Text history kept in memory only, never written to disk                                                                 |
-| **System**    | Lock, sleep, restart, shut down, scheduled shutdown                                                                     |
-| **All pages** | Every page in one launcher. Pin your favourites to the top, choose the tab bar, turn pages off.                         |
-| **Modules**   | Turn each page, Home card, search source and tool on or off. Install more modules from the catalog or from a file       |
-| **Updates**   | Signed automatic updates from GitHub Releases, with release notes at the next launch                                    |
+|               |                                                                                                                                                                   |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Search**    | Files and folders (own index, much faster than Windows Search), apps, websites, web search (`g`, `yt`, `w`…), calculator with its own tool, system commands (`>`) |
+| **Home**      | Shortcuts to websites and software, recent apps, storage, notes and last copied item                                                                              |
+| **FileSize**  | Folder tree, treemap and largest files, with deletion to the Recycle Bin                                                                                          |
+| **Notes**     | Markdown notes (headings, bold, italic, checkboxes) with Preview and Edit modes                                                                                   |
+| **Clipboard** | Text history kept in memory only, never written to disk                                                                                                           |
+| **System**    | Lock, sleep, restart, shut down, scheduled shutdown                                                                                                               |
+| **All pages** | Every page in one launcher. Pin your favourites to the top, choose the tab bar, turn pages off.                                                                   |
+| **Modules**   | Turn each page, Home card, search source and tool on or off. Install more modules from the catalog or from a file                                                 |
+| **Updates**   | Signed automatic updates from GitHub Releases, with release notes at the next launch                                                                              |
 
 Languages: English and French.
 

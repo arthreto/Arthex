@@ -68,6 +68,7 @@
     "allow-clipboard-clear",
     "allow-notes-list",
     "allow-notes-save",
-    "allow-notes-delete"
+    "allow-notes-delete",
+    "allow-web-search-open"
   ]
 }

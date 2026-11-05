@@ -89,6 +89,7 @@ pub fn run() {
             modules::recent_apps::commands::recent_apps_list,
             modules::recent_apps::commands::recent_apps_open,
             modules::recent_apps::commands::recent_apps_clear,
+            modules::web_search::commands::web_search_open,
         ])
         .setup(|tauri_app| {
             app::setup(tauri_app.handle())?;

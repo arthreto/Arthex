@@ -8,6 +8,7 @@ pub mod notes;
 pub mod recent_apps;
 pub mod shortcuts;
 pub mod system;
+pub mod web_search;
 
 use tauri::{AppHandle, Listener};
 
