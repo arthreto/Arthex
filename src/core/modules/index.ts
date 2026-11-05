@@ -9,6 +9,7 @@ export type { ModuleManifest, SettingsSection, Tint, ToolProps, WidgetSlot } fro
 export { ELEMENTS, HOME_ID, MAX_TAB_BAR, ZONES, elementsOf, switchElement, toggleFavorite } from './layout';
 export type { Element, Placement, Zone } from './layout';
 export { registry } from './registry.svelte';
+export { TAGS, knownTags, type Tag } from './tags';
 
 /** Built-in modules and the installed ones, by order. */
 export const allModules = () => registry.all;

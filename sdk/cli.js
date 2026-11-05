@@ -95,6 +95,7 @@ async function stage(dir, target) {
     ...(native && { native }),
     background: module.background,
     elements: ELEMENTS.filter((element) => module[element] !== undefined),
+    tags: module.tags ?? [],
     icon: module.icon,
     tint: module.tint,
     texts: Object.fromEntries(
@@ -167,8 +168,8 @@ function catalog(args) {
     if (known && newer(known.version, entry.version)) continue;
     const packages = known?.version === entry.version ? known.packages : {};
     packages[entry.platform] = { file: entry.file, size: entry.size };
-    const { id, version, api, icon, tint, elements, texts } = entry;
-    modules.set(id, { id, version, api, icon, tint, elements, texts, packages });
+    const { id, version, api, icon, tint, elements, tags, texts } = entry;
+    modules.set(id, { id, version, api, icon, tint, elements, tags, texts, packages });
   }
   const file = path.join(dir, 'catalog.json');
   fs.writeFileSync(file, JSON.stringify({ modules: [...modules.values()] }, null, 2));

@@ -18,6 +18,9 @@ use crate::app::{self, AppError, Result, is_module_id};
 const BASE: &str = "https://github.com/arthreto/arthex-modules/releases/latest/download/";
 const MAX_CATALOG_BYTES: u64 = 4 * 1024 * 1024;
 
+/// More would not be categories any more.
+const MAX_TAGS: usize = 8;
+
 #[derive(Debug, Clone, Deserialize)]
 struct PackageFile {
     file: String,
@@ -33,6 +36,9 @@ struct Entry {
     icon: String,
     tint: String,
     elements: Vec<String>,
+    /// Categories, among the fixed list the interface knows.
+    #[serde(default)]
+    tags: Vec<String>,
     /// Name and description per language code.
     texts: BTreeMap<String, Texts>,
     /// Per platform (`windows-x86_64`), or `any` for a module without a program.
@@ -50,6 +56,8 @@ impl Entry {
         is_module_id(&self.id)
             && Version::parse(&self.version).is_ok()
             && self.icon.len() <= 2000
+            && self.tags.len() <= MAX_TAGS
+            && self.tags.iter().all(|tag| tag.len() <= 32)
             && self.packages.values().all(|package| {
                 is_safe_path(&package.file)
                     && !package.file.contains('/')
@@ -82,6 +90,7 @@ pub struct Offer {
     icon: String,
     tint: String,
     elements: Vec<String>,
+    tags: Vec<String>,
     texts: BTreeMap<String, Texts>,
     size: u64,
     state: OfferState,
@@ -157,6 +166,7 @@ pub fn offers(app: &AppHandle) -> Result<Vec<Offer>> {
                 icon: entry.icon,
                 tint: entry.tint,
                 elements: entry.elements,
+                tags: entry.tags,
                 texts: entry.texts,
                 size,
             })
@@ -222,6 +232,7 @@ mod tests {
             icon: String::new(),
             tint: "green".into(),
             elements: vec!["tool".into()],
+            tags: vec!["time".into()],
             texts: BTreeMap::new(),
             packages: BTreeMap::from([(
                 "any".into(),
@@ -281,5 +292,8 @@ mod tests {
             },
         );
         assert!(!escaping.is_valid());
+        let mut tagged = entry("1.2.0", 1);
+        tagged.tags = vec!["time".into(); MAX_TAGS + 1];
+        assert!(!tagged.is_valid());
     }
 }

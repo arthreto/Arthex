@@ -2,6 +2,7 @@ import { mount, unmount, type Component } from 'svelte';
 import type { MessageTree } from '../src/core/i18n/types';
 import type { ForeignManifest, Mount } from '../src/core/modules/foreign';
 import type { Tint, ToolProps, WidgetSlot } from '../src/core/modules/manifest';
+import { TAGS, type Tag } from '../src/core/modules/tags';
 import type { SearchProvider } from '../src/core/search/types';
 
 type Lazy<Props extends Record<string, unknown> = Record<string, never>> = () => Promise<{
@@ -17,6 +18,8 @@ export interface InstallableModule {
   icon: string;
   tint: Tint;
   order: number;
+  /** Its categories in the catalog, among the fixed list `TAGS`. */
+  tags?: readonly Tag[];
   /** `import.meta.glob('./locales/*.json', { eager: true, import: 'default' })`. */
   locales: Record<string, MessageTree>;
   /** Its program runs as long as the module is active, not only while it is called. */
@@ -34,7 +37,7 @@ export interface InstallableModule {
   };
 }
 
-export type DefinedModule = ForeignManifest & { version: string; background: boolean };
+export type DefinedModule = ForeignManifest & { version: string; background: boolean; tags: Tag[] };
 
 /** The module brings its own Svelte: the shell receives functions that mount each view. */
 function mounted<Props extends Record<string, unknown>>(load: Lazy<Props>): () => Promise<Mount> {
@@ -57,12 +60,16 @@ function byLanguage(locales: Record<string, MessageTree>): Record<string, Messag
 }
 
 export function defineModule(module: InstallableModule): DefinedModule {
+  // Plain JavaScript modules skip the type check: `arthex pack` fails here instead.
+  const unknown = (module.tags ?? []).filter((tag) => !TAGS.includes(tag));
+  if (unknown.length > 0) throw new Error(`unknown tags: ${unknown.join(', ')}`);
   return {
     id: module.id,
     version: module.version,
     icon: module.icon,
     tint: module.tint,
     order: module.order,
+    tags: [...(module.tags ?? [])],
     background: module.background ?? false,
     locales: byLanguage(module.locales),
     page: lazy(module.page),

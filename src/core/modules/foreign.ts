@@ -3,6 +3,7 @@ import type { MessageTree, MessageValues } from '../i18n';
 import type { SearchProvider } from '../search/types';
 import ForeignView from './ForeignView.svelte';
 import { TINTS, type ModuleManifest, type WidgetSlot } from './manifest';
+import { knownTags } from './tags';
 
 /**
  * Shows a view of an installed module in `target` and returns what removes it. Installed modules
@@ -17,6 +18,7 @@ export interface ForeignManifest {
   icon: string;
   tint: string;
   order: number;
+  tags?: string[];
   /** Its `locales/<lang>.json`, by language code. */
   locales: Record<string, MessageTree>;
   page?: LazyMount;
@@ -84,6 +86,7 @@ export function adopt(raw: unknown, id: string): ModuleManifest | null {
     icon: raw.icon,
     tint,
     order: raw.order,
+    tags: knownTags(foreign.tags),
     page: view(foreign.page),
     widget: widget && widgetView ? { slot: widget.slot, component: widgetView } : undefined,
     search,

@@ -1,5 +1,6 @@
 import type { Component } from 'svelte';
 import type { SearchProvider } from '../search/types';
+import type { Tag } from './tags';
 
 /** Where a card goes on Home: the full-width row on top, the main column or the side column. */
 export type WidgetSlot = 'top' | 'main' | 'side';
@@ -29,6 +30,8 @@ export interface ModuleManifest {
   /** SVG path data of a 24×24 stroked icon. */
   icon: string;
   tint: Tint;
+  /** Its categories in the catalog. */
+  tags?: readonly Tag[];
   /** Position among modules when nothing else decides the order. */
   order: number;
   /** A locked module can never be turned off (the home page). */

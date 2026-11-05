@@ -70,24 +70,24 @@ src-tauri/
 
 Reuse these instead of writing your own.
 
-| Need                                                                   | Use                                                                                       |
-| ---------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Call Rust                                                              | the typed wrappers: `commands` in `src/core/api.ts` (shell) or `src/modules/<id>/api.ts`  |
-| Listen to Rust                                                         | `on(events.x, handler)` from `src/core/api.ts`                                            |
-| Show a Rust error                                                      | `errorMessage(error)` from `src/core/api.ts`                                              |
-| Read or change settings                                                | `settings.value` and `settings.update(patch)` from `src/core/settings/settings.svelte.ts` |
-| Text                                                                   | `t('key')` from `src/core/i18n` (shell) or the module's `i18n.ts`                         |
-| A module's name or description                                         | `moduleText(id, 'name' \| 'description')` from `src/core/i18n`                            |
-| A button, switch, modal, panel, chip, card, checkbox, file icon, field | `src/ui/`                                                                                 |
-| An empty list or a list with no match                                  | `EmptyState` from `src/ui/`: a centred pictogram, a title, a line and a button            |
-| Colours, radii, veil                                                   | the tokens in `src/ui/tokens.css`                                                         |
-| Match text against a search                                            | `matchesAll` and `normalize` from `src/core/text.ts` (case and accents ignored)           |
-| Show a time ("2 min ago"), a size ("1.2 GB") or a share                | `formatWhen`, `formatBytes`, `formatPercent` and `formatCount` from `src/core/format.ts`  |
-| Copy a path                                                            | `copyPath` from `src/core/clipboard.ts`                                                   |
-| Feedback after an action                                               | `toast.show(message)` from `src/core/toast.svelte.ts`                                     |
-| Open a page, the hub or settings                                       | `navigation.open(view)` from `src/app/navigation.svelte.ts`                               |
-| Open the uninstall dialog                                              | `dialogs.uninstall = true` from `src/app/dialogs.svelte.ts`                               |
-| Module list, tab bar, launcher order                                   | `modules`, `getModule`, `tabBarIds`, `launcherIds` from `src/core/modules`                |
+| Need                                                                                  | Use                                                                                       |
+| ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Call Rust                                                                             | the typed wrappers: `commands` in `src/core/api.ts` (shell) or `src/modules/<id>/api.ts`  |
+| Listen to Rust                                                                        | `on(events.x, handler)` from `src/core/api.ts`                                            |
+| Show a Rust error                                                                     | `errorMessage(error)` from `src/core/api.ts`                                              |
+| Read or change settings                                                               | `settings.value` and `settings.update(patch)` from `src/core/settings/settings.svelte.ts` |
+| Text                                                                                  | `t('key')` from `src/core/i18n` (shell) or the module's `i18n.ts`                         |
+| A module's name or description                                                        | `moduleText(id, 'name' \| 'description')` from `src/core/i18n`                            |
+| A button, switch, modal, panel, chip or toggle chip, card, checkbox, file icon, field | `src/ui/`                                                                                 |
+| An empty list or a list with no match                                                 | `EmptyState` from `src/ui/`: a centred pictogram, a title, a line and a button            |
+| Colours, radii, veil                                                                  | the tokens in `src/ui/tokens.css`                                                         |
+| Match text against a search                                                           | `matchesAll` and `normalize` from `src/core/text.ts` (case and accents ignored)           |
+| Show a time ("2 min ago"), a size ("1.2 GB") or a share                               | `formatWhen`, `formatBytes`, `formatPercent` and `formatCount` from `src/core/format.ts`  |
+| Copy a path                                                                           | `copyPath` from `src/core/clipboard.ts`                                                   |
+| Feedback after an action                                                              | `toast.show(message)` from `src/core/toast.svelte.ts`                                     |
+| Open a page, the hub or settings                                                      | `navigation.open(view)` from `src/app/navigation.svelte.ts`                               |
+| Open the uninstall dialog                                                             | `dialogs.uninstall = true` from `src/app/dialogs.svelte.ts`                               |
+| Module list, tab bar, launcher order                                                  | `modules`, `getModule`, `tabBarIds`, `launcherIds` from `src/core/modules`                |
 
 ## Modules
 
@@ -185,11 +185,16 @@ A `.arthex` file can be installed three ways: from the catalog, with "Install fr
 
 - **Package** (`src-tauri/src/services/module_host/package.rs`): a `.arthex` file is a zip.
   - `files.json` holds the SHA-256 of every other file, and `files.json.sig` its minisign signature made with the update key (the `pubkey` of the updater). An unsigned, altered, missing, extra or unsafe file refuses the whole package before anything is written.
-  - `module.json` gives the `id`, `version`, `api`, `platform` (`any` or `windows-x86_64`…), the path of its program (`native`), `background`, its `elements`, and the `icon`, `tint` and `texts` (name and description per language) shown before installing an opened file.
+  - `module.json` gives the `id`, `version`, `api`, `platform` (`any` or `windows-x86_64`…), the path of its program (`native`), `background`, its `elements` and `tags`, and the `icon`, `tint` and `texts` (name and description per language) shown before installing an opened file.
   - `index.js` is its interface (its default export comes from `defineModule` of the SDK), `style.css` its styles.
 - **Files:** unpacked in `<local data>/modules/<id>/`, replacing the previous version in one rename. What a module keeps lives in `<data>/module-data/<id>/`, which survives updates; uninstalling deletes it only when the user ticks "Also delete its data".
 - **Serving** (`protocol.rs`): interface files only (`js`, `css`, `json`, `png`, `svg`, `woff2`), at `arthex-module://localhost/<id>/` (`http://arthex-module.localhost/<id>/` on Windows). The CSP allows scripts and styles from there and nowhere else besides the app.
-- **Catalog** (`catalog.rs`): `catalog.json` and `catalog.json.sig` from the latest release of `arthreto/arthex-modules`. They are read when the Catalog tab opens, and 40 s after launch only when modules are installed and updates install automatically. Each entry gives the module's texts, icon, tint, elements and one package per platform (or `any`).
+- **Catalog** (`catalog.rs`): `catalog.json` and `catalog.json.sig` from the latest release of `arthreto/arthex-modules`. They are read when the Catalog tab opens, and 40 s after launch only when modules are installed and updates install automatically. Each entry gives the module's texts, icon, tint, elements, tags (at most 8) and one package per platform (or `any`).
+- **Categories:** the Catalog tab filters by type of element and by category. The categories are the closed list `TAGS` of `src/core/modules/tags.ts`: a module picks among them in `tags` and can never add one.
+  - Each one has an English id in code (`math`, `games`…) and its name in every language under `settings.modules.tags.<id>` of `src/core/locales/`.
+  - `defineModule` of the SDK refuses an unknown tag, so `arthex pack` fails. The interface ignores unknown tags of the catalog (`knownTags`).
+  - Only the categories that hold a module are offered as filters; the search of the tab matches their names too.
+  - To add a category: add its id to `TAGS` and its name to every locale file, in the same commit.
 - **Interface** (`src/app/moduleHost.svelte.ts`): imports each installed `index.js`, checks its export with `adopt` (`src/core/modules/foreign.ts`) and adds the module to the registry. An installed module brings its own Svelte: each of its views is a `mount(target, props)` that `ForeignView` shows. It reaches the shell only through `window.__ARTHEX__` (`HostApi`): translations, toast, tools and navigation.
 - **Program** (`program.rs`): the system side of a module is a program of its own, built for each platform, that the app relays without knowing what it does.
   - It talks in JSON lines on its standard input and output. It receives `{"type":"init","dataDir","locale"}`, then `{"type":"call","id","method","params"}`. It answers `{"type":"result","id","value"}` or `{"type":"error","id","message"}`, and may send `{"type":"event","name","payload"}`, which reaches the interface as `<id>://<name>`.
@@ -214,6 +219,7 @@ Installable modules live outside this repository, in [`arthreto/arthex-modules`]
      icon: 'M12 7v5l3 2M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z',
      tint: 'green',
      order: 50,
+     tags: ['time', 'productivity'], // from TAGS in src/core/modules/tags.ts
      locales: import.meta.glob('./locales/*.json', { eager: true, import: 'default' }),
      tool: () => import('./TimerTool.svelte'),
    });

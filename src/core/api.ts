@@ -35,6 +35,8 @@ export interface ModuleOffer {
   icon: string;
   tint: string;
   elements: string[];
+  /** Catalog categories; the interface ignores unknown ones. */
+  tags: string[];
   /** Name and description by language code. */
   texts: Record<string, { name: string; description: string }>;
   size: number;

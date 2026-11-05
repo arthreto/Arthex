@@ -22,6 +22,8 @@ export { default as Panel } from '../src/ui/Panel.svelte';
 export { default as Segmented } from '../src/ui/Segmented.svelte';
 export { default as Switch } from '../src/ui/Switch.svelte';
 export { default as TextField } from '../src/ui/TextField.svelte';
+export { default as ToggleChip } from '../src/ui/ToggleChip.svelte';
+export { TAGS, type Tag } from '../src/core/modules/tags';
 export { formatBytes, formatPercent, formatWhen } from '../src/core/format';
 export { matchesAll, normalize } from '../src/core/text';
 

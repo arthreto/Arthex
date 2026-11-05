@@ -2,7 +2,15 @@
   import { onMount } from 'svelte';
   import { commands, errorMessage, type ModuleOffer } from '../../core/api';
   import { moduleText, t } from '../../core/i18n';
-  import { ELEMENTS, elementsOf, getModule, type Element } from '../../core/modules';
+  import {
+    ELEMENTS,
+    TAGS,
+    elementsOf,
+    getModule,
+    knownTags,
+    type Element,
+    type Tag,
+  } from '../../core/modules';
   import type { Tint } from '../../core/modules/manifest';
   import { matchesAll } from '../../core/text';
   import { toast } from '../../core/toast.svelte';
@@ -14,6 +22,7 @@
   import Panel from '../../ui/Panel.svelte';
   import Segmented from '../../ui/Segmented.svelte';
   import TextField from '../../ui/TextField.svelte';
+  import ToggleChip from '../../ui/ToggleChip.svelte';
   import { moduleHost } from '../moduleHost.svelte';
   import { knownElements, pickTexts, summary, tintOf } from './moduleSummary';
   import UninstallModuleDialog from './UninstallModuleDialog.svelte';
@@ -25,6 +34,7 @@
     icon: string;
     tint: Tint;
     elements: Element[];
+    tags: Tag[];
     size?: number;
     state: ModuleOffer['state'] | 'dev';
   }
@@ -34,6 +44,7 @@
   let failed = $state(false);
   let query = $state('');
   let filter = $state<Element | 'all'>('all');
+  let tag = $state<Tag | null>(null);
   let busy = $state<string | null>(null);
   let uninstalling = $state<Row | null>(null);
 
@@ -52,6 +63,7 @@
       icon: offer.icon,
       tint: tintOf(offer.tint),
       elements: knownElements(offer.elements),
+      tags: knownTags(offer.tags),
       size: offer.size,
       state: installed?.dev ? 'dev' : offer.state,
     };
@@ -67,21 +79,32 @@
       icon: module?.icon ?? icons.modules,
       tint: module?.tint ?? 'blue',
       elements: module ? elementsOf(module) : [],
+      tags: [...(module?.tags ?? [])],
       state: dev ? 'dev' : 'installed',
     };
   }
 
-  const rows = $derived.by(() => {
+  const tagLabel = (name: Tag) => t(`settings.modules.tags.${name}`);
+
+  const allRows = $derived.by(() => {
     const listed = (offers ?? []).map(offerRow);
     const others = moduleHost.installed
       .filter((module) => !listed.some((row) => row.id === module.id))
       .map((module) => installedRow(module.id, module.dev));
-    return [...listed, ...others].filter(
+    return [...listed, ...others];
+  });
+
+  /** Only the categories that hold a module, so the row stays short. */
+  const tags = $derived(TAGS.filter((name) => allRows.some((row) => row.tags.includes(name))));
+
+  const rows = $derived(
+    allRows.filter(
       (row) =>
         (filter === 'all' || row.elements.includes(filter)) &&
-        matchesAll(`${row.name} ${row.description}`, query),
-    );
-  });
+        (tag === null || row.tags.includes(tag)) &&
+        matchesAll(`${row.name} ${row.description} ${row.tags.map(tagLabel).join(' ')}`, query),
+    ),
+  );
 
   async function refresh() {
     failed = false;
@@ -93,11 +116,12 @@
     }
   }
 
-  const narrowed = $derived(query.trim() !== '' || filter !== 'all');
+  const narrowed = $derived(query.trim() !== '' || filter !== 'all' || tag !== null);
 
   function showAll() {
     query = '';
     filter = 'all';
+    tag = null;
   }
 
   function markOffer(id: string, state: ModuleOffer['state']) {
@@ -171,6 +195,18 @@
   value={filter}
   onchange={(value) => (filter = value)}
 />
+{#if tags.length > 0}
+  <div class="tags" role="group" aria-label={t('settings.modules.categories')}>
+    <ToggleChip label={t('settings.modules.allTags')} pressed={tag === null} onclick={() => (tag = null)} />
+    {#each tags as name (name)}
+      <ToggleChip
+        label={tagLabel(name)}
+        pressed={tag === name}
+        onclick={() => (tag = tag === name ? null : name)}
+      />
+    {/each}
+  </div>
+{/if}
 
 {#if offers === null}
   <EmptyState icon={icons.modules} title={t('settings.modules.loading')} />
@@ -206,7 +242,7 @@
         <span class="text">
           <span class="name">{row.name}</span>
           {#if row.description}<span class="description">{row.description}</span>{/if}
-          <span class="meta">{summary(row.elements, row.size)}</span>
+          <span class="meta">{[...row.tags.map(tagLabel), summary(row.elements, row.size)].join(' · ')}</span>
         </span>
         {#if row.state === 'dev'}
           <Chip label={t('settings.modules.dev')} />
@@ -250,6 +286,12 @@
   .search {
     flex: 1;
     min-width: 0;
+  }
+
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
   }
 
   .notice {
