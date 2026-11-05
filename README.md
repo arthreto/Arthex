@@ -36,6 +36,8 @@ It is built for Windows 11. macOS and Linux get a simplified version.
 | **Modules**   | Turn each page, Home card, search source and tool on or off. Install more modules from the catalog or from a file                                                 |
 | **Updates**   | Signed automatic updates from GitHub Releases, with release notes at the next launch                                                                              |
 
+And much more with [modules](#modules).
+
 Languages: English and French.
 
 <table>
