@@ -4,6 +4,7 @@
   import { settings } from '../../core/settings/settings.svelte';
   import type { SettingsPatch, Theme } from '../../core/settings/types';
   import { toast } from '../../core/toast.svelte';
+  import Check from '../../ui/Check.svelte';
   import { formatKeys } from '../hotkey';
   import Choice from './Choice.svelte';
   import Done from './Done.svelte';
@@ -100,6 +101,15 @@
             </Choice>
           {/each}
         </div>
+        <button
+          class="translucent"
+          role="checkbox"
+          aria-checked={settings.value.translucent}
+          onclick={() => save({ translucent: !settings.value.translucent })}
+        >
+          <Check checked={settings.value.translucent} size={22} />
+          {t('settings.general.translucent')}
+        </button>
       </Step>
     {:else if step === 3}
       <Step
@@ -221,6 +231,18 @@
   .startup {
     width: 560px;
     gap: 12px;
+  }
+
+  .translucent {
+    height: 44px;
+    margin-top: -14px;
+    padding: 0 14px;
+    border-radius: 22px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 15px;
+    font-weight: 500;
   }
 
   .label {

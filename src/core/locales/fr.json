@@ -85,6 +85,7 @@
         "dark": "Sombre",
         "light": "Clair"
       },
+      "translucent": "Rendre transparent et flou",
       "autostart": "Lancer Arthex au démarrage de Windows",
       "debugLog": "Journal de débogage",
       "openLogs": "Ouvrir les journaux",

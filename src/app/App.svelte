@@ -29,10 +29,10 @@
 
   $effect(() => {
     if (!settings.loaded) return;
-    const { language, theme, reduceMotion } = settings.value;
+    const { language, theme, translucent, reduceMotion } = settings.value;
     setLocale(resolveLocale(language, systemLocale, navigator.language));
     void systemThemeTick;
-    applyAppearance(theme, reduceMotion);
+    applyAppearance(theme, translucent, reduceMotion);
   });
 </script>
 

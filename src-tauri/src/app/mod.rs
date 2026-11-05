@@ -57,6 +57,11 @@ pub fn update_settings(app: &AppHandle, patch: &Value) -> Result<Settings> {
     if before.autostart != after.autostart {
         autostart::apply(app, after.autostart);
     }
+    if before.translucent != after.translucent
+        && let Some(window) = app.get_webview_window(overlay::LABEL)
+    {
+        overlay::see_through(&window);
+    }
     if before.debug_log != after.debug_log {
         logging::set_debug(after.debug_log);
     }

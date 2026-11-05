@@ -62,6 +62,13 @@
       onchange={(theme: Theme) => save({ theme })}
     />
   </SettingRow>
+  <SettingRow label={t('settings.general.translucent')}>
+    <Switch
+      label={t('settings.general.translucent')}
+      checked={settings.value.translucent}
+      onchange={(translucent) => save({ translucent })}
+    />
+  </SettingRow>
   <SettingRow label={t('settings.general.autostart')}>
     <Switch
       label={t('settings.general.autostart')}

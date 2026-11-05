@@ -6,6 +6,8 @@ export interface Settings {
   onboarded: boolean;
   language: string | null;
   theme: Theme;
+  /** Shows the blurred desktop behind the overlay; otherwise its background is opaque. */
+  translucent: boolean;
   reduceMotion: boolean;
   autostart: boolean;
   hotkey: string[];

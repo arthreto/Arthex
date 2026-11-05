@@ -59,6 +59,8 @@ pub struct Settings {
     pub onboarded: bool,
     pub language: Option<String>,
     pub theme: Theme,
+    /// Shows the blurred desktop behind the overlay; otherwise its background is opaque.
+    pub translucent: bool,
     pub reduce_motion: bool,
     pub autostart: bool,
     pub hotkey: Vec<String>,
@@ -93,6 +95,7 @@ impl Default for Settings {
             onboarded: false,
             language: None,
             theme: Theme::System,
+            translucent: true,
             reduce_motion: false,
             autostart: true,
             hotkey: vec!["Shift".into(), "Win".into()],
@@ -280,6 +283,23 @@ mod tests {
 
         let reloaded = SettingsStore::load(dir.path().join("settings.json"));
         assert_eq!(reloaded.get(), saved);
+    }
+
+    #[test]
+    fn translucency_is_on_for_older_files_and_can_be_turned_off() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("settings.json");
+        fs::write(&path, r#"{ "version": 2, "theme": "dark" }"#).unwrap();
+        let store = SettingsStore::load(path.clone());
+        assert!(store.get().translucent);
+
+        assert!(
+            !store
+                .update(&json!({ "translucent": false }))
+                .unwrap()
+                .translucent
+        );
+        assert!(!SettingsStore::load(path).get().translucent);
     }
 
     #[test]

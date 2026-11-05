@@ -275,14 +275,18 @@ fn fitted(area: PhysicalSize<u32>, screen: PhysicalSize<u32>) -> PhysicalSize<u3
 /// A borderless window lets the desktop show through only once the DWM frame covers all of it;
 /// without that, Windows fills what the page leaves transparent with black. Windows 11 then puts
 /// its acrylic behind it: the plain blur alone leaves the window black there. Older versions,
-/// which lack that backdrop, get the plain blur instead.
+/// which lack that backdrop, get the plain blur instead. With the `translucent` setting off, the
+/// page is opaque and all of this is removed.
 #[cfg(windows)]
-fn see_through(window: &WebviewWindow) {
-    use tauri::window::{Effect, EffectsBuilder};
+pub fn see_through(window: &WebviewWindow) {
+    use tauri::{
+        utils::config::WindowEffectsConfig,
+        window::{Effect, EffectsBuilder},
+    };
     use windows_sys::Win32::{
         Graphics::Dwm::{
-            DWMSBT_TRANSIENTWINDOW, DWMWA_SYSTEMBACKDROP_TYPE, DwmExtendFrameIntoClientArea,
-            DwmSetWindowAttribute,
+            DWMSBT_NONE, DWMSBT_TRANSIENTWINDOW, DWMWA_SYSTEMBACKDROP_TYPE,
+            DwmExtendFrameIntoClientArea, DwmSetWindowAttribute,
         },
         UI::Controls::MARGINS,
     };
@@ -290,17 +294,26 @@ fn see_through(window: &WebviewWindow) {
     let Ok(hwnd) = window.hwnd() else {
         return;
     };
-    let whole = MARGINS {
-        cxLeftWidth: -1,
-        cxRightWidth: -1,
-        cyTopHeight: -1,
-        cyBottomHeight: -1,
+    let translucent = super::settings(window.app_handle()).translucent;
+    if !translucent {
+        let _ = window.set_effects(None::<WindowEffectsConfig>);
+    }
+    let margin = if translucent { -1 } else { 0 };
+    let margins = MARGINS {
+        cxLeftWidth: margin,
+        cxRightWidth: margin,
+        cyTopHeight: margin,
+        cyBottomHeight: margin,
     };
-    let backdrop = DWMSBT_TRANSIENTWINDOW;
+    let backdrop = if translucent {
+        DWMSBT_TRANSIENTWINDOW
+    } else {
+        DWMSBT_NONE
+    };
     // SAFETY: DWM calls on our own window, with values that outlive the calls.
     let (frame, acrylic) = unsafe {
         (
-            DwmExtendFrameIntoClientArea(hwnd.0, &raw const whole),
+            DwmExtendFrameIntoClientArea(hwnd.0, &raw const margins),
             DwmSetWindowAttribute(
                 hwnd.0,
                 DWMWA_SYSTEMBACKDROP_TYPE.cast_unsigned(),
@@ -309,14 +322,14 @@ fn see_through(window: &WebviewWindow) {
             ),
         )
     };
-    tracing::debug!(frame, acrylic, "overlay backdrop");
-    if acrylic != 0 {
+    tracing::debug!(translucent, frame, acrylic, "overlay backdrop");
+    if translucent && acrylic != 0 {
         let _ = window.set_effects(EffectsBuilder::new().effect(Effect::Blur).build());
     }
 }
 
 #[cfg(not(windows))]
-fn see_through(_window: &WebviewWindow) {}
+pub fn see_through(_window: &WebviewWindow) {}
 
 /// While the overlay is hidden, `WebView2` is made invisible, suspended (its page stops running)
 /// and asked to give memory back. Showing it again resumes it.
