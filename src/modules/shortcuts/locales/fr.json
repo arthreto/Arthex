@@ -1,46 +1,98 @@
 {
   "name": "Raccourcis",
-  "description": "Tes sites et logiciels favoris sur l’accueil.",
+  "description": "Tes sites, logiciels, dossiers et commandes, sur l’accueil et dans la recherche.",
   "title": "Raccourcis",
   "keyboard": "Pour les ouvrir au clavier",
   "add": "Ajouter",
   "dialog": {
     "title": "Nouveau raccourci",
-    "address": "Adresse",
-    "name": "Nom",
-    "submit": "Ajouter",
+    "editTitle": "Modifier le raccourci",
     "type": "Type de raccourci",
     "site": "Site web",
     "app": "Logiciel",
-    "customIcon": "Choisir une icône personnalisée…",
+    "path": "Dossier ou fichier",
+    "command": "Commande",
+    "address": "Adresse",
     "search": "Rechercher un logiciel…",
     "installed": "Logiciels installés",
     "none": "Aucun logiciel trouvé.",
     "browse": "Parcourir un autre programme…",
-    "editTitle": "Modifier le raccourci",
+    "browseFolder": "Parcourir…",
+    "name": "Nom",
+    "keyword": "Mot-clé",
+    "icon": "Icône",
+    "look": {
+      "auto": "Automatique",
+      "symbol": "Pictogramme",
+      "image": "Image"
+    },
+    "colour": "Couleur",
+    "colourNumber": "Couleur {number}",
+    "onHome": "Sur l’accueil",
+    "inSearch": "Dans la recherche",
+    "submit": "Ajouter",
     "save": "Enregistrer"
+  },
+  "symbols": {
+    "folder": "Dossier",
+    "terminal": "Terminal",
+    "star": "Étoile",
+    "bolt": "Éclair",
+    "code": "Code",
+    "music": "Musique",
+    "game": "Jeu",
+    "mail": "Courrier",
+    "book": "Livre",
+    "heart": "Cœur",
+    "settings": "Réglages",
+    "globe": "Globe"
   },
   "errors": {
     "missing": "Indique l’adresse du site.",
     "scheme": "Seules les adresses http:// et https:// sont acceptées (sécurité).",
     "invalid": "Cette adresse n’est pas valide.",
-    "pickApp": "Choisis un logiciel dans la liste."
+    "pickApp": "Choisis un logiciel dans la liste.",
+    "missingPath": "Indique le dossier ou le fichier.",
+    "missingCommand": "Écris la commande à exécuter.",
+    "missingName": "Donne un nom à cette commande.",
+    "noPlace": "Coche « Sur l’accueil » ou « Dans la recherche »."
   },
   "added": "Raccourci « {name} » ajouté, son icône est récupérée automatiquement",
-  "addedApp": "Raccourci « {name} » ajouté",
-  "iconChosen": "Icône choisie",
+  "addedPlain": "Raccourci « {name} » ajouté",
   "menu": "Raccourci {name}",
   "edit": "Modifier",
   "delete": "Supprimer",
   "edited": "Raccourci « {name} » modifié",
   "deleted": "Raccourci « {name} » supprimé",
   "search": {
-    "group": "Sites",
-    "kind": "Site web",
+    "group": "Raccourcis",
+    "kinds": {
+      "site": "Site web",
+      "app": "Logiciel",
+      "path": "Dossier ou fichier",
+      "command": "Commande"
+    },
+    "details": {
+      "site": "Adresse",
+      "app": "Programme",
+      "path": "Emplacement",
+      "command": "Commande"
+    },
     "meta": "Raccourci",
-    "address": "Adresse",
-    "opening": "Ouverture",
-    "browser": "Navigateur par défaut",
-    "open": "Ouvrir le site"
+    "keyword": "mot-clé « {keyword} »",
+    "open": "Ouvrir",
+    "run": "Exécuter",
+    "createGroup": "Créer",
+    "createKind": "Nouveau raccourci",
+    "create": "Créer un raccourci « {text} »",
+    "createHint": "Site, logiciel, dossier ou commande",
+    "createAction": "Créer"
+  },
+  "settings": {
+    "new": "Nouveau raccourci",
+    "home": "Accueil",
+    "search": "Recherche",
+    "editNamed": "Modifier {name}",
+    "deleteNamed": "Supprimer {name}"
   }
 }

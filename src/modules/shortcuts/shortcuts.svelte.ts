@@ -1,7 +1,9 @@
-import { shortcutsApi, type Shortcut } from './api';
+import { shortcutsApi, type Draft, type Shortcut } from './api';
 
 class ShortcutsState {
   items = $state<Shortcut[]>([]);
+  /** Home shows these, in order; Alt + 1…9 opens them. */
+  home = $derived(this.items.filter((item) => item.onHome));
   #loading: Promise<void> | null = null;
 
   /** Loads the list once and follows later changes (icons arriving in the background). */
@@ -13,12 +15,8 @@ class ShortcutsState {
     return this.#loading;
   }
 
-  async saveSite(id: string | null, url: string, name: string | null, icon: string | null): Promise<void> {
-    this.items = await shortcutsApi.saveSite(id, url, name, icon);
-  }
-
-  async saveApp(id: string | null, path: string, name: string | null): Promise<void> {
-    this.items = await shortcutsApi.saveApp(id, path, name);
+  async save(id: string | null, draft: Draft): Promise<void> {
+    this.items = await shortcutsApi.save(id, draft);
   }
 
   /** Removes a shortcut and returns a function that puts it back. */

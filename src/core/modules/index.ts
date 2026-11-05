@@ -1,3 +1,4 @@
+import type { SearchProvider } from '../search/types';
 import type { Settings } from '../settings/types';
 import * as layout from './layout';
 import type { ModuleManifest, WidgetSlot } from './manifest';
@@ -30,9 +31,11 @@ export const homeWidgets = (settings: Settings, slot: WidgetSlot) =>
   registry.all.filter(
     (m) => m.widget?.slot === slot && layout.isEnabled(registry.all, settings, m.id, 'widget'),
   );
-export const searchProviders = (settings: Settings) =>
+export const searchProviders = (settings: Settings): SearchProvider[] =>
   registry.all.flatMap((m) =>
-    m.search && layout.isEnabled(registry.all, settings, m.id, 'search') ? [m.search] : [],
+    m.search && layout.isEnabled(registry.all, settings, m.id, 'search')
+      ? ([] as SearchProvider[]).concat(m.search)
+      : [],
   );
 export const toolModules = (settings: Settings) =>
   registry.all.filter((m) => layout.isEnabled(registry.all, settings, m.id, 'tool'));

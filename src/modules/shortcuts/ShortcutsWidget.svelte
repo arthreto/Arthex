@@ -7,18 +7,18 @@
   import Keycap from '../../ui/Keycap.svelte';
   import Menu from '../../ui/Menu.svelte';
   import MenuItem from '../../ui/MenuItem.svelte';
-  import { MAX_SHORTCUTS, shortcutsApi, type Shortcut } from './api';
+  import { MAX_ON_HOME, shortcutsApi, targetText, type Shortcut } from './api';
+  import { editor } from './editor.svelte';
   import { t } from './i18n';
   import ShortcutDialog from './ShortcutDialog.svelte';
+  import ShortcutIcon from './ShortcutIcon.svelte';
   import { shortcuts } from './shortcuts.svelte';
 
-  /** The dialog: closed, adding (`editing: null`) or editing one shortcut. */
-  let dialog = $state<{ editing: Shortcut | null } | null>(null);
   let menu = $state<{ shortcut: Shortcut; x: number; y: number } | null>(null);
   let dragged = $state<string | null>(null);
 
-  const full = $derived(shortcuts.items.length >= MAX_SHORTCUTS);
-  const columns = $derived(Math.min(10, Math.max(8, shortcuts.items.length + 1)));
+  const full = $derived(shortcuts.home.length >= MAX_ON_HOME);
+  const columns = $derived(Math.min(10, Math.max(8, shortcuts.home.length + 1)));
 
   onMount(() => {
     void shortcuts.load();
@@ -49,7 +49,7 @@
 
   function edit(shortcut: Shortcut) {
     menu = null;
-    dialog = { editing: shortcut };
+    editor.edit(shortcut);
   }
 
   async function remove(shortcut: Shortcut) {
@@ -74,7 +74,7 @@
 
   function onkeydown(event: KeyboardEvent) {
     if (!event.altKey || event.ctrlKey || !/^Digit[1-9]$/.test(event.code)) return;
-    const shortcut = shortcuts.items[Number(event.code.slice(5)) - 1];
+    const shortcut = shortcuts.home[Number(event.code.slice(5)) - 1];
     if (!shortcut) return;
     event.preventDefault();
     void open(shortcut);
@@ -92,11 +92,11 @@
     </span>
   </header>
   <div class="grid" style:grid-template-columns="repeat({columns}, minmax(0, 1fr))">
-    {#each shortcuts.items as shortcut (shortcut.id)}
+    {#each shortcuts.home as shortcut (shortcut.id)}
       <button
         class="tile"
         class:dragged={dragged === shortcut.id}
-        title={shortcut.kind === 'site' ? shortcut.url : shortcut.path}
+        title={targetText(shortcut)}
         draggable="true"
         onclick={() => open(shortcut)}
         oncontextmenu={(event) => openMenu(event, shortcut)}
@@ -105,16 +105,12 @@
         ondragover={(event) => event.preventDefault()}
         ondrop={(event) => drop(event, shortcut)}
       >
-        {#if shortcut.icon}
-          <img src={shortcut.icon} alt="" width="46" height="46" />
-        {:else}
-          <span class="letter">{shortcut.name.charAt(0).toUpperCase()}</span>
-        {/if}
+        <ShortcutIcon {shortcut} size={46} />
         <span class="name">{shortcut.name}</span>
       </button>
     {/each}
     {#if !full}
-      <button class="tile add" onclick={() => (dialog = { editing: null })}>
+      <button class="tile add" onclick={() => editor.add()}>
         <Icon name="plus" size={22} stroke={2} />
         <span class="name">{t('add')}</span>
       </button>
@@ -130,8 +126,12 @@
   </Menu>
 {/if}
 
-{#if dialog}
-  <ShortcutDialog editing={dialog.editing} onclose={() => (dialog = null)} />
+{#if editor.current}
+  <ShortcutDialog
+    editing={editor.current.editing}
+    prefill={editor.current.prefill}
+    onclose={() => editor.close()}
+  />
 {/if}
 
 <style>
@@ -181,27 +181,6 @@
   .tile:hover {
     background: var(--surface-hover);
     border-color: var(--border-strong);
-  }
-
-  img {
-    width: 46px;
-    height: 46px;
-    padding: 3px;
-    object-fit: contain;
-  }
-
-  .letter {
-    width: 46px;
-    height: 46px;
-    border-radius: 13px;
-    background: var(--surface-raised);
-    border: 1px solid var(--border-strong);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--text-muted);
   }
 
   .name {

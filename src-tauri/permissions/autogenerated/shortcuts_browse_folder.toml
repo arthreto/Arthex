@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-shortcuts-browse-folder"
+description = "Enables the shortcuts_browse_folder command without any pre-configured scope."
+commands.allow = ["shortcuts_browse_folder"]
+
+[[permission]]
+identifier = "deny-shortcuts-browse-folder"
+description = "Denies the shortcuts_browse_folder command without any pre-configured scope."
+commands.deny = ["shortcuts_browse_folder"]

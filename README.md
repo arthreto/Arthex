@@ -27,7 +27,7 @@ It is built for Windows 11. macOS and Linux get a simplified version.
 |               |                                                                                                                                                                   |
 | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Search**    | Files and folders (own index, much faster than Windows Search), apps, websites, web search (`g`, `yt`, `w`…), calculator with its own tool, system commands (`>`) |
-| **Home**      | Shortcuts to websites and software, recent apps, storage, notes and last copied item                                                                              |
+| **Home**      | Shortcuts to websites, software, folders and commands, with your own name, pictogram and search keyword; recent apps, storage, notes and last copied item         |
 | **FileSize**  | Folder tree, treemap and largest files, with deletion to the Recycle Bin                                                                                          |
 | **Notes**     | Markdown notes (headings, bold, italic, checkboxes) with Preview and Edit modes                                                                                   |
 | **Clipboard** | Text history kept in memory only, never written to disk                                                                                                           |

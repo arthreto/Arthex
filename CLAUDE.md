@@ -82,7 +82,7 @@ These come from the owner's feedback on the mockup. Do not reintroduce what was 
 - Every system action is a typed Rust command with validated input:
   - URLs are `http`/`https` only;
   - paths are canonicalised and must exist;
-  - programs launch without arguments;
+  - programs launch without arguments, except the command lines the user writes in their own shortcuts, run as typed through the system shell;
   - system commands are a closed enum.
 - No admin rights, no telemetry. The network is used only for favicons, update checks and the module catalog.
 - Logs never contain keystrokes, clipboard content or search queries.

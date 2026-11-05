@@ -1,46 +1,98 @@
 {
   "name": "Shortcuts",
-  "description": "Your favourite sites and apps on Home.",
+  "description": "Your sites, apps, folders and commands, on Home and in the search.",
   "title": "Shortcuts",
   "keyboard": "Open from the keyboard",
   "add": "Add",
   "dialog": {
     "title": "New shortcut",
-    "address": "Address",
-    "name": "Name",
-    "submit": "Add",
+    "editTitle": "Edit shortcut",
     "type": "Shortcut type",
     "site": "Website",
     "app": "Software",
-    "customIcon": "Choose a custom icon…",
+    "path": "Folder or file",
+    "command": "Command",
+    "address": "Address",
     "search": "Search for an app…",
     "installed": "Installed apps",
     "none": "No app found.",
     "browse": "Browse for another program…",
-    "editTitle": "Edit shortcut",
+    "browseFolder": "Browse…",
+    "name": "Name",
+    "keyword": "Keyword",
+    "icon": "Icon",
+    "look": {
+      "auto": "Automatic",
+      "symbol": "Pictogram",
+      "image": "Image"
+    },
+    "colour": "Colour",
+    "colourNumber": "Colour {number}",
+    "onHome": "On Home",
+    "inSearch": "In the search",
+    "submit": "Add",
     "save": "Save"
+  },
+  "symbols": {
+    "folder": "Folder",
+    "terminal": "Terminal",
+    "star": "Star",
+    "bolt": "Bolt",
+    "code": "Code",
+    "music": "Music",
+    "game": "Game",
+    "mail": "Mail",
+    "book": "Book",
+    "heart": "Heart",
+    "settings": "Settings",
+    "globe": "Globe"
   },
   "errors": {
     "missing": "Enter the site address.",
     "scheme": "Only http:// and https:// addresses are accepted (security).",
     "invalid": "This address is not valid.",
-    "pickApp": "Choose an app from the list."
+    "pickApp": "Choose an app from the list.",
+    "missingPath": "Enter the folder or file.",
+    "missingCommand": "Write the command to run.",
+    "missingName": "Give this command a name.",
+    "noPlace": "Tick “On Home” or “In the search”."
   },
   "added": "Shortcut “{name}” added, its icon is fetched automatically",
-  "addedApp": "Shortcut “{name}” added",
-  "iconChosen": "Icon chosen",
+  "addedPlain": "Shortcut “{name}” added",
   "menu": "Shortcut {name}",
   "edit": "Edit",
   "delete": "Delete",
   "edited": "Shortcut “{name}” edited",
   "deleted": "Shortcut “{name}” deleted",
   "search": {
-    "group": "Sites",
-    "kind": "Website",
+    "group": "Shortcuts",
+    "kinds": {
+      "site": "Website",
+      "app": "Software",
+      "path": "Folder or file",
+      "command": "Command"
+    },
+    "details": {
+      "site": "Address",
+      "app": "Program",
+      "path": "Location",
+      "command": "Command"
+    },
     "meta": "Shortcut",
-    "address": "Address",
-    "opening": "Opens in",
-    "browser": "Default browser",
-    "open": "Open the site"
+    "keyword": "keyword “{keyword}”",
+    "open": "Open",
+    "run": "Run",
+    "createGroup": "Create",
+    "createKind": "New shortcut",
+    "create": "Create a shortcut “{text}”",
+    "createHint": "Site, software, folder or command",
+    "createAction": "Create"
+  },
+  "settings": {
+    "new": "New shortcut",
+    "home": "Home",
+    "search": "Search",
+    "editNamed": "Edit {name}",
+    "deleteNamed": "Delete {name}"
   }
 }

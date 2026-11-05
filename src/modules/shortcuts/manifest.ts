@@ -1,5 +1,7 @@
 import { defineModule } from '../../core/modules/manifest';
-import { shortcutsSearch } from './search';
+import { editor } from './editor.svelte';
+import { t } from './i18n';
+import { createShortcutSearch, shortcutsSearch } from './search';
 
 export default defineModule({
   id: 'shortcuts',
@@ -7,5 +9,9 @@ export default defineModule({
   tint: 'mint',
   order: 30,
   widget: { slot: 'top', component: () => import('./ShortcutsWidget.svelte') },
-  search: shortcutsSearch,
+  search: [shortcutsSearch, createShortcutSearch],
+  settingsSection: {
+    component: () => import('./ShortcutsSettings.svelte'),
+    action: { label: () => t('settings.new'), run: () => editor.add() },
+  },
 });

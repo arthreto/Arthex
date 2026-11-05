@@ -127,7 +127,8 @@ api.ts               typed wrappers of its Rust commands (if any)
 A module adds results to the search bar with a `SearchProvider` (`src/core/search/types.ts`):
 
 - `search(query)` returns `SearchResult`s, synchronously or not. `query` carries the typed `text`, a `normalized` copy and `commandsOnly` (the query starts with `>`).
-- `order` places its group among the others: calculator 0, tools 5, apps 10, sites 20, web 25, system commands 30, files 40.
+- `order` places its group among the others: calculator 0, shortcuts 3, tools 5, apps 10, web 25, system commands 30, files 40, "Create a shortcut" 90.
+- A module may give several providers as an array (shortcuts: its results, then "Create a shortcut" last).
 - `exclusive: true` hides every other group when it answers (the calculator).
 - A result names its `primary` action (Enter) and may add a `secondary` one (Ctrl + Enter), a `path` to copy, a `confirm` question for actions that cannot be undone, or a `panel` component that replaces the preview buttons.
 
@@ -275,17 +276,17 @@ Events go from Rust to the interface.
 
 Modules keep their data in JSON files of the app data folder, read and written with `storage::read_json` and `storage::write_json` (`src-tauri/src/app/storage.rs`). Writes are atomic, and a corrupt file is set aside instead of crashing.
 
-| File                | Folder     | Content                                                        |
-| ------------------- | ---------- | -------------------------------------------------------------- |
-| `settings.json`     | config     | settings (see below)                                           |
-| `shortcuts.json`    | data       | Home shortcuts                                                 |
-| `recent.json`       | data       | recently used programs (path, name, time; never window titles) |
-| `notes.json`        | data       | notes (id, title, Markdown text, time)                         |
-| `whats-new.json`    | data       | notes of an update being installed, shown once after it        |
-| `file-search.json`  | config     | folders added to the file index and the exclusions             |
-| `index.bin`         | local data | the file index cache, rebuilt from the drives when missing     |
-| `modules/<id>/`     | local data | an installed module, as its package held it                    |
-| `module-data/<id>/` | data       | what an installed module keeps                                 |
+| File                | Folder     | Content                                                                                                               |
+| ------------------- | ---------- | --------------------------------------------------------------------------------------------------------------------- |
+| `settings.json`     | config     | settings (see below)                                                                                                  |
+| `shortcuts.json`    | data       | shortcuts: site, app, folder or file, or command line; name, icon or pictogram, keyword, on Home and/or in the search |
+| `recent.json`       | data       | recently used programs (path, name, time; never window titles)                                                        |
+| `notes.json`        | data       | notes (id, title, Markdown text, time)                                                                                |
+| `whats-new.json`    | data       | notes of an update being installed, shown once after it                                                               |
+| `file-search.json`  | config     | folders added to the file index and the exclusions                                                                    |
+| `index.bin`         | local data | the file index cache, rebuilt from the drives when missing                                                            |
+| `modules/<id>/`     | local data | an installed module, as its package held it                                                                           |
+| `module-data/<id>/` | data       | what an installed module keeps                                                                                        |
 
 Icons reach the interface as small PNG data URLs made by `services::icons::png_data_url`, so the webview never loads a file or a remote image.
 

@@ -43,7 +43,7 @@ export interface ModuleManifest {
   /** A small status at the top right of the overlay, such as the planned shutdown. */
   badge?: Lazy;
   /** Results this module adds to the search, while it is enabled. */
-  search?: SearchProvider;
+  search?: SearchProvider | readonly SearchProvider[];
   /** A mini-app found by its name or keywords in the search, opened over the overlay. */
   tool?: () => Promise<{ default: Component<ToolProps> }>;
 }
