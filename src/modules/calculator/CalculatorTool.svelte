@@ -171,13 +171,17 @@
   }
 
   .keys {
+    flex: 1;
+    min-height: 0;
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-auto-rows: 1fr;
     gap: 8px;
   }
 
   .keys :global(.button) {
     width: 100%;
+    height: 100%;
     font-size: 18px;
   }
 
@@ -208,7 +212,13 @@
   }
 
   .history {
+    flex: 1;
     min-height: 0;
+    overflow-x: hidden;
+  }
+
+  .history :global(.panel) {
+    min-height: 100%;
   }
 
   .entry {
@@ -228,6 +238,13 @@
 
   .entry:hover {
     background: var(--surface-hover);
+  }
+
+  .expression,
+  .result {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    text-align: right;
   }
 
   .expression {
