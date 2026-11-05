@@ -4,7 +4,7 @@
   import { modulesView } from './modulesView.svelte';
 
   const tabs = $derived([
-    { value: 'installed' as const, label: t('settings.modules.tabs.installed') },
+    { value: 'configuration' as const, label: t('settings.modules.tabs.configuration') },
     { value: 'catalog' as const, label: t('settings.modules.tabs.catalog') },
   ]);
 </script>

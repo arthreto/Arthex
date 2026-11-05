@@ -134,8 +134,9 @@
         "tool": "Tools"
       },
       "switch": "{name}, {element}",
+      "turnedOff": "{name}, turned off",
       "tabs": {
-        "installed": "Installed",
+        "configuration": "Configuration",
         "catalog": "Catalog"
       },
       "element": {
