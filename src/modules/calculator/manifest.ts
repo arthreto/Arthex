@@ -1,10 +1,12 @@
 import { defineModule } from '../../core/modules/manifest';
+import { ICON, ID, TINT } from './identity';
 import { calculatorSearch } from './search';
 
 export default defineModule({
-  id: 'calculator',
-  icon: 'M6 3h12v18H6zM9 7h6M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01',
-  tint: 'sky',
+  id: ID,
+  icon: ICON,
+  tint: TINT,
   order: 60,
   search: calculatorSearch,
+  tool: () => import('./CalculatorTool.svelte'),
 });

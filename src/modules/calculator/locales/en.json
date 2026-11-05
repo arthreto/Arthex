@@ -7,5 +7,10 @@
   "tip": "Tip",
   "tipText": "Comma or dot, ^ for powers, sqrt(), pi",
   "copy": "Copy the result",
-  "copied": "Result {value} copied"
+  "copied": "Result {value} copied",
+  "keywords": "calculator calc calculate",
+  "openWith": "Open {expression} in the calculator",
+  "history": "History",
+  "clear": "Clear",
+  "back": "Delete the last character"
 }

@@ -6,7 +6,7 @@ import { toast } from '../core/toast.svelte';
 import { navigation } from './navigation.svelte';
 import { forget } from './pages';
 import { search } from './search.svelte';
-import { tools } from './tools.svelte';
+import { tools } from '../core/tools.svelte';
 
 async function importModule(module: InstalledModule): Promise<ModuleManifest | null> {
   // A new URL for each version: the webview keeps every module it imported.

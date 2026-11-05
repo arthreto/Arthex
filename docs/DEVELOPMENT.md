@@ -135,7 +135,7 @@ The shell asks every enabled provider at each keystroke and drops answers to old
 
 ### Tools
 
-A tool is a mini-app with its own interface, such as a colour picker. The shell finds it by its name and `keywords`, in a "Tools" group before the applications, without any search code in the module. Enter opens it over the overlay, in a sheet the size of "What's new"; Escape or a click outside goes back to the search. `tools.open(id, input)` from `src/app/tools.svelte.ts` opens a tool from elsewhere, and the tool receives `input`.
+A tool is a mini-app with its own interface, such as a colour picker. The shell finds it by its name and `keywords`, in a "Tools" group before the applications, without any search code in the module. Enter opens it over the overlay, in a sheet the size of "What's new"; Escape or a click outside goes back to the search. `tools.open(id, input)` from `src/core/tools.svelte.ts` opens a tool from elsewhere, and the tool receives `input`. The calculator does both: its tool is found by name, and its search result for a calculation adds "Open in the calculator" with the calculation as `input`.
 
 ### Create a module
 

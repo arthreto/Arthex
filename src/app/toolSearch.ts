@@ -3,7 +3,7 @@ import { toolModules } from '../core/modules';
 import type { SearchProvider, SearchResult } from '../core/search/types';
 import { settings } from '../core/settings/settings.svelte';
 import { matchesAll } from '../core/text';
-import { tools } from './tools.svelte';
+import { tools } from '../core/tools.svelte';
 
 /** Finds the tools of every module by name or keyword. Tools rank before applications. */
 export const toolSearch: SearchProvider = {

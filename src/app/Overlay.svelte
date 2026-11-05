@@ -16,7 +16,7 @@
   import Settings from './settings/Settings.svelte';
   import TabBar from './TabBar.svelte';
   import ToolSheet from './ToolSheet.svelte';
-  import { tools } from './tools.svelte';
+  import { tools } from '../core/tools.svelte';
   import UninstallDialog from './UninstallDialog.svelte';
   import { updates } from './updates.svelte';
   import WhatsNew from './WhatsNew.svelte';

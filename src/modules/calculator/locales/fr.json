@@ -7,5 +7,10 @@
   "tip": "Astuce",
   "tipText": "Virgule ou point, ^ pour les puissances, sqrt(), pi",
   "copy": "Copier le résultat",
-  "copied": "Résultat {value} copié dans le presse-papiers"
+  "copied": "Résultat {value} copié dans le presse-papiers",
+  "keywords": "calculatrice calculette calculer calcul",
+  "openWith": "Ouvrir {expression} dans la calculatrice",
+  "history": "Historique",
+  "clear": "Tout effacer",
+  "back": "Effacer le dernier caractère"
 }
