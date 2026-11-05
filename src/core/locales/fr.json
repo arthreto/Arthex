@@ -131,7 +131,8 @@
         "page": "Pages",
         "widget": "Cartes d’accueil",
         "search": "Recherche",
-        "tool": "Outils"
+        "tool": "Outils",
+        "contextMenu": "Menu clic droit"
       },
       "switch": "{name}, {element}",
       "turnedOff": "{name}, désactivé",
@@ -143,7 +144,8 @@
         "page": "Page",
         "widget": "Carte d’accueil",
         "search": "Recherche",
-        "tool": "Outil"
+        "tool": "Outil",
+        "contextMenu": "Menu clic droit"
       },
       "all": "Tout",
       "filter": "Afficher",

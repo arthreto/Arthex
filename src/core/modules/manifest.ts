@@ -21,8 +21,21 @@ export interface SettingsSection {
 export const TINTS = ['blue', 'amber', 'green', 'violet', 'sky', 'pink', 'mint', 'orange', 'red'] as const;
 export type Tint = (typeof TINTS)[number];
 
+/** Where an action of the right-click menu of Explorer shows. */
+export type ContextMenuTarget = 'file' | 'folder' | 'folder-background' | 'drive';
+
+/** An action of the right-click menu of Explorer. Its label is `contextMenu.<id>` in the locales. */
+export interface ContextMenuAction {
+  id: string;
+  targets: readonly ContextMenuTarget[];
+  /** For files: only these, as `.png`. All of them when absent. */
+  extensions?: readonly string[];
+  /** A `.ico` of the module's folder. The icon of Arthex when absent. */
+  icon?: string;
+}
+
 /**
- * A module and the elements it provides: `page`, `widget`, `search` and `tool`.
+ * A module and the elements it provides: `page`, `widget`, `search`, `tool` and `contextMenu`.
  * Each element has its own switch in Settings → Modules.
  */
 export interface ModuleManifest {
@@ -47,6 +60,8 @@ export interface ModuleManifest {
   badge?: Lazy;
   /** Results this module adds to the search, while it is enabled. */
   search?: SearchProvider | readonly SearchProvider[];
+  /** Actions in the right-click menu of Explorer, run by the module's program. */
+  contextMenu?: readonly ContextMenuAction[];
   /** A mini-app found by its name or keywords in the search, opened over the overlay. */
   tool?: () => Promise<{ default: Component<ToolProps> }>;
 }

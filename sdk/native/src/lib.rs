@@ -111,6 +111,21 @@ impl Module {
         self
     }
 
+    /// Answers a click on one of the module's actions in the right-click menu of Explorer, with
+    /// the action's id and the path clicked. Each selected item comes as one call. Answer quickly:
+    /// long work belongs on a thread.
+    #[must_use]
+    pub fn on_context_menu(
+        self,
+        handler: impl Fn(&Context, &str, &Path) -> Result<Value, String> + 'static,
+    ) -> Self {
+        self.on("contextMenu", move |context, params| {
+            let action = params["action"].as_str().ok_or("no action")?;
+            let path = params["path"].as_str().ok_or("no path")?;
+            handler(context, action, Path::new(path))
+        })
+    }
+
     /// Runs once the program knows its context, to start background work that emits events.
     #[must_use]
     pub fn on_start(mut self, start: impl FnOnce(&Context) + 'static) -> Self {
@@ -220,6 +235,21 @@ mod tests {
                 json!({ "type": "result", "id": 2, "value": "fr" }),
                 json!({ "type": "error", "id": 3, "message": "unknown method nope" }),
             ]
+        );
+    }
+
+    #[test]
+    fn hands_over_right_click_actions() {
+        let module = Module::new().on_context_menu(|_, action, path| {
+            Ok(json!({ "action": action, "path": path.display().to_string() }))
+        });
+        let input = format!(
+            "{INIT}\n{}\n",
+            r#"{"type":"call","id":1,"method":"contextMenu","params":{"action":"zip","path":"/a b"}}"#,
+        );
+        assert_eq!(
+            serve(module, &input),
+            [json!({ "type": "result", "id": 1, "value": { "action": "zip", "path": "/a b" } })]
         );
     }
 

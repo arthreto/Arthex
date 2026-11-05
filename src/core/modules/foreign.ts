@@ -2,7 +2,7 @@ import type { Component } from 'svelte';
 import type { MessageTree, MessageValues } from '../i18n';
 import type { SearchProvider } from '../search/types';
 import ForeignView from './ForeignView.svelte';
-import { TINTS, type ModuleManifest, type WidgetSlot } from './manifest';
+import { TINTS, type ContextMenuAction, type ModuleManifest, type WidgetSlot } from './manifest';
 import { knownTags } from './tags';
 
 /**
@@ -25,6 +25,7 @@ export interface ForeignManifest {
   widget?: { slot: WidgetSlot; component: LazyMount };
   search?: SearchProvider;
   tool?: LazyMount;
+  contextMenu?: readonly ContextMenuAction[];
   badge?: LazyMount;
   settingsAction?: LazyMount;
   settingsSection?: {
@@ -38,7 +39,7 @@ export interface ForeignManifest {
  * `src-tauri/src/services/module_host/package.rs`: only add to it, or raise that version.
  */
 export interface HostApi {
-  api: 3;
+  api: 4;
   locale(): string;
   onLocaleChange(listener: (locale: string) => void): () => void;
   /** A message by its full key: `modules.<id>.<key>` for a module, `common.close` for the shell. */
@@ -98,6 +99,7 @@ export function adopt(raw: unknown, id: string): ModuleManifest | null {
     widget: widget && widgetView ? { slot: widget.slot, component: widgetView } : undefined,
     search,
     tool: view(foreign.tool),
+    contextMenu: Array.isArray(foreign.contextMenu) ? foreign.contextMenu : undefined,
     badge: view(foreign.badge),
     settingsAction: view(foreign.settingsAction),
     settingsSection: sectionView ? { component: sectionView, action: section?.action } : undefined,

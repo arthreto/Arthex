@@ -131,7 +131,8 @@
         "page": "Pages",
         "widget": "Home cards",
         "search": "Search",
-        "tool": "Tools"
+        "tool": "Tools",
+        "contextMenu": "Right-click menu"
       },
       "switch": "{name}, {element}",
       "turnedOff": "{name}, turned off",
@@ -143,7 +144,8 @@
         "page": "Page",
         "widget": "Home card",
         "search": "Search",
-        "tool": "Tool"
+        "tool": "Tool",
+        "contextMenu": "Right-click menu"
       },
       "all": "All",
       "filter": "Show",

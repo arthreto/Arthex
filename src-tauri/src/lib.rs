@@ -8,13 +8,24 @@ fn setup(tauri_app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     app::setup(tauri_app.handle())?;
     modules::setup(tauri_app.handle())?;
     services::module_host::setup(tauri_app.handle())?;
+    let args: Vec<String> = std::env::args().collect();
+    services::module_host::context_menu::run_from_args(tauri_app.handle(), &args);
     Ok(())
+}
+
+/// Removes what Arthex added to the right-click menu, for the uninstaller.
+#[cfg(windows)]
+pub fn clear_context_menu() {
+    services::module_host::context_menu::clear();
 }
 
 pub fn run() {
     let builder = tauri::Builder::default()
         // Must stay first: a second launch only reopens the overlay of the running instance.
         .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+            if services::module_host::context_menu::run_from_args(app, &args) {
+                return;
+            }
             app::overlay::show(app);
             services::module_host::open_from_args(app, &args);
         }))

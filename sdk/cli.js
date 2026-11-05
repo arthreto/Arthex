@@ -18,8 +18,8 @@ import { moduleConfig } from './vite.js';
 import { zip } from './zip.js';
 
 /** `HOST_API` of the app this SDK comes with. */
-const API = 3;
-const ELEMENTS = ['page', 'widget', 'search', 'tool'];
+const API = 4;
+const ELEMENTS = ['page', 'widget', 'search', 'tool', 'contextMenu'];
 const require = createRequire(import.meta.url);
 
 function fail(message) {
@@ -77,6 +77,31 @@ function buildProgram(dir, staging, id, target) {
   return packed;
 }
 
+/** Its right-click actions, with their labels in each language and their icons copied. */
+function contextMenuOf(dir, staging, module, native) {
+  const actions = module.contextMenu;
+  if (!actions) return undefined;
+  if (module.api < 4) fail('a right-click action needs api: 4 in manifest.ts');
+  if (!native) fail('a right-click action needs a program in native/, which runs it');
+  return actions.map((action) => {
+    const labels = Object.fromEntries(
+      Object.entries(module.locales).flatMap(([language, messages]) => {
+        const label = messages.contextMenu?.[action.id];
+        return label ? [[language, label]] : [];
+      }),
+    );
+    if (Object.keys(labels).length === 0) fail(`no "contextMenu.${action.id}" in the locales`);
+    if (action.icon) {
+      if (!action.icon.toLowerCase().endsWith('.ico')) fail(`${action.icon}: Windows needs a .ico`);
+      const source = path.join(dir, action.icon);
+      if (!fs.existsSync(source)) fail(`${action.icon} is missing`);
+      fs.mkdirSync(path.dirname(path.join(staging, action.icon)), { recursive: true });
+      fs.copyFileSync(source, path.join(staging, action.icon));
+    }
+    return { ...action, labels };
+  });
+}
+
 /** Builds the interface and the program of a module, and writes its `module.json`. */
 async function stage(dir, target) {
   const staging = fs.mkdtempSync(path.join(os.tmpdir(), 'arthex-module-'));
@@ -88,6 +113,7 @@ async function stage(dir, target) {
   if (module.api > API) fail(`this module needs API ${module.api}, and this SDK offers ${API}`);
   const native = buildProgram(dir, staging, module.id, target);
   const platform = native ? platformOf(target) : 'any';
+  const contextMenu = contextMenuOf(dir, staging, module, native);
   const info = {
     id: module.id,
     version: module.version,
@@ -96,6 +122,7 @@ async function stage(dir, target) {
     ...(native && { native }),
     background: module.background,
     elements: ELEMENTS.filter((element) => module[element] !== undefined),
+    ...(contextMenu && { contextMenu }),
     tags: module.tags ?? [],
     icon: module.icon,
     tint: module.tint,

@@ -4,6 +4,7 @@
 
 mod catalog;
 pub mod commands;
+pub mod context_menu;
 mod opened;
 mod package;
 mod program;
@@ -96,13 +97,17 @@ pub fn setup(app: &AppHandle) -> Result<()> {
         programs: program::Programs::default(),
         opened: opened::Opened::default(),
     });
-    open_from_args(app, &std::env::args().collect::<Vec<_>>());
+    let args: Vec<String> = std::env::args().collect();
+    open_from_args(app, &args);
 
-    program::sync(app, &app::settings(app));
+    let settings = app::settings(app);
+    program::sync(app, &settings);
+    context_menu::sync(app, &settings);
     let handle = app.clone();
     app.listen_any(events::SETTINGS_CHANGED, move |event| {
         if let Ok(settings) = serde_json::from_str::<Settings>(event.payload()) {
             program::sync(&handle, &settings);
+            context_menu::sync(&handle, &settings);
         }
     });
 
@@ -206,7 +211,9 @@ pub fn install(app: &AppHandle, bytes: &[u8], expected: Option<&str>) -> Result<
     let installed = describe(&target, package.info, false);
     host.installed_mut().insert(id.clone(), installed.clone());
     tracing::info!(module = %id, version = %installed.version, "module installed");
-    program::sync(app, &app::settings(app));
+    let settings = app::settings(app);
+    program::sync(app, &settings);
+    context_menu::sync(app, &settings);
     app.emit(CHANGED, ()).ok();
     Ok(installed)
 }
@@ -223,6 +230,7 @@ pub fn uninstall(app: &AppHandle, id: &str, delete_data: bool) -> Result<()> {
         remove_if_present(&host.data.join(id))?;
     }
     tracing::info!(module = %id, delete_data, "module uninstalled");
+    context_menu::sync(app, &app::settings(app));
     app.emit(CHANGED, ()).ok();
     Ok(())
 }

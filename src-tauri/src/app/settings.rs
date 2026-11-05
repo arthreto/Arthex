@@ -19,10 +19,17 @@ pub enum Element {
     Widget,
     Search,
     Tool,
+    ContextMenu,
 }
 
 impl Element {
-    pub const ALL: [Self; 4] = [Self::Page, Self::Widget, Self::Search, Self::Tool];
+    pub const ALL: [Self; 5] = [
+        Self::Page,
+        Self::Widget,
+        Self::Search,
+        Self::Tool,
+        Self::ContextMenu,
+    ];
 
     pub fn as_str(self) -> &'static str {
         match self {
@@ -30,6 +37,7 @@ impl Element {
             Self::Widget => "widget",
             Self::Search => "search",
             Self::Tool => "tool",
+            Self::ContextMenu => "contextMenu",
         }
     }
 
@@ -184,7 +192,9 @@ fn migrate(mut raw: Value) -> Value {
             .iter()
             .filter(|(_, enabled)| **enabled == Value::Bool(false))
             .flat_map(|(id, _)| {
-                Element::ALL.map(|element| Value::String(format!("{id}:{}", element.as_str())))
+                // The elements of that version: this migration must not change with later ones.
+                ["page", "widget", "search", "tool"]
+                    .map(|element| Value::String(format!("{id}:{element}")))
             })
             .collect();
         fields.insert("disabledElements".into(), Value::Array(disabled));

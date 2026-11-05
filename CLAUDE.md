@@ -46,7 +46,7 @@ These come from the owner's feedback on the mockup. Do not reintroduce what was 
   - a "Customize" mode with three drag zones: "In the bar" (max 6), "Other pages" and "Turned off";
   - Home is locked first in the bar.
   - **Settings is never a page.** It is the ⚙ icon next to ▦ "All pages".
-- A module provides **elements**: a page, a Home card, search results, a tool. **Settings → Modules → Configuration** shows the icons of the modules grouped by type (Pages, Home cards, Search, Tools), grey when turned off. A click opens the module's dialog, with one switch per element. The hub's "Turned off" zone drives the same page switch.
+- A module provides **elements**: a page, a Home card, search results, a tool, actions in the right-click menu of Explorer. **Settings → Modules → Configuration** shows the icons of the modules grouped by type (Pages, Home cards, Search, Tools, Right-click menu), grey when turned off. A click opens the module's dialog, with one switch per element. The hub's "Turned off" zone drives the same page switch.
 - Logo at the top left, next to the search bar. Layout from top to bottom: search bar, tab bar, page content, keyboard hints.
 - Animations are short (opacity and scale) and respect "Reduce motion".
 - **Nothing that looks generated:** no imitation Windows icons or fake system UI in the mockup or the screenshots. Sample sites and apps always show their real icon (or Arthex's own icon), never coloured letters or made-up icons. No meta text such as "validated design" or "mockup" in anything users read.
@@ -86,6 +86,7 @@ These come from the owner's feedback on the mockup. Do not reintroduce what was 
   - paths are canonicalised and must exist;
   - programs launch without arguments, except the command lines the user writes in their own shortcuts, run as typed through the system shell;
   - system commands are a closed enum.
+- A module's right-click actions are verbs of the current user's registry: Arthex checks each one, writes them only while the element is on, and removes them when it goes away or Arthex is uninstalled.
 - No admin rights, no telemetry. The network is used only for favicons, update checks, the module catalog and, in the Discord RPC module, the images of its preview (Discord's list of an application's images, and the addresses the user types).
 - Logs never contain keystrokes, clipboard content or search queries.
 - File deletion always goes to the Recycle Bin, after confirmation.

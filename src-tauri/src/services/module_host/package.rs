@@ -13,11 +13,12 @@ use minisign_verify::{PublicKey, Signature};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
+use super::context_menu::{Action, MAX_ACTIONS};
 use crate::app::{AppError, Element, Result, is_module_id};
 
 /// Version of what the app offers modules (`window.__ARTHEX__`). A module built for a newer
 /// one is refused; older ones keep working.
-pub const HOST_API: u32 = 3;
+pub const HOST_API: u32 = 4;
 pub const MAX_PACKAGE_BYTES: u64 = 64 * 1024 * 1024;
 const MAX_UNPACKED_BYTES: u64 = 256 * 1024 * 1024;
 const MAX_FILES: usize = 2000;
@@ -49,6 +50,9 @@ pub struct ModuleInfo {
     #[serde(default)]
     pub background: bool,
     pub elements: Vec<String>,
+    /// Its actions in the right-click menu of Explorer.
+    #[serde(default)]
+    pub context_menu: Vec<Action>,
     /// What the overlay shows before it installs an opened file.
     #[serde(default)]
     pub icon: String,
@@ -183,6 +187,16 @@ fn check_info(info: &ModuleInfo, files: &BTreeMap<String, Vec<u8>>) -> Result<()
     }
     if !files.contains_key(ENTRY) {
         return Err(invalid("no index.js"));
+    }
+    if info.context_menu.len() > MAX_ACTIONS
+        || !info.context_menu.iter().all(Action::is_valid)
+        || info
+            .context_menu
+            .iter()
+            .filter_map(|action| action.icon.as_ref())
+            .any(|icon| !files.contains_key(icon))
+    {
+        return Err(invalid("bad right-click actions"));
     }
     if let Some(native) = &info.native
         && (info.platform == "any" || !files.contains_key(native))

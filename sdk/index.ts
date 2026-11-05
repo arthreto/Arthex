@@ -2,7 +2,7 @@ import { host } from './host';
 
 export { defineModule, type DefinedModule, type InstallableModule } from './define';
 export { getLocale, moduleTranslator } from './i18n.svelte';
-export type { ToolProps, Tint, WidgetSlot } from '../src/core/modules/manifest';
+export type { ContextMenuAction, ToolProps, Tint, WidgetSlot } from '../src/core/modules/manifest';
 export type { Query, ResultIcon, SearchProvider, SearchResult } from '../src/core/search/types';
 
 export { default as Button } from '../src/ui/Button.svelte';

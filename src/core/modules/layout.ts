@@ -5,7 +5,7 @@ export const HOME_ID = 'home';
 export const MAX_TAB_BAR = 6;
 
 /** What a module brings to the overlay, in the order Settings lists them. Each one has its own switch. */
-export const ELEMENTS = ['page', 'widget', 'search', 'tool'] as const;
+export const ELEMENTS = ['page', 'widget', 'search', 'tool', 'contextMenu'] as const;
 export type Element = (typeof ELEMENTS)[number];
 
 type Layout = Pick<Settings, 'disabledElements' | 'tabBar' | 'favorites'>;

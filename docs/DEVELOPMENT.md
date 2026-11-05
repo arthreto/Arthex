@@ -100,12 +100,13 @@ Reuse these instead of writing your own.
 
 A module is a folder in `src/modules/<id>/`. Its manifest declares the **elements** it provides, and each element has its own switch in Settings → Modules:
 
-| Element  | What it gives                                                   |
-| -------- | --------------------------------------------------------------- |
-| `page`   | a page in "All pages", and a tab if the user puts it in the bar |
-| `widget` | a card on Home                                                  |
-| `search` | results in the search bar                                       |
-| `tool`   | a mini-app found by name in the search, opened over the overlay |
+| Element       | What it gives                                                                                           |
+| ------------- | ------------------------------------------------------------------------------------------------------- |
+| `page`        | a page in "All pages", and a tab if the user puts it in the bar                                         |
+| `widget`      | a card on Home                                                                                          |
+| `search`      | results in the search bar                                                                               |
+| `tool`        | a mini-app found by name in the search, opened over the overlay                                         |
+| `contextMenu` | actions in the right-click menu of Explorer, run by the module's program (installable modules, Windows) |
 
 ```
 manifest.ts          what the module is (id, icon, tint, order) and the elements it provides, below
@@ -248,12 +249,32 @@ Installable modules live outside this repository, in [`arthreto/arthex-modules`]
    }
    ```
 
-4. Develop it without signing: `npx arthex build <module> --out dev-modules`, then `ARTHEX_DEV_MODULES=<full path of dev-modules> npm run tauri dev`.
-5. Release it, with `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` set as for app releases:
+4. To add actions to the right-click menu of Explorer, set `api: 4`, give it a program and declare them. Each `label` is `contextMenu.<id>` in the locales. Without `icon`, the action shows the icon of Arthex; `icon` is a `.ico` of the module's folder.
+
+   ```ts
+   contextMenu: [
+     { id: 'compress', targets: ['file', 'folder'] },
+     { id: 'convert', targets: ['file'], extensions: ['.png', '.jpg'], icon: 'assets/convert.ico' },
+   ],
+   ```
+
+   ```rust
+   Module::new()
+       .on_context_menu(|context, action, path| Ok(json!({ "action": action, "path": path.display().to_string() })))
+       .run()
+   ```
+
+   - `targets` are `file`, `folder`, `folder-background` (the empty space of an open folder) and `drive`.
+   - Arthex writes one verb per target in `HKCU\Software\Classes` (`context_menu.rs`) while the element is on, in the language of the interface. The click starts `arthex.exe --module-action <module> <action> <path>`, or reaches the running Arthex through the single-instance plugin, and the program receives the checked path. The overlay stays closed: to show it, the program calls `set_overlay_visible`.
+   - Each selected item is one call.
+   - Windows 11 shows these actions under "Show more options". Its first menu only takes commands of a signed, packaged app, which Arthex is not.
+
+5. Develop it without signing: `npx arthex build <module> --out dev-modules`, then `ARTHEX_DEV_MODULES=<full path of dev-modules> npm run tauri dev`.
+6. Release it, with `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` set as for app releases:
    - `npx arthex pack <module> --out dist` (add `--target <rust target>` for each platform when it has a program) writes `<id>-<version>-<platform>.arthex` and its catalog entry;
    - `npx arthex catalog dist` merges the entries into a signed `catalog.json`;
    - publish every `.arthex`, `catalog.json` and `catalog.json.sig` in the latest release of `arthreto/arthex-modules`.
-6. A change to `HostApi` or to what `@arthex/sdk` exports raises `HOST_API` in Rust and `API` in `sdk/cli.js` together. A module that uses it sets `api` to that version in its `manifest.ts`.
+7. A change to `HostApi` or to what `@arthex/sdk` exports raises `HOST_API` in Rust and `API` in `sdk/cli.js` together. A module that uses it sets `api` to that version in its `manifest.ts`.
 
 ## Rust commands and events
 

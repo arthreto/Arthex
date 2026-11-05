@@ -8,5 +8,10 @@ fn main() {
     unsafe {
         std::env::set_var("WEBVIEW2_DEFAULT_BACKGROUND_COLOR", "0");
     }
+    #[cfg(windows)]
+    if std::env::args().any(|arg| arg == "--clear-context-menu") {
+        arthex_lib::clear_context_menu();
+        return;
+    }
     arthex_lib::run();
 }

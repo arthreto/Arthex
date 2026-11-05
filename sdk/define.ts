@@ -1,7 +1,7 @@
 import { mount, unmount, type Component } from 'svelte';
 import type { MessageTree } from '../src/core/i18n/types';
 import type { ForeignManifest, Mount } from '../src/core/modules/foreign';
-import type { Tint, ToolProps, WidgetSlot } from '../src/core/modules/manifest';
+import type { ContextMenuAction, Tint, ToolProps, WidgetSlot } from '../src/core/modules/manifest';
 import { TAGS, type Tag } from '../src/core/modules/tags';
 import type { SearchProvider } from '../src/core/search/types';
 
@@ -34,6 +34,8 @@ export interface InstallableModule {
   /** Results in the search bar. `panel` is not available to installed modules. */
   search?: SearchProvider;
   tool?: Lazy<ToolProps>;
+  /** Its actions in the right-click menu of Explorer: needs `api: 4` and a program in `native/`. */
+  contextMenu?: readonly ContextMenuAction[];
   badge?: Lazy;
   settingsAction?: Lazy;
   settingsSection?: {
@@ -87,6 +89,7 @@ export function defineModule(module: InstallableModule): DefinedModule {
     widget: module.widget && { slot: module.widget.slot, component: mounted(module.widget.component) },
     search: module.search,
     tool: lazy(module.tool),
+    contextMenu: module.contextMenu,
     badge: lazy(module.badge),
     settingsAction: lazy(module.settingsAction),
     settingsSection: module.settingsSection && {
