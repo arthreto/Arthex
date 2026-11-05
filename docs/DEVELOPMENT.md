@@ -70,24 +70,25 @@ src-tauri/
 
 Reuse these instead of writing your own.
 
-| Need                                                                                  | Use                                                                                       |
-| ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Call Rust                                                                             | the typed wrappers: `commands` in `src/core/api.ts` (shell) or `src/modules/<id>/api.ts`  |
-| Listen to Rust                                                                        | `on(events.x, handler)` from `src/core/api.ts`                                            |
-| Show a Rust error                                                                     | `errorMessage(error)` from `src/core/api.ts`                                              |
-| Read or change settings                                                               | `settings.value` and `settings.update(patch)` from `src/core/settings/settings.svelte.ts` |
-| Text                                                                                  | `t('key')` from `src/core/i18n` (shell) or the module's `i18n.ts`                         |
-| A module's name or description                                                        | `moduleText(id, 'name' \| 'description')` from `src/core/i18n`                            |
-| A button, switch, modal, panel, chip or toggle chip, card, checkbox, file icon, field | `src/ui/`                                                                                 |
-| An empty list or a list with no match                                                 | `EmptyState` from `src/ui/`: a centred pictogram, a title, a line and a button            |
-| Colours, radii, veil                                                                  | the tokens in `src/ui/tokens.css`                                                         |
-| Match text against a search                                                           | `matchesAll` and `normalize` from `src/core/text.ts` (case and accents ignored)           |
-| Show a time ("2 min ago"), a size ("1.2 GB") or a share                               | `formatWhen`, `formatBytes`, `formatPercent` and `formatCount` from `src/core/format.ts`  |
-| Copy a path                                                                           | `copyPath` from `src/core/clipboard.ts`                                                   |
-| Feedback after an action                                                              | `toast.show(message)` from `src/core/toast.svelte.ts`                                     |
-| Open a page, the hub or settings                                                      | `navigation.open(view)` from `src/app/navigation.svelte.ts`                               |
-| Open the uninstall dialog                                                             | `dialogs.uninstall = true` from `src/app/dialogs.svelte.ts`                               |
-| Module list, tab bar, launcher order                                                  | `modules`, `getModule`, `tabBarIds`, `launcherIds` from `src/core/modules`                |
+| Need                                                                                  | Use                                                                                                                               |
+| ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Call Rust                                                                             | the typed wrappers: `commands` in `src/core/api.ts` (shell) or `src/modules/<id>/api.ts`                                          |
+| Listen to Rust                                                                        | `on(events.x, handler)` from `src/core/api.ts`                                                                                    |
+| Show a Rust error                                                                     | `errorMessage(error)` from `src/core/api.ts`                                                                                      |
+| Read or change settings                                                               | `settings.value` and `settings.update(patch)` from `src/core/settings/settings.svelte.ts`                                         |
+| Text                                                                                  | `t('key')` from `src/core/i18n` (shell) or the module's `i18n.ts`                                                                 |
+| A module's name or description                                                        | `moduleText(id, 'name' \| 'description')` from `src/core/i18n`                                                                    |
+| A button, switch, modal, panel, chip or toggle chip, card, checkbox, file icon, field | `src/ui/`                                                                                                                         |
+| An empty list or a list with no match                                                 | `EmptyState` from `src/ui/`: a centred pictogram, a title, a line and a button                                                    |
+| Drag a tile                                                                           | `dragWithGhost(event, element)` from `src/ui/dragGhost.ts`: the browser's drag image has black corners in the transparent overlay |
+| Colours, radii, veil                                                                  | the tokens in `src/ui/tokens.css`                                                                                                 |
+| Match text against a search                                                           | `matchesAll` and `normalize` from `src/core/text.ts` (case and accents ignored)                                                   |
+| Show a time ("2 min ago"), a size ("1.2 GB") or a share                               | `formatWhen`, `formatBytes`, `formatPercent` and `formatCount` from `src/core/format.ts`                                          |
+| Copy a path                                                                           | `copyPath` from `src/core/clipboard.ts`                                                                                           |
+| Feedback after an action                                                              | `toast.show(message)` from `src/core/toast.svelte.ts`                                                                             |
+| Open a page, the hub or settings                                                      | `navigation.open(view)` from `src/app/navigation.svelte.ts`                                                                       |
+| Open the uninstall dialog                                                             | `dialogs.uninstall = true` from `src/app/dialogs.svelte.ts`                                                                       |
+| Module list, tab bar, launcher order                                                  | `modules`, `getModule`, `tabBarIds`, `launcherIds` from `src/core/modules`                                                        |
 
 ## Modules
 
@@ -344,6 +345,7 @@ The language appears in Settings and in the tray at the next build. No code chan
   - It uses a `WH_KEYBOARD_LL` hook on its own thread, driven by a pure, tested state machine.
   - It fires when Shift + Win is released with no other key in between, so Win + Shift + S still works.
   - A neutral `vkE8` key press is injected so that releasing Win does not open the Start menu.
+  - The hook can miss a key-up while the focus moves to the overlay. Before each modifier press, the machine takes the modifiers Windows says are down (`GetAsyncKeyState`) and starts over if they differ, so the next press is never lost.
   - The hook callback does O(1) work. Windows silently removes slow hooks.
 - The window sets `dragDropEnabled: false`. Otherwise Tauri takes every drag on Windows for a file drop, and the drags inside the page (Customize in All pages, Home shortcuts) show the "forbidden" cursor.
 - The startup entry is managed by `tauri-plugin-autostart`. It launches the app with `--autostart`, so it starts silently. Debug builds never register it.

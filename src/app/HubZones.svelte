@@ -5,6 +5,7 @@
   import { settings } from '../core/settings/settings.svelte';
   import type { SettingsPatch } from '../core/settings/types';
   import { toast } from '../core/toast.svelte';
+  import { dragWithGhost } from '../ui/dragGhost';
   import Icon from '../ui/Icon.svelte';
 
   const zones = $derived(zoneIds(settings.value));
@@ -50,6 +51,7 @@
     dragged = id;
     event.dataTransfer?.setData('text/plain', id);
     if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+    if (event.currentTarget instanceof HTMLElement) dragWithGhost(event, event.currentTarget);
   }
 
   function dragEnd() {

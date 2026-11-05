@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { dragWithGhost } from '../../ui/dragGhost';
   import { onMount } from 'svelte';
   import { errorMessage } from '../../core/api';
   import { t as shellT } from '../../core/i18n';
@@ -100,7 +101,10 @@
         draggable="true"
         onclick={() => open(shortcut)}
         oncontextmenu={(event) => openMenu(event, shortcut)}
-        ondragstart={() => (dragged = shortcut.id)}
+        ondragstart={(event) => {
+          dragged = shortcut.id;
+          if (event.currentTarget instanceof HTMLElement) dragWithGhost(event, event.currentTarget);
+        }}
         ondragend={() => (dragged = null)}
         ondragover={(event) => event.preventDefault()}
         ondrop={(event) => drop(event, shortcut)}
