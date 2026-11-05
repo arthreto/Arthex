@@ -49,7 +49,7 @@
     align-items: center;
     justify-content: center;
     background: var(--dialog-scrim);
-    backdrop-filter: blur(22px) saturate(120%);
+    backdrop-filter: blur(34px) saturate(120%);
   }
 
   .backdrop {
