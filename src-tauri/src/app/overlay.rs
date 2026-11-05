@@ -8,7 +8,7 @@ use std::{
 };
 
 use tauri::{
-    AppHandle, Emitter, Manager, Webview, WebviewWindow, Window, WindowEvent,
+    AppHandle, Emitter, Manager, PhysicalSize, Webview, WebviewWindow, Window, WindowEvent,
     webview::{PageLoadEvent, PageLoadPayload},
 };
 
@@ -246,11 +246,30 @@ fn present(window: &WebviewWindow) -> tauri::Result<()> {
     };
     if let Some(monitor) = monitor {
         let area = monitor.work_area();
+        let size = fitted(area.size, *monitor.size());
+        tracing::debug!(
+            width = size.width,
+            height = size.height,
+            screen_width = monitor.size().width,
+            screen_height = monitor.size().height,
+            "overlay placed"
+        );
         window.set_position(area.position)?;
-        window.set_size(area.size)?;
+        window.set_size(size)?;
     }
     window.show()?;
     window.set_focus()
+}
+
+/// A topmost window covering a whole screen is shown by Windows like a full-screen game, straight
+/// to the display: the desktop is no longer composed behind it and the transparent page turns
+/// black. That happens when the taskbar hides itself, so the overlay then stops one pixel short.
+fn fitted(area: PhysicalSize<u32>, screen: PhysicalSize<u32>) -> PhysicalSize<u32> {
+    if area == screen {
+        PhysicalSize::new(area.width, area.height.saturating_sub(1))
+    } else {
+        area
+    }
 }
 
 /// A borderless window lets the desktop show through only once the DWM frame covers all of it;
@@ -341,3 +360,16 @@ fn set_resting(window: &WebviewWindow, resting: bool) {
 
 #[cfg(not(windows))]
 fn set_resting(_window: &WebviewWindow, _resting: bool) {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn never_covers_a_whole_screen() {
+        let screen = PhysicalSize::new(1920, 1080);
+        assert_eq!(fitted(screen, screen), PhysicalSize::new(1920, 1079));
+        let above_taskbar = PhysicalSize::new(1920, 1032);
+        assert_eq!(fitted(above_taskbar, screen), above_taskbar);
+    }
+}
