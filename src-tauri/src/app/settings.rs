@@ -61,6 +61,8 @@ pub struct Settings {
     pub theme: Theme,
     /// Shows the blurred desktop behind the overlay; otherwise its background is opaque.
     pub translucent: bool,
+    /// Shows the logo of Arthex on the Windows taskbar, to open the overlay.
+    pub taskbar_search: bool,
     pub reduce_motion: bool,
     pub autostart: bool,
     pub hotkey: Vec<String>,
@@ -96,6 +98,7 @@ impl Default for Settings {
             language: None,
             theme: Theme::System,
             translucent: true,
+            taskbar_search: false,
             reduce_motion: false,
             autostart: true,
             hotkey: vec!["Shift".into(), "Win".into()],
@@ -283,6 +286,24 @@ mod tests {
 
         let reloaded = SettingsStore::load(dir.path().join("settings.json"));
         assert_eq!(reloaded.get(), saved);
+    }
+
+    #[test]
+    fn taskbar_search_stays_off_until_asked_for() {
+        let (dir, store) = store();
+        assert!(!store.get().taskbar_search);
+
+        assert!(
+            store
+                .update(&json!({ "taskbarSearch": true }))
+                .unwrap()
+                .taskbar_search
+        );
+        assert!(
+            SettingsStore::load(dir.path().join("settings.json"))
+                .get()
+                .taskbar_search
+        );
     }
 
     #[test]

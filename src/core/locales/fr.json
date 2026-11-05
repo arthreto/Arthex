@@ -86,6 +86,7 @@
         "light": "Clair"
       },
       "translucent": "Rendre transparent et flou",
+      "taskbarSearch": "Icône Arthex dans la barre des tâches",
       "autostart": "Lancer Arthex au démarrage de Windows",
       "debugLog": "Journal de débogage",
       "openLogs": "Ouvrir les journaux",
@@ -234,6 +235,12 @@
       "title": "Choisis ton thème",
       "subtitle": "Tu pourras le changer plus tard."
     },
+    "search": {
+      "title": "Rechercher depuis la barre des tâches ?",
+      "subtitle": "L’icône d’Arthex dans la barre des tâches ouvre la recherche d’un clic.",
+      "yes": "Oui, ajouter l’icône",
+      "no": "Non, merci"
+    },
     "startup": {
       "title": "Lancer Arthex avec Windows ?",
       "subtitle": "Il démarre discrètement, prêt dès que tu appuies sur {keys}.",
@@ -249,6 +256,7 @@
     "recap": {
       "language": "Langue",
       "theme": "Thème",
+      "search": "Icône dans la barre des tâches",
       "startup": "Démarrage",
       "on": "activé",
       "off": "désactivé",

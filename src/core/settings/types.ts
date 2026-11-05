@@ -8,6 +8,8 @@ export interface Settings {
   theme: Theme;
   /** Shows the blurred desktop behind the overlay; otherwise its background is opaque. */
   translucent: boolean;
+  /** Shows the logo of Arthex on the Windows taskbar, to open the overlay. */
+  taskbarSearch: boolean;
   reduceMotion: boolean;
   autostart: boolean;
   hotkey: string[];

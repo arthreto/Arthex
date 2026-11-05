@@ -4,10 +4,9 @@
   import Button from '../../ui/Button.svelte';
   import Icon from '../../ui/Icon.svelte';
 
-  const STEPS = 3;
-
   interface Props {
     number: number;
+    total: number;
     title: string;
     subtitle: string;
     onback: () => void;
@@ -15,12 +14,12 @@
     children: Snippet;
   }
 
-  let { number, title, subtitle, onback, onnext, children }: Props = $props();
+  let { number, total, title, subtitle, onback, onnext, children }: Props = $props();
 </script>
 
 <div class="step">
-  <div class="dots" role="img" aria-label={t('onboarding.step', { n: number, total: STEPS })}>
-    {#each { length: STEPS }, index (index)}
+  <div class="dots" role="img" aria-label={t('onboarding.step', { n: number, total })}>
+    {#each { length: total }, index (index)}
       <span class:done={index < number} class:current={index + 1 === number}></span>
     {/each}
   </div>
@@ -35,7 +34,7 @@
       {t('onboarding.back')}
     </button>
     <Button variant="primary" size="large" onclick={onnext}>
-      {number === STEPS ? t('onboarding.finish') : t('onboarding.next')}
+      {number === total ? t('onboarding.finish') : t('onboarding.next')}
       <Icon name="arrowRight" stroke={2.2} />
     </Button>
   </div>

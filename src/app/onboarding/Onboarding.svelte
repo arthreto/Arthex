@@ -1,6 +1,7 @@
 <script lang="ts">
   import { errorMessage } from '../../core/api';
   import { availableLocales, getLocale, resolveLocale, t } from '../../core/i18n';
+  import { isWindows } from '../../core/platform';
   import { settings } from '../../core/settings/settings.svelte';
   import type { SettingsPatch, Theme } from '../../core/settings/types';
   import { toast } from '../../core/toast.svelte';
@@ -10,6 +11,7 @@
   import Done from './Done.svelte';
   import Flag from './Flag.svelte';
   import Step from './Step.svelte';
+  import TaskbarPreview from './TaskbarPreview.svelte';
   import ThemePreview from './ThemePreview.svelte';
   import Tick from './Tick.svelte';
   import Welcome from './Welcome.svelte';
@@ -17,6 +19,10 @@
   let { systemLocale }: { systemLocale: string | null } = $props();
 
   const THEMES: Theme[] = ['dark', 'light', 'system'];
+  const THEME_STEP = 2;
+  const SEARCH_STEP = 3;
+  const STARTUP_STEP = 4;
+  const TOTAL = isWindows ? STARTUP_STEP : STARTUP_STEP - 1;
 
   let step = $state(0);
   const language = $derived(getLocale());
@@ -29,6 +35,14 @@
       value: languages.find((meta) => meta.code === language)?.nativeName ?? language,
     },
     { label: t('onboarding.recap.theme'), value: t(`settings.general.themes.${settings.value.theme}`) },
+    ...(isWindows
+      ? [
+          {
+            label: t('onboarding.recap.search'),
+            value: t(settings.value.taskbarSearch ? 'onboarding.recap.on' : 'onboarding.recap.off'),
+          },
+        ]
+      : []),
     {
       label: t('onboarding.recap.startup'),
       value: t(settings.value.autostart ? 'onboarding.recap.on' : 'onboarding.recap.off'),
@@ -43,8 +57,8 @@
     }
   }
 
-  const next = () => (step += 1);
-  const back = () => (step -= 1);
+  const next = () => (step += !isWindows && step === THEME_STEP ? 2 : 1);
+  const back = () => (step -= !isWindows && step === STARTUP_STEP ? 2 : 1);
 </script>
 
 <div class="onboarding">
@@ -59,6 +73,7 @@
     {:else if step === 1}
       <Step
         number={1}
+        total={TOTAL}
         title={t('onboarding.language.title')}
         subtitle={t('onboarding.language.subtitle')}
         onback={back}
@@ -82,9 +97,10 @@
           {/each}
         </div>
       </Step>
-    {:else if step === 2}
+    {:else if step === THEME_STEP}
       <Step
-        number={2}
+        number={THEME_STEP}
+        total={TOTAL}
         title={t('onboarding.theme.title')}
         subtitle={t('onboarding.theme.subtitle')}
         onback={back}
@@ -111,9 +127,35 @@
           {t('settings.general.translucent')}
         </button>
       </Step>
-    {:else if step === 3}
+    {:else if step === SEARCH_STEP}
       <Step
-        number={3}
+        number={SEARCH_STEP}
+        total={TOTAL}
+        title={t('onboarding.search.title')}
+        subtitle={t('onboarding.search.subtitle')}
+        onback={back}
+        onnext={next}
+      >
+        <TaskbarPreview />
+        <div class="options startup" role="radiogroup" aria-label={t('onboarding.search.title')}>
+          {#each [true, false] as taskbarSearch (taskbarSearch)}
+            <Choice
+              layout="row"
+              selected={settings.value.taskbarSearch === taskbarSearch}
+              onselect={() => save({ taskbarSearch })}
+            >
+              <Tick on={settings.value.taskbarSearch === taskbarSearch} />
+              <span class="row-label"
+                >{t(taskbarSearch ? 'onboarding.search.yes' : 'onboarding.search.no')}</span
+              >
+            </Choice>
+          {/each}
+        </div>
+      </Step>
+    {:else if step === STARTUP_STEP}
+      <Step
+        number={TOTAL}
+        total={TOTAL}
         title={t('onboarding.startup.title')}
         subtitle={t('onboarding.startup.subtitle', { keys: formatKeys(settings.value.hotkey) })}
         onback={back}

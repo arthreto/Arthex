@@ -86,6 +86,7 @@
         "light": "Light"
       },
       "translucent": "Make it transparent and blurred",
+      "taskbarSearch": "Arthex icon in the taskbar",
       "autostart": "Launch Arthex when Windows starts",
       "debugLog": "Debug log",
       "openLogs": "Open the logs",
@@ -234,6 +235,12 @@
       "title": "Choose your theme",
       "subtitle": "You can change it later."
     },
+    "search": {
+      "title": "Search from the taskbar?",
+      "subtitle": "The Arthex icon in the taskbar opens the search in one click.",
+      "yes": "Yes, add the icon",
+      "no": "No, thanks"
+    },
     "startup": {
       "title": "Start Arthex with Windows?",
       "subtitle": "It starts quietly, ready as soon as you press {keys}.",
@@ -249,6 +256,7 @@
     "recap": {
       "language": "Language",
       "theme": "Theme",
+      "search": "Taskbar icon",
       "startup": "Startup",
       "on": "on",
       "off": "off",

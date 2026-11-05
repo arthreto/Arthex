@@ -3,6 +3,7 @@
   import logo from '../../assets/logo.png';
   import { commands, errorMessage } from '../../core/api';
   import { availableLocales, getLocale, t } from '../../core/i18n';
+  import { isWindows } from '../../core/platform';
   import { settings } from '../../core/settings/settings.svelte';
   import type { SettingsPatch, Theme } from '../../core/settings/types';
   import { toast } from '../../core/toast.svelte';
@@ -69,6 +70,15 @@
       onchange={(translucent) => save({ translucent })}
     />
   </SettingRow>
+  {#if isWindows}
+    <SettingRow label={t('settings.general.taskbarSearch')}>
+      <Switch
+        label={t('settings.general.taskbarSearch')}
+        checked={settings.value.taskbarSearch}
+        onchange={(taskbarSearch) => save({ taskbarSearch })}
+      />
+    </SettingRow>
+  {/if}
   <SettingRow label={t('settings.general.autostart')}>
     <Switch
       label={t('settings.general.autostart')}

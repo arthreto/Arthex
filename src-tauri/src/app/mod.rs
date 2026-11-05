@@ -10,6 +10,8 @@ pub mod overlay;
 mod settings;
 pub mod storage;
 mod system;
+#[cfg(windows)]
+mod taskbar_search;
 mod tray;
 pub mod updates;
 
@@ -37,6 +39,8 @@ pub fn setup(app: &AppHandle) -> Result<()> {
     overlay::prepare(app);
     hotkey::start(app, &settings.hotkey);
     updates::start(app);
+    #[cfg(windows)]
+    taskbar_search::set_enabled(app, settings.taskbar_search);
     if !autostart::launched_at_startup() {
         overlay::show(app);
     }
@@ -61,6 +65,10 @@ pub fn update_settings(app: &AppHandle, patch: &Value) -> Result<Settings> {
         && let Some(window) = app.get_webview_window(overlay::LABEL)
     {
         overlay::see_through(&window);
+    }
+    #[cfg(windows)]
+    if before.taskbar_search != after.taskbar_search {
+        taskbar_search::set_enabled(app, after.taskbar_search);
     }
     if before.debug_log != after.debug_log {
         logging::set_debug(after.debug_log);
