@@ -49,6 +49,11 @@ pub fn app_open_data_dir(app: AppHandle) -> Result<()> {
 }
 
 #[tauri::command]
+pub fn app_open_log_dir(app: AppHandle) -> Result<()> {
+    system::open_log_dir(&app)
+}
+
+#[tauri::command]
 pub fn app_uninstall(app: AppHandle) -> Result<()> {
     system::uninstall(&app)
 }

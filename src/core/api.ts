@@ -68,6 +68,7 @@ export const commands = {
   hotkeyRecord: (active: boolean) => invoke<boolean>('hotkey_record', { active }),
   appInfo: () => invoke<AppInfo>('app_info'),
   appOpenDataDir: () => invoke<null>('app_open_data_dir'),
+  appOpenLogDir: () => invoke<null>('app_open_log_dir'),
   appUninstall: () => invoke<null>('app_uninstall'),
   /** Fails with `unsupported` in builds without an update key. */
   updatesCheck: () => invoke<UpdateAvailable | null>('updates_check'),

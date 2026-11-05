@@ -22,7 +22,7 @@ npm run tauri dev
 npm run tauri build
 ```
 
-`npm run tauri build` writes the installer to `src-tauri/target/release/bundle/`. Logs are written daily to the app log folder. `ARTHEX_LOG=debug` raises their level.
+`npm run tauri build` writes the installer to `src-tauri/target/release/bundle/`. Logs are written daily to the app log folder (`%LOCALAPPDATA%\dev.arthreto.arthex\logs` on Windows), which Settings → General opens. The "Debug log" setting (`debugLog`, off by default) adds the detail of what Arthex does, such as when and why the overlay opens and closes: write such traces with `tracing::debug!`. `ARTHEX_LOG` (`debug`, `trace`…) fixes the level and overrides the setting.
 
 ## Checks
 
@@ -137,7 +137,7 @@ A module adds results to the search bar with a `SearchProvider` (`src/core/searc
 - `status` is a component shown above the results while the provider cannot answer fully yet. File search shows the progress of the first indexing there (`file-index://building`): until it ends, no file can be found.
 - A result names its `primary` action (Enter) and may add a `secondary` one (Ctrl + Enter), a `path` to copy, a `confirm` question for actions that cannot be undone, or a `panel` component that replaces the preview buttons.
 
-The shell asks every enabled provider at each keystroke and shows each answer as it arrives, so a slow provider never holds back the others; answers to older queries are dropped. Below 2 characters (except commands and calculations), it asks for more instead of searching.
+The shell asks every enabled provider at each keystroke and shows each answer as it arrives, so a slow provider never holds back the others; answers to older queries are dropped. A thin line under the search bar shows that a provider is still answering, once it takes more than 150 ms. Below 2 characters (except commands and calculations), it asks for more instead of searching.
 
 ### Tools
 

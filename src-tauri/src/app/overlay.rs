@@ -93,7 +93,7 @@ pub fn show(app: &AppHandle) {
         tracing::warn!(%error, "could not show the overlay");
         return;
     }
-    tracing::info!("overlay shown");
+    tracing::debug!("overlay shown");
     let _ = app.emit_to(LABEL, events::OVERLAY_SHOWN, ());
     // Windows may refuse the foreground to an app the user is not typing in: ask once more.
     let app = app.clone();
@@ -105,7 +105,7 @@ pub fn show(app: &AppHandle) {
                 && window.is_visible().unwrap_or(false)
                 && !is_foreground(&window)
             {
-                tracing::warn!("the overlay did not get the focus, asking again");
+                tracing::debug!("the overlay did not get the focus, asking again");
                 let _ = window.set_focus();
             }
         });
@@ -121,7 +121,7 @@ pub fn hide(app: &AppHandle) {
     if !window.is_visible().unwrap_or(false) {
         return;
     }
-    tracing::info!("overlay hiding");
+    tracing::debug!("overlay hiding");
     leave(app);
     let Some(timeline) = app.try_state::<Timeline>() else {
         conceal(app);
@@ -159,7 +159,7 @@ pub fn conceal(app: &AppHandle) {
         tracing::warn!(%error, "could not hide the overlay");
     }
     set_resting(&window, true);
-    tracing::info!("overlay hidden");
+    tracing::debug!("overlay hidden");
 }
 
 fn leave(app: &AppHandle) {
@@ -177,7 +177,7 @@ pub fn toggle(app: &AppHandle) {
     let just_hidden = app
         .try_state::<Timeline>()
         .is_some_and(|timeline| Timeline::within_grace(&timeline.hidden_at));
-    tracing::info!(visible, just_hidden, "the hotkey toggles the overlay");
+    tracing::debug!(visible, just_hidden, "the hotkey toggles the overlay");
     if visible || just_hidden {
         hide(app);
     } else {
@@ -215,7 +215,7 @@ fn on_focus_lost(app: &AppHandle) {
         Timeline::within_grace(&timeline.shown_at) || timeline.held.load(Ordering::SeqCst) > 0
     });
     let foreground = is_foreground(&window);
-    tracing::info!(keep, foreground, "the overlay lost the focus");
+    tracing::debug!(keep, foreground, "the overlay lost the focus");
     if !keep && !foreground {
         hide(app);
     }

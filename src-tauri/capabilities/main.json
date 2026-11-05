@@ -14,6 +14,7 @@
     "allow-hotkey-record",
     "allow-app-info",
     "allow-app-open-data-dir",
+    "allow-app-open-log-dir",
     "allow-app-uninstall",
     "allow-updates-check",
     "allow-updates-install",

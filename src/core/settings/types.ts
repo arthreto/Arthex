@@ -15,6 +15,8 @@ export interface Settings {
   disabledElements: string[];
   /** Installs updates found at launch without asking. */
   autoUpdate: boolean;
+  /** Writes the detail of what Arthex does to its logs. */
+  debugLog: boolean;
 }
 
 export type SettingsPatch = Partial<Omit<Settings, 'version'>>;

@@ -28,6 +28,7 @@ pub fn setup(app: &AppHandle) -> Result<()> {
     logging::init(&app.path().app_log_dir()?);
     let store = SettingsStore::load(app.path().app_config_dir()?.join("settings.json"));
     let settings = store.get();
+    logging::set_debug(settings.debug_log);
     app.manage(AppState { settings: store });
 
     autostart::apply(app, settings.autostart);
@@ -54,6 +55,9 @@ pub fn update_settings(app: &AppHandle, patch: &Value) -> Result<Settings> {
 
     if before.autostart != after.autostart {
         autostart::apply(app, after.autostart);
+    }
+    if before.debug_log != after.debug_log {
+        logging::set_debug(after.debug_log);
     }
     if before.hotkey != after.hotkey {
         hotkey::apply(app, &after.hotkey);

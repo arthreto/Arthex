@@ -23,6 +23,7 @@
     "placeholder": "Rechercher fichiers, apps, sites…    = calcul    > commande",
     "clear": "Effacer la recherche",
     "noResults": "Aucun résultat pour « {query} ».",
+    "loading": "Recherche en cours",
     "tooShort": "Tape au moins {count} caractères",
     "preview": "Aperçu",
     "copyPath": "Copier le chemin",
@@ -85,6 +86,8 @@
         "light": "Clair"
       },
       "autostart": "Lancer Arthex au démarrage de Windows",
+      "debugLog": "Journal de débogage",
+      "openLogs": "Ouvrir les journaux",
       "reduceMotion": "Réduire les animations",
       "version": "Arthex {version}",
       "data": "Données",

@@ -34,6 +34,7 @@ pub fn run() {
             app::commands::hotkey_record,
             app::commands::app_info,
             app::commands::app_open_data_dir,
+            app::commands::app_open_log_dir,
             app::commands::app_uninstall,
             app::commands::updates_check,
             app::commands::updates_install,

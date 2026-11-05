@@ -36,9 +36,9 @@
     }
   }
 
-  async function openDataDir() {
+  async function open(folder: () => Promise<null>) {
     try {
-      await commands.appOpenDataDir();
+      await folder();
     } catch (error) {
       toast.show(t('errors.generic', { message: errorMessage(error) }));
     }
@@ -76,13 +76,22 @@
       onchange={(reduceMotion) => save({ reduceMotion })}
     />
   </SettingRow>
+  <SettingRow label={t('settings.general.debugLog')}>
+    <Button size="small" onclick={() => open(commands.appOpenLogDir)}>{t('settings.general.openLogs')}</Button
+    >
+    <Switch
+      label={t('settings.general.debugLog')}
+      checked={settings.value.debugLog}
+      onchange={(debugLog) => save({ debugLog })}
+    />
+  </SettingRow>
 </Panel>
 
 <Panel>
   <div class="about">
     <img src={logo} alt="" width="34" height="34" />
     <span class="version">{t('settings.general.version', { version })}</span>
-    <Button onclick={openDataDir}>{t('settings.general.data')}</Button>
+    <Button onclick={() => open(commands.appOpenDataDir)}>{t('settings.general.data')}</Button>
     <Button onclick={() => (dialogs.uninstall = true)}>{t('settings.general.uninstall')}</Button>
   </div>
 </Panel>

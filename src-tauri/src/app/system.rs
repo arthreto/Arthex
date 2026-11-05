@@ -13,6 +13,14 @@ pub fn open_data_dir(app: &AppHandle) -> Result<()> {
         .map_err(|error| AppError::Failed(error.to_string()))
 }
 
+pub fn open_log_dir(app: &AppHandle) -> Result<()> {
+    let dir = app.path().app_log_dir()?;
+    fs::create_dir_all(&dir)?;
+    app.opener()
+        .open_path(dir.to_string_lossy(), None::<&str>)
+        .map_err(|error| AppError::Failed(error.to_string()))
+}
+
 /// Starts the uninstaller registered by the NSIS installer, then quits so it can remove the files.
 #[cfg(windows)]
 pub fn uninstall(app: &AppHandle) -> Result<()> {

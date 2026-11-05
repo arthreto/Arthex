@@ -68,6 +68,8 @@ pub struct Settings {
     pub disabled_elements: Vec<String>,
     /// Installs updates found at launch without asking.
     pub auto_update: bool,
+    /// Writes the detail of what Arthex does to its logs, to diagnose a problem.
+    pub debug_log: bool,
 }
 
 impl Settings {
@@ -100,6 +102,7 @@ impl Default for Settings {
             favorites: Vec::new(),
             disabled_elements: Vec::new(),
             auto_update: true,
+            debug_log: false,
         }
     }
 }
