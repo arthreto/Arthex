@@ -3,7 +3,7 @@
   import type { WhatsNew } from '../core/api';
   import { getLocale, t } from '../core/i18n';
   import Button from '../ui/Button.svelte';
-  import { focusTrap } from '../ui/focusTrap';
+  import Dialog from '../ui/Dialog.svelte';
   import { releaseNotes, type NoteKind } from './releaseNotes';
 
   let { notes, onclose }: { notes: WhatsNew; onclose: () => void } = $props();
@@ -15,82 +15,34 @@
     improved: 'var(--tint-sky)',
     fixed: 'var(--warning)',
   };
-
-  function onkeydown(event: KeyboardEvent) {
-    if (event.key !== 'Escape') return;
-    event.stopPropagation();
-    onclose();
-  }
 </script>
 
-<div class="scrim fade-in">
-  <button class="backdrop" aria-label={t('common.close')} tabindex="-1" onclick={onclose}></button>
-  <div
-    class="dialog enter"
-    role="dialog"
-    use:focusTrap
-    aria-modal="true"
-    aria-labelledby={titleId}
-    tabindex="-1"
-    {onkeydown}
-  >
-    <header>
-      <img src={logo} alt="" width="58" height="58" />
-      <div>
-        <h2 id={titleId}>{t('whatsNew.title')}</h2>
-        <span class="installed">{t('whatsNew.installed', { version: notes.version })}</span>
-      </div>
-    </header>
-    <div class="sections scroll">
-      {#each sections as section (section.kind)}
-        <section style:--kind={colors[section.kind]}>
-          <h3>{t(`whatsNew.${section.kind}`)}</h3>
-          <ul>
-            {#each section.items as item, position (position)}
-              <li>{item}</li>
-            {/each}
-          </ul>
-        </section>
-      {/each}
+<Dialog labelledby={titleId} width={920} height={640} {onclose}>
+  <header>
+    <img src={logo} alt="" width="58" height="58" />
+    <div>
+      <h2 id={titleId}>{t('whatsNew.title')}</h2>
+      <span class="installed">{t('whatsNew.installed', { version: notes.version })}</span>
     </div>
-    <div class="actions">
-      <Button variant="primary" size="large" onclick={onclose}>{t('whatsNew.continue')}</Button>
-    </div>
+  </header>
+  <div class="sections scroll">
+    {#each sections as section (section.kind)}
+      <section style:--kind={colors[section.kind]}>
+        <h3>{t(`whatsNew.${section.kind}`)}</h3>
+        <ul>
+          {#each section.items as item, position (position)}
+            <li>{item}</li>
+          {/each}
+        </ul>
+      </section>
+    {/each}
   </div>
-</div>
+  <div class="actions">
+    <Button variant="primary" size="large" onclick={onclose}>{t('whatsNew.continue')}</Button>
+  </div>
+</Dialog>
 
 <style>
-  .scrim {
-    position: fixed;
-    inset: 0;
-    z-index: 30;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--scrim);
-    backdrop-filter: blur(22px) saturate(120%);
-  }
-
-  .backdrop {
-    position: absolute;
-    inset: 0;
-    cursor: default;
-  }
-
-  .dialog {
-    position: relative;
-    width: min(920px, calc(100vw - 48px));
-    height: min(640px, calc(100vh - 48px));
-    padding: 36px 44px 30px;
-    border-radius: 26px;
-    display: flex;
-    flex-direction: column;
-    gap: 26px;
-    background: var(--surface-dialog);
-    border: 1px solid var(--border-strong);
-    box-shadow: var(--shadow-dialog);
-  }
-
   header {
     display: flex;
     align-items: center;
