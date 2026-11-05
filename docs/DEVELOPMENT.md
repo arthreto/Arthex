@@ -36,6 +36,10 @@ npm run check && npm run lint && npm test && npm run i18n:check
 cd src-tauri && cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test
 ```
 
+```bash
+cd sdk/native && cargo fmt --check && cargo clippy --all-targets -- -D warnings && cargo test
+```
+
 `npm run format` fixes formatting of the interface code.
 
 ## Project structure
@@ -46,6 +50,7 @@ src/
   core/           api.ts (typed commands and events), i18n/, settings/, modules/ (registry), appearance, toast
   ui/             shared components + tokens.css (themes) + base.css
   modules/<id>/   one folder per module
+sdk/              the kit for installable modules: runtime, build preset, `arthex` command, native/ (Rust crate)
 src-tauri/
   build.rs        declares the commands granted in capabilities/ + embeds the core locales for Rust
   capabilities/   what the window may call
@@ -185,6 +190,47 @@ Built-in modules live in `src/modules/` and ship with the app. Installable modul
   - It starts without arguments and without a window, in its data folder, and must exit when its standard input closes.
 - **Versions:** `HOST_API` in `package.rs` versions `HostApi`. Only add to it, or raise the version; a module built for a newer one is refused with "Update Arthex first".
 - **Development:** a debug build loads unsigned modules from `ARTHEX_DEV_MODULES=<folder>`, one built module per `<folder>/<id>/`. Release builds never do.
+
+### Make an installable module
+
+Installable modules live outside this repository (in `arthreto/arthex-modules`, or anywhere). They use the kit in `sdk/`, which their `package.json` references as `"@arthex/sdk": "file:<path to this repository>/sdk"`, next to `svelte`, `vite`, `@sveltejs/vite-plugin-svelte` and `@tauri-apps/cli`.
+
+1. A module is a folder like a built-in one. Its `manifest.ts` adds a `version` and its `locales`:
+
+   ```ts
+   import { defineModule } from '@arthex/sdk';
+
+   export default defineModule({
+     id: 'timer',
+     version: '1.0.0',
+     icon: 'M12 7v5l3 2M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z',
+     tint: 'green',
+     order: 50,
+     locales: import.meta.glob('./locales/*.json', { eager: true, import: 'default' }),
+     tool: () => import('./TimerTool.svelte'),
+   });
+   ```
+
+2. Its views use what `@arthex/sdk` exports: the UI kit of `src/ui/`, `moduleTranslator` for its texts (as in a built-in module), `toast`, `openTool`, `closeTool`, `navigate` and the formatting helpers. A search provider works as in a built-in module, without `panel`.
+3. A system side is a Cargo project in `native/` that depends on `arthex-module` (`sdk/native/`). The interface calls it with `moduleNative('timer').call(method, params)` and hears it with `.on(event, handler)`:
+
+   ```rust
+   use arthex_module::Module;
+   use serde_json::json;
+
+   fn main() -> std::io::Result<()> {
+       Module::new()
+           .on("start", |context, params| Ok(json!({ "locale": context.locale(), "params": params })))
+           .run()
+   }
+   ```
+
+4. Develop it without signing: `npx arthex build <module> --out dev-modules`, then `ARTHEX_DEV_MODULES=<full path of dev-modules> npm run tauri dev`.
+5. Release it, with `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` set as for app releases:
+   - `npx arthex pack <module> --out dist` (add `--target <rust target>` for each platform when it has a program) writes `<id>-<version>-<platform>.arthex` and its catalog entry;
+   - `npx arthex catalog dist` merges the entries into a signed `catalog.json`;
+   - publish every `.arthex`, `catalog.json` and `catalog.json.sig` in the latest release of `arthreto/arthex-modules`.
+6. A change to `HostApi` or to what `@arthex/sdk` exports raises `HOST_API` in Rust and `API` in `sdk/cli.js` together.
 
 ## Rust commands and events
 

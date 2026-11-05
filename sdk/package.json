@@ -1,0 +1,20 @@
+{
+  "name": "@arthex/sdk",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Builds, packs and signs installable modules for Arthex.",
+  "type": "module",
+  "exports": {
+    ".": "./index.ts",
+    "./vite": "./vite.js"
+  },
+  "bin": {
+    "arthex": "./cli.js"
+  },
+  "peerDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^7.3.1",
+    "@tauri-apps/cli": "^2.12.4",
+    "svelte": "^5.57.3",
+    "vite": "^8.3.5"
+  }
+}

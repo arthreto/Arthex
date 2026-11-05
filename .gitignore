@@ -1,6 +1,7 @@
 node_modules/
 dist/
 src-tauri/target/
+sdk/native/target/
 src-tauri/gen/
 *.log
 .DS_Store

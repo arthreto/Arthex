@@ -1,0 +1,76 @@
+import { mount, unmount, type Component } from 'svelte';
+import type { MessageTree } from '../src/core/i18n/types';
+import type { ForeignManifest, Mount } from '../src/core/modules/foreign';
+import type { Tint, ToolProps, WidgetSlot } from '../src/core/modules/manifest';
+import type { SearchProvider } from '../src/core/search/types';
+
+type Lazy<Props extends Record<string, unknown> = Record<string, never>> = () => Promise<{
+  default: Component<Props>;
+}>;
+
+/** What a module of the catalog declares in its `manifest.ts`. */
+export interface InstallableModule {
+  id: string;
+  /** Semantic version, raised for each release of the module. */
+  version: string;
+  /** SVG path data of a 24×24 stroked icon. */
+  icon: string;
+  tint: Tint;
+  order: number;
+  /** `import.meta.glob('./locales/*.json', { eager: true, import: 'default' })`. */
+  locales: Record<string, MessageTree>;
+  /** Its program runs as long as the module is active, not only while it is called. */
+  background?: boolean;
+  page?: Lazy;
+  widget?: { slot: WidgetSlot; component: Lazy };
+  /** Results in the search bar. `panel` is not available to installed modules. */
+  search?: SearchProvider;
+  tool?: Lazy<ToolProps>;
+  badge?: Lazy;
+  settingsAction?: Lazy;
+  settingsSection?: { component: Lazy; action?: { label: () => string; run: () => unknown } };
+}
+
+export type DefinedModule = ForeignManifest & { version: string; background: boolean };
+
+/** The module brings its own Svelte: the shell receives functions that mount each view. */
+function mounted<Props extends Record<string, unknown>>(load: Lazy<Props>): () => Promise<Mount> {
+  return async () => {
+    const view = (await load()).default;
+    return (target, props) => {
+      const instance = mount(view, { target, props: props as Props });
+      return () => void unmount(instance);
+    };
+  };
+}
+
+const lazy = <Props extends Record<string, unknown>>(load: Lazy<Props> | undefined) => load && mounted(load);
+
+/** Turns `./locales/fr.json` keys into `fr`. */
+function byLanguage(locales: Record<string, MessageTree>): Record<string, MessageTree> {
+  return Object.fromEntries(
+    Object.entries(locales).map(([path, messages]) => [path.replace(/^.*\/|\.json$/g, ''), messages]),
+  );
+}
+
+export function defineModule(module: InstallableModule): DefinedModule {
+  return {
+    id: module.id,
+    version: module.version,
+    icon: module.icon,
+    tint: module.tint,
+    order: module.order,
+    background: module.background ?? false,
+    locales: byLanguage(module.locales),
+    page: lazy(module.page),
+    widget: module.widget && { slot: module.widget.slot, component: mounted(module.widget.component) },
+    search: module.search,
+    tool: lazy(module.tool),
+    badge: lazy(module.badge),
+    settingsAction: lazy(module.settingsAction),
+    settingsSection: module.settingsSection && {
+      component: mounted(module.settingsSection.component),
+      action: module.settingsSection.action,
+    },
+  };
+}

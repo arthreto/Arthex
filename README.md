@@ -33,6 +33,7 @@ It is built for Windows 11. macOS and Linux get a simplified version.
 | **Clipboard** | Text history kept in memory only, never written to disk                                                                 |
 | **System**    | Lock, sleep, restart, shut down, scheduled shutdown                                                                     |
 | **All pages** | Every page in one launcher. Pin your favourites to the top, choose the tab bar, turn pages off.                         |
+| **Modules**   | Turn each page, Home card, search source and tool on or off. Install more modules from the catalog or from a file       |
 | **Updates**   | Signed automatic updates from GitHub Releases, with release notes at the next launch                                    |
 
 Languages: English and French.

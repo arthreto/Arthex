@@ -47,7 +47,9 @@ jobs:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: src-tauri
+          workspaces: |
+            src-tauri
+            sdk/native
       - run: npm ci && npm run build
       - working-directory: src-tauri
         run: cargo fmt --check
@@ -55,6 +57,8 @@ jobs:
         run: cargo clippy --all-targets --locked -- -D warnings
       - working-directory: src-tauri
         run: cargo test --locked
+      - working-directory: sdk/native
+        run: cargo fmt --check && cargo clippy --all-targets --locked -- -D warnings && cargo test --locked
 
   windows:
     runs-on: windows-latest
