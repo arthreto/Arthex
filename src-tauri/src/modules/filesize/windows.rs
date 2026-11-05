@@ -1,4 +1,4 @@
-//! Win32 calls of `FileSize`: name and free space of a drive, and the Recycle Bin.
+//! Win32 calls of `FileSize`: name of a drive, and the Recycle Bin.
 
 use std::{
     iter,
@@ -9,7 +9,7 @@ use std::{
 
 use windows_sys::Win32::{
     Foundation::HWND,
-    Storage::FileSystem::{GetDiskFreeSpaceExW, GetDriveTypeW, GetVolumeInformationW},
+    Storage::FileSystem::{GetDriveTypeW, GetVolumeInformationW},
     System::WindowsProgramming::DRIVE_FIXED,
     UI::Shell::{
         FO_DELETE, FOF_ALLOWUNDO, FOF_NO_CONNECTED_ELEMENTS, FOF_NOCONFIRMATION, FOF_NOERRORUI,
@@ -18,22 +18,6 @@ use windows_sys::Win32::{
 };
 
 use crate::app::{AppError, Result};
-
-/// Total and free bytes of the drive holding `path`.
-pub fn space(path: &Path) -> Option<(u64, u64)> {
-    let wide: Vec<u16> = path.as_os_str().encode_wide().chain(Some(0)).collect();
-    let (mut available, mut total, mut free) = (0u64, 0u64, 0u64);
-    // SAFETY: `wide` is a terminated UTF-16 path and the out pointers live for the call.
-    let done = unsafe {
-        GetDiskFreeSpaceExW(
-            wide.as_ptr(),
-            &raw mut available,
-            &raw mut total,
-            &raw mut free,
-        )
-    };
-    (done != 0).then_some((total, free))
-}
 
 /// The name given to a drive ("System", "Data"), if any.
 pub fn label(path: &Path) -> Option<String> {

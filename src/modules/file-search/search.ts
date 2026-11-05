@@ -2,6 +2,7 @@ import { formatBytes, formatWhen } from '../../core/format';
 import type { SearchProvider, SearchResult } from '../../core/search/types';
 import { fileSearchApi, type FileHit } from './api';
 import { t } from './i18n';
+import IndexingStatus from './IndexingStatus.svelte';
 
 /** "C:\Users\Léa" rather than "C:\Users\Léa\", but a drive keeps its "C:\". */
 function folderOf(hit: FileHit): string {
@@ -32,6 +33,7 @@ function toResult(hit: FileHit): SearchResult {
 
 export const fileSearch: SearchProvider = {
   order: 40,
+  status: IndexingStatus,
   async search(query) {
     if (query.commandsOnly) return [];
     return (await fileSearchApi.query(query.text)).map(toResult);

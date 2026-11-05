@@ -19,5 +19,9 @@
     "removeFolder": "Retirer {folder} des dossiers indexés",
     "exclusions": "Exclusions",
     "removeExclusion": "Retirer {exclusion} des exclusions"
+  },
+  "indexing": {
+    "title": "Indexation des fichiers",
+    "items": "{count} éléments"
   }
 }

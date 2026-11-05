@@ -24,7 +24,11 @@ use std::{
 use notify::RecommendedWatcher;
 use tauri::{AppHandle, Emitter, Manager};
 
-use self::{config::Exclusions, index::Item};
+use serde::Serialize;
+
+#[cfg(windows)]
+pub use self::config::space;
+use self::{config::Exclusions, index::Item, scan::Progress};
 pub use self::{
     config::{Config, drives},
     index::{Index, location},
@@ -36,6 +40,9 @@ use crate::{
 };
 /// Sent when a scan finishes, so views built on the index refresh.
 pub const UPDATED: &str = "file-index://updated";
+/// Sent while the first scan runs, with a `Building`, then once with `null` when it ends.
+pub const BUILDING: &str = "file-index://building";
+const BUILDING_EVERY: Duration = Duration::from_millis(500);
 /// A start at login waits before scanning, to stay out of the way while Windows settles.
 const DELAY_AT_LOGIN: Duration = Duration::from_secs(30);
 const DELAY: Duration = Duration::from_secs(3);
@@ -55,9 +62,35 @@ pub struct FileIndex {
     running: AtomicBool,
     cancel: AtomicBool,
     rescan: AtomicBool,
+    /// Set while there is no index to search yet: no saved one, first scan pending or running.
+    building: AtomicBool,
+    progress: Progress,
+    /// Bytes used on the indexed drives, which the first scan is expected to go through.
+    expected: AtomicU64,
+}
+
+/// How far the first scan has gone.
+#[derive(Debug, Clone, Serialize)]
+pub struct Building {
+    pub items: u64,
+    /// An estimate, from the bytes gone through; `None` when the drives' usage is unknown.
+    pub percent: Option<u8>,
 }
 
 impl FileIndex {
+    pub fn building(&self) -> Option<Building> {
+        if !self.building.load(Ordering::SeqCst) {
+            return None;
+        }
+        Some(Building {
+            items: self.progress.items.load(Ordering::Relaxed),
+            percent: estimate(
+                self.progress.bytes.load(Ordering::Relaxed),
+                self.expected.load(Ordering::Relaxed),
+            ),
+        })
+    }
+
     fn config(&self) -> MutexGuard<'_, Config> {
         self.config.lock().unwrap_or_else(PoisonError::into_inner)
     }
@@ -286,6 +319,9 @@ pub fn setup(app: &AppHandle) -> Result<()> {
         running: AtomicBool::new(false),
         cancel: AtomicBool::new(false),
         rescan: AtomicBool::new(false),
+        building: AtomicBool::new(false),
+        progress: Progress::default(),
+        expected: AtomicU64::new(0),
     });
     Ok(())
 }
@@ -307,6 +343,7 @@ pub fn set_wanted(app: &AppHandle, wanted: bool) {
     } else if files.running.swap(false, Ordering::SeqCst) {
         files.generation.fetch_add(1, Ordering::SeqCst);
         files.cancel.store(true, Ordering::SeqCst);
+        files.building.store(false, Ordering::SeqCst);
         *files.watcher.lock().unwrap_or_else(PoisonError::into_inner) = None;
         files.replace_index(Index::default());
     }
@@ -318,6 +355,9 @@ fn keep_up_to_date(app: &AppHandle, generation: u64) {
     if let Some(cached) = store::load(&files.cache_path) {
         files.replace_index(cached);
         app.emit(UPDATED, ()).ok();
+    } else {
+        files.progress.reset();
+        files.building.store(true, Ordering::SeqCst);
     }
     let delay = if autostart::launched_at_startup() {
         DELAY_AT_LOGIN
@@ -331,7 +371,17 @@ fn keep_up_to_date(app: &AppHandle, generation: u64) {
         let config = files.config().clone();
         let roots = config::roots(&config);
         let started = Instant::now();
-        let scanned = scan::scan(&roots, &Exclusions::new(&config.exclusions), &files.cancel);
+        if files.building.load(Ordering::SeqCst) {
+            files.progress.reset();
+            files.expected.store(used_space(), Ordering::Relaxed);
+            report_building(app, generation);
+        }
+        let scanned = scan::scan(
+            &roots,
+            &Exclusions::new(&config.exclusions),
+            &files.cancel,
+            &files.progress,
+        );
         let Some(index) = scanned.filter(|_| current()) else {
             return;
         };
@@ -348,6 +398,7 @@ fn keep_up_to_date(app: &AppHandle, generation: u64) {
             return;
         }
         files.replace_index(index);
+        files.building.store(false, Ordering::SeqCst);
         app.emit(UPDATED, ()).ok();
         let handle = app.clone();
         if !current() {
@@ -364,6 +415,48 @@ fn keep_up_to_date(app: &AppHandle, generation: u64) {
             return;
         }
     }
+}
+
+/// Never 100 before the end: the estimate cannot know what the scan will miss or count twice.
+fn estimate(bytes: u64, expected: u64) -> Option<u8> {
+    (expected > 0).then(|| {
+        u8::try_from((u128::from(bytes) * 100 / u128::from(expected)).min(99)).unwrap_or(99)
+    })
+}
+
+/// Sends the progress of the first scan until it ends or the module stops.
+fn report_building(app: &AppHandle, generation: u64) {
+    let app = app.clone();
+    thread::Builder::new()
+        .name("file-index-progress".into())
+        .spawn(move || {
+            let files = app.state::<FileIndex>();
+            while files.generation.load(Ordering::SeqCst) == generation {
+                // The last event says `null`, so the interface never keeps a stale progress.
+                let building = files.building();
+                app.emit(BUILDING, &building).ok();
+                if building.is_none() {
+                    break;
+                }
+                thread::sleep(BUILDING_EVERY);
+            }
+        })
+        .inspect_err(|error| tracing::warn!(%error, "could not report the file index progress"))
+        .ok();
+}
+
+#[cfg(windows)]
+fn used_space() -> u64 {
+    drives()
+        .into_iter()
+        .filter_map(|drive| space(&drive))
+        .map(|(total, free)| total.saturating_sub(free))
+        .sum()
+}
+
+#[cfg(not(windows))]
+fn used_space() -> u64 {
+    0
 }
 
 /// Sleeps up to `duration`. Returns `true` when the time is up or `wake` asks for it, `false` when
@@ -386,6 +479,14 @@ fn wait(duration: Duration, current: impl Fn() -> bool, wake: impl Fn() -> bool)
 mod tests {
     use super::*;
 
+    #[test]
+    fn estimates_the_first_scan_without_reaching_the_end_early() {
+        assert_eq!(estimate(0, 0), None);
+        assert_eq!(estimate(50, 200), Some(25));
+        assert_eq!(estimate(300, 200), Some(99));
+        assert_eq!(estimate(u64::MAX, u64::MAX), Some(99));
+    }
+
     fn indexed(root: &Path) -> FileIndex {
         let config = Config {
             folders: Vec::new(),
@@ -402,11 +503,15 @@ mod tests {
             running: AtomicBool::new(false),
             cancel: AtomicBool::new(false),
             rescan: AtomicBool::new(false),
+            building: AtomicBool::new(false),
+            progress: Progress::default(),
+            expected: AtomicU64::new(0),
         };
         let index = scan::scan(
             &[root.to_path_buf()],
             &Exclusions::new(&[]),
             &AtomicBool::new(false),
+            &Progress::default(),
         )
         .unwrap();
         files.replace_index(index);

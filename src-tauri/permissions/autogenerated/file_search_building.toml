@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-file-search-building"
+description = "Enables the file_search_building command without any pre-configured scope."
+commands.allow = ["file_search_building"]
+
+[[permission]]
+identifier = "deny-file-search-building"
+description = "Denies the file_search_building command without any pre-configured scope."
+commands.deny = ["file_search_building"]

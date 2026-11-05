@@ -1,5 +1,7 @@
 <script lang="ts">
   import { t } from '../core/i18n';
+  import { searchProviders } from '../core/modules';
+  import { settings } from '../core/settings/settings.svelte';
   import Button from '../ui/Button.svelte';
   import Keycap from '../ui/Keycap.svelte';
   import ResultIcon from './ResultIcon.svelte';
@@ -7,6 +9,8 @@
   import { search } from './search.svelte';
 
   const DELAY_MS = 40;
+
+  const statuses = $derived(searchProviders(settings.value).flatMap((provider) => provider.status ?? []));
 
   $effect(() => {
     void search.query;
@@ -21,6 +25,9 @@
 
 <div class="search-view fade-in">
   <div class="list scroll" role="listbox" aria-label={t('search.label')}>
+    {#each statuses as Status, index (index)}
+      <Status />
+    {/each}
     {#each search.results as result, index (result.key)}
       {#if index === 0 || search.results[index - 1]?.group !== result.group}
         <div class="group" role="presentation">{result.group}</div>

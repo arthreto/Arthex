@@ -9,6 +9,7 @@ use crate::{
         dialogs::{blocking, pick_folder},
         overlay,
     },
+    services::file_index::Building,
     services::{file_index::FileIndex, paths},
 };
 
@@ -50,6 +51,12 @@ fn indexed(app: &AppHandle, path: &str) -> Result<PathBuf> {
 #[tauri::command]
 pub fn file_search_status(app: AppHandle) -> Status {
     status(&app.state::<FileIndex>())
+}
+
+/// How far the first indexing has gone, or `None` once files can be searched.
+#[tauri::command]
+pub fn file_search_building(app: AppHandle) -> Option<Building> {
+    app.state::<FileIndex>().building()
 }
 
 #[tauri::command]

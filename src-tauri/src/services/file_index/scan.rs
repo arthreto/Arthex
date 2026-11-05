@@ -3,7 +3,7 @@
 use std::{
     fs::{self, Metadata},
     path::{Path, PathBuf},
-    sync::atomic::{AtomicBool, Ordering},
+    sync::atomic::{AtomicBool, AtomicU64, Ordering},
     time::UNIX_EPOCH,
 };
 
@@ -17,7 +17,44 @@ use super::{
 /// Folders this close to a root are scanned in parallel; deeper ones go on sequentially.
 const PARALLEL_DEPTH: u8 = 2;
 
-pub fn scan(roots: &[PathBuf], exclusions: &Exclusions, stop: &AtomicBool) -> Option<Index> {
+/// What a scan has gone through so far, read while it runs.
+#[derive(Default)]
+pub struct Progress {
+    pub items: AtomicU64,
+    pub bytes: AtomicU64,
+}
+
+impl Progress {
+    pub fn reset(&self) {
+        self.items.store(0, Ordering::Relaxed);
+        self.bytes.store(0, Ordering::Relaxed);
+    }
+
+    fn count(&self, bytes: u64) {
+        self.items.fetch_add(1, Ordering::Relaxed);
+        self.bytes.fetch_add(bytes, Ordering::Relaxed);
+    }
+}
+
+/// What every step of a walk shares.
+#[derive(Clone, Copy)]
+struct Walk<'a> {
+    exclusions: &'a Exclusions,
+    stop: &'a AtomicBool,
+    progress: &'a Progress,
+}
+
+pub fn scan(
+    roots: &[PathBuf],
+    exclusions: &Exclusions,
+    stop: &AtomicBool,
+    progress: &Progress,
+) -> Option<Index> {
+    let walk = Walk {
+        exclusions,
+        stop,
+        progress,
+    };
     let threads = std::thread::available_parallelism().map_or(2, |n| (n.get() / 2).max(2));
     let pool = rayon::ThreadPoolBuilder::new()
         .num_threads(threads)
@@ -28,7 +65,7 @@ pub fn scan(roots: &[PathBuf], exclusions: &Exclusions, stop: &AtomicBool) -> Op
     let parts: Vec<Index> = pool.install(|| {
         roots
             .par_iter()
-            .map(|root| scan_folder(root, &root.to_string_lossy(), 0, exclusions, stop))
+            .map(|root| scan_folder(root, &root.to_string_lossy(), 0, walk))
             .collect()
     });
     if stop.load(Ordering::Relaxed) {
@@ -57,17 +94,17 @@ pub fn subtree(path: &Path, name: &str, exclusions: &Exclusions) -> Index {
         });
         return part;
     }
-    scan_folder(path, name, PARALLEL_DEPTH, exclusions, &stop)
+    let progress = Progress::default();
+    let walk = Walk {
+        exclusions,
+        stop: &stop,
+        progress: &progress,
+    };
+    scan_folder(path, name, PARALLEL_DEPTH, walk)
 }
 
 /// Returns a part whose first entry is this folder.
-fn scan_folder(
-    path: &Path,
-    name: &str,
-    depth: u8,
-    exclusions: &Exclusions,
-    stop: &AtomicBool,
-) -> Index {
+fn scan_folder(path: &Path, name: &str, depth: u8, walk: Walk<'_>) -> Index {
     let mut part = Index::default();
     let me = part.push(&Item {
         name,
@@ -78,25 +115,25 @@ fn scan_folder(
         modified: fs::metadata(path).map_or(0, |meta| modified(&meta)),
     });
     if depth < PARALLEL_DEPTH {
-        let folders = read_into(&mut part, me, path, exclusions, stop);
+        let folders = read_into(&mut part, me, path, walk);
         let children: Vec<Index> = folders
             .into_par_iter()
-            .map(|(folder, name, _)| scan_folder(&folder, &name, depth + 1, exclusions, stop))
+            .map(|(folder, name, _)| scan_folder(&folder, &name, depth + 1, walk))
             .collect();
         for child in children {
             part.append(child, me);
         }
     } else {
-        walk(&mut part, me, path, exclusions, stop);
+        walk_folder(&mut part, me, path, walk);
     }
     part
 }
 
-fn walk(part: &mut Index, parent: u32, path: &Path, exclusions: &Exclusions, stop: &AtomicBool) {
-    if stop.load(Ordering::Relaxed) {
+fn walk_folder(part: &mut Index, parent: u32, path: &Path, walk: Walk<'_>) {
+    if walk.stop.load(Ordering::Relaxed) {
         return;
     }
-    for (folder, name, time) in read_into(part, parent, path, exclusions, stop) {
+    for (folder, name, time) in read_into(part, parent, path, walk) {
         let me = part.push(&Item {
             name: &name,
             parent,
@@ -105,7 +142,7 @@ fn walk(part: &mut Index, parent: u32, path: &Path, exclusions: &Exclusions, sto
             size: 0,
             modified: time,
         });
-        walk(part, me, &folder, exclusions, stop);
+        walk_folder(part, me, &folder, walk);
     }
 }
 
@@ -115,8 +152,7 @@ fn read_into(
     part: &mut Index,
     parent: u32,
     path: &Path,
-    exclusions: &Exclusions,
-    stop: &AtomicBool,
+    walk: Walk<'_>,
 ) -> Vec<(PathBuf, String, u32)> {
     let Ok(entries) = fs::read_dir(path) else {
         return Vec::new();
@@ -134,25 +170,30 @@ fn read_into(
         let time = meta.as_ref().map_or(0, modified);
         if kind.is_dir() {
             let folder = entry.path();
-            if exclusions.excludes(&folder) {
+            if walk.exclusions.excludes(&folder) {
+                let size = folder_size(&folder, walk.stop);
+                walk.progress.count(size);
                 part.push(&Item {
                     name: &name,
                     parent,
                     is_dir: true,
                     summary: true,
-                    size: folder_size(&folder, stop),
+                    size,
                     modified: time,
                 });
             } else {
+                walk.progress.count(0);
                 folders.push((folder, name, time));
             }
         } else {
+            let size = meta.as_ref().map_or(0, Metadata::len);
+            walk.progress.count(size);
             part.push(&Item {
                 name: &name,
                 parent,
                 is_dir: false,
                 summary: false,
-                size: meta.as_ref().map_or(0, Metadata::len),
+                size,
                 modified: time,
             });
         }
@@ -213,12 +254,17 @@ mod tests {
         fs::write(dir.path().join("node_modules/pkg/index.js"), b"x").unwrap();
 
         let exclusions = Exclusions::new(&["node_modules".into()]);
+        let progress = Progress::default();
         let index = scan(
             &[dir.path().to_path_buf()],
             &exclusions,
             &AtomicBool::new(false),
+            &progress,
         )
         .unwrap();
+        // docs, deep, deeper, report.pdf and the excluded node_modules as one item.
+        assert_eq!(progress.items.load(Ordering::Relaxed), 5);
+        assert_eq!(progress.bytes.load(Ordering::Relaxed), 6);
         let hits = index.search(&["report".into()], 5);
         assert_eq!(hits.len(), 1);
         let path = index.path(hits[0].index);

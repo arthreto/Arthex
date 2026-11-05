@@ -82,7 +82,7 @@ Reuse these instead of writing your own.
 | An empty list or a list with no match                                  | `EmptyState` from `src/ui/`: a centred pictogram, a title, a line and a button            |
 | Colours, radii, veil                                                   | the tokens in `src/ui/tokens.css`                                                         |
 | Match text against a search                                            | `matchesAll` and `normalize` from `src/core/text.ts` (case and accents ignored)           |
-| Show a time ("2 min ago"), a size ("1.2 GB") or a share                | `formatWhen`, `formatBytes` and `formatPercent` from `src/core/format.ts`                 |
+| Show a time ("2 min ago"), a size ("1.2 GB") or a share                | `formatWhen`, `formatBytes`, `formatPercent` and `formatCount` from `src/core/format.ts`  |
 | Copy a path                                                            | `copyPath` from `src/core/clipboard.ts`                                                   |
 | Feedback after an action                                               | `toast.show(message)` from `src/core/toast.svelte.ts`                                     |
 | Open a page, the hub or settings                                       | `navigation.open(view)` from `src/app/navigation.svelte.ts`                               |
@@ -134,6 +134,7 @@ A module adds results to the search bar with a `SearchProvider` (`src/core/searc
 - `order` places its group among the others: calculator 0, shortcuts 3, tools 5, apps 10, web 25, system commands 30, files 40, "Create a shortcut" 90.
 - A module may give several providers as an array (shortcuts: its results, then "Create a shortcut" last).
 - `exclusive: true` hides every other group when it answers (the calculator).
+- `status` is a component shown above the results while the provider cannot answer fully yet. File search shows the progress of the first indexing there (`file-index://building`): until it ends, no file can be found.
 - A result names its `primary` action (Enter) and may add a `secondary` one (Ctrl + Enter), a `path` to copy, a `confirm` question for actions that cannot be undone, or a `panel` component that replaces the preview buttons.
 
 The shell asks every enabled provider at each keystroke and drops answers to older queries.
@@ -271,6 +272,7 @@ Events go from Rust to the interface.
 | `hotkey://held`           | key names               | modifiers held while recording (Windows)                          |
 | `hotkey://recorded`       | key names               | recording finished, `[]` when cancelled (Windows)                 |
 | `file-index://updated`    | none                    | a file index scan finished                                        |
+| `file-index://building`   | `{ items, percent }`    | progress of the first scan, then `null` when it ends              |
 | `clipboard://changed`     | none                    | the clipboard history changed (Windows)                           |
 | `updates://available`     | `{ version }`           | the check at launch found an update it does not install by itself |
 | `updates://progress`      | `{ downloaded, total }` | download progress of an update                                    |

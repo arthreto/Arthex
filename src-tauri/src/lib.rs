@@ -61,6 +61,7 @@ pub fn run() {
             modules::file_search::commands::file_search_open,
             modules::file_search::commands::file_search_reveal,
             modules::file_search::commands::file_search_status,
+            modules::file_search::commands::file_search_building,
             modules::file_search::commands::file_search_rescan,
             modules::file_search::commands::file_search_add_folder,
             modules::file_search::commands::file_search_remove_folder,

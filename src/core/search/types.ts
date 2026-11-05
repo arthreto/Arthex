@@ -55,4 +55,6 @@ export interface SearchProvider {
   /** When it returns results, other providers are not shown (a calculation). */
   exclusive?: boolean;
   search(query: Query): SearchResult[] | Promise<SearchResult[]>;
+  /** Shown above the results while the provider cannot answer fully yet (the first file indexing). */
+  status?: Component;
 }

@@ -129,7 +129,7 @@ pub fn drives() -> Vec<Drive> {
         .into_iter()
         .map(|drive| {
             #[cfg(windows)]
-            let (total, free) = windows::space(&drive).unwrap_or_default();
+            let (total, free) = crate::services::file_index::space(&drive).unwrap_or_default();
             #[cfg(windows)]
             let label = windows::label(&drive).unwrap_or_default();
             #[cfg(not(windows))]

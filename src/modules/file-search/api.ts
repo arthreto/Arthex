@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import { on } from '../../core/api';
 
 export interface FileHit {
   path: string;
@@ -19,7 +20,17 @@ export interface IndexStatus {
   exclusions: string[];
 }
 
+/** How far the first indexing has gone. */
+export interface Building {
+  items: number;
+  /** An estimate between 0 and 99, or `null` when the drives' usage is unknown. */
+  percent: number | null;
+}
+
 export const fileSearchApi = {
+  building: () => invoke<Building | null>('file_search_building'),
+  /** The last event of an indexing carries `null`. */
+  onBuilding: (handler: (building: Building | null) => void) => on('file-index://building', handler),
   query: (query: string) => invoke<FileHit[]>('file_search_query', { query }),
   open: (path: string) => invoke<null>('file_search_open', { path }),
   reveal: (path: string) => invoke<null>('file_search_reveal', { path }),

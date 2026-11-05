@@ -38,6 +38,11 @@ export function formatBytes(bytes: number, locale = getLocale()): string {
   }).format(value);
 }
 
+/** "4,383,486" / "4 383 486". */
+export function formatCount(count: number, locale = getLocale()): string {
+  return new Intl.NumberFormat(locale).format(count);
+}
+
 /** "12.3%" / "12,3 %", for a share between 0 and 1. */
 export function formatPercent(share: number, digits = 1, locale = getLocale()): string {
   return new Intl.NumberFormat(locale, {

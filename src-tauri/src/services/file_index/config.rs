@@ -111,6 +111,26 @@ pub fn drives() -> Vec<PathBuf> {
         .collect()
 }
 
+/// Total and free bytes of the drive holding `path`.
+#[cfg(windows)]
+pub fn space(path: &Path) -> Option<(u64, u64)> {
+    use std::os::windows::ffi::OsStrExt;
+    use windows_sys::Win32::Storage::FileSystem::GetDiskFreeSpaceExW;
+
+    let wide: Vec<u16> = path.as_os_str().encode_wide().chain(Some(0)).collect();
+    let (mut available, mut total, mut free) = (0u64, 0u64, 0u64);
+    // SAFETY: `wide` is a terminated UTF-16 path and the out pointers live for the call.
+    let done = unsafe {
+        GetDiskFreeSpaceExW(
+            wide.as_ptr(),
+            &raw mut available,
+            &raw mut total,
+            &raw mut free,
+        )
+    };
+    (done != 0).then_some((total, free))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
