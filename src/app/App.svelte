@@ -16,16 +16,14 @@
     void commands.appInfo().then((info) => (systemLocale = info.systemLocale));
     void settings.load();
     installHostApi();
-    void moduleHost.load().then(() => moduleHost.openPendingPage());
+    void moduleHost.load();
     void moduleHost.checkOpened();
     const modulesChanged = on(events.modulesChanged, () => void moduleHost.load());
     const moduleOpened = on(events.modulesOpened, () => void moduleHost.checkOpened());
-    const modulePage = on(events.modulesOpenPage, () => void moduleHost.openPendingPage());
     const stopThemeWatch = onSystemThemeChange(() => (systemThemeTick += 1));
     return () => {
       stopThemeWatch();
-      for (const listening of [modulesChanged, moduleOpened, modulePage])
-        void listening.then((unlisten) => unlisten());
+      for (const listening of [modulesChanged, moduleOpened]) void listening.then((unlisten) => unlisten());
     };
   });
 

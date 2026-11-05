@@ -34,8 +34,6 @@ export interface ContextMenuAction {
   icon?: string;
   /** Choices under this entry, such as formats. The program gets `<id>:<choice>`. Needs `api: 5`. */
   submenu?: readonly { id: string; label: string }[];
-  /** Opens the overlay on the module's page when the action runs. Needs `api: 5`. */
-  openPage?: boolean;
 }
 
 /**

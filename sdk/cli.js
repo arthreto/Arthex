@@ -87,8 +87,8 @@ function contextMenuOf(dir, staging, module, native) {
   if (!actions) return undefined;
   if (module.api < 4) fail('a right-click action needs api: 4 in manifest.ts');
   if (!native) fail('a right-click action needs a program in native/, which runs it');
-  if (module.api < 5 && actions.some((action) => action.submenu || action.openPage)) {
-    fail('submenu and openPage need api: 5 in manifest.ts');
+  if (module.api < 5 && actions.some((action) => action.submenu)) {
+    fail('a submenu needs api: 5 in manifest.ts');
   }
   return actions.map((action) => {
     const labels = Object.fromEntries(
