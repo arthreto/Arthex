@@ -17,11 +17,13 @@
     void settings.load();
     installHostApi();
     void moduleHost.load();
+    void moduleHost.checkOpened();
     const modulesChanged = on(events.modulesChanged, () => void moduleHost.load());
+    const moduleOpened = on(events.modulesOpened, () => void moduleHost.checkOpened());
     const stopThemeWatch = onSystemThemeChange(() => (systemThemeTick += 1));
     return () => {
       stopThemeWatch();
-      void modulesChanged.then((unlisten) => unlisten());
+      for (const listening of [modulesChanged, moduleOpened]) void listening.then((unlisten) => unlisten());
     };
   });
 

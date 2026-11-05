@@ -24,6 +24,8 @@
     "allow-modules-install-file",
     "allow-modules-uninstall",
     "allow-modules-call",
+    "allow-modules-opened",
+    "allow-modules-answer-opened",
     "allow-shortcuts-list",
     "allow-shortcuts-save-site",
     "allow-shortcuts-save-app",

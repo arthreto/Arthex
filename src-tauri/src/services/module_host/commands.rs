@@ -5,7 +5,7 @@ use std::fs;
 use serde_json::Value;
 use tauri::{AppHandle, Manager};
 
-use super::{Installed, ModuleHost, catalog, package::MAX_PACKAGE_BYTES};
+use super::{Installed, ModuleHost, catalog, opened, package::MAX_PACKAGE_BYTES};
 use crate::app::{
     AppError, Result,
     dialogs::{blocking, pick_file},
@@ -56,4 +56,15 @@ pub async fn modules_call(
     params: Value,
 ) -> Result<Value> {
     blocking(move || super::call(&app, &id, &method, params)).await?
+}
+
+/// The `.arthex` file opened from Explorer, waiting for the user's answer.
+#[tauri::command]
+pub fn modules_opened(app: AppHandle) -> Result<Option<opened::InstallRequest>> {
+    opened::pending(&app)
+}
+
+#[tauri::command]
+pub async fn modules_answer_opened(app: AppHandle, install: bool) -> Result<Option<Installed>> {
+    blocking(move || opened::answer(&app, install)).await?
 }

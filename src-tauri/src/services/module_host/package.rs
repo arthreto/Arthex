@@ -26,8 +26,15 @@ const SIGNATURE: &str = "files.json.sig";
 pub const INFO: &str = "module.json";
 pub const ENTRY: &str = "index.js";
 
-/// `module.json`, written by `arthex pack`.
+/// The name and description of a module in one language.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Texts {
+    pub name: String,
+    pub description: String,
+}
+
+/// `module.json`, written by `arthex pack`.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ModuleInfo {
     pub id: String,
@@ -42,6 +49,14 @@ pub struct ModuleInfo {
     #[serde(default)]
     pub background: bool,
     pub elements: Vec<String>,
+    /// What the overlay shows before it installs an opened file.
+    #[serde(default)]
+    pub icon: String,
+    #[serde(default)]
+    pub tint: String,
+    /// By language code.
+    #[serde(default)]
+    pub texts: BTreeMap<String, Texts>,
 }
 
 impl ModuleInfo {
@@ -272,9 +287,8 @@ mod tests {
             version: "1.0.0".into(),
             api,
             platform: platform.into(),
-            native: None,
-            background: false,
             elements: vec!["page".into()],
+            ..ModuleInfo::default()
         };
         assert!(check_info(&info(1, "any"), &files).is_ok());
         assert!(matches!(

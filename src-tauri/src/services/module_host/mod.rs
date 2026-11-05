@@ -4,6 +4,7 @@
 
 mod catalog;
 pub mod commands;
+mod opened;
 mod package;
 mod program;
 pub mod protocol;
@@ -23,6 +24,7 @@ use tauri::{AppHandle, Emitter, Listener, Manager};
 use crate::app::{self, AppError, Result, Settings, events};
 use package::{ENTRY, INFO, ModuleInfo};
 
+pub use opened::open_from_args;
 pub use package::HOST_API;
 pub use program::call;
 
@@ -56,6 +58,7 @@ pub struct ModuleHost {
     data: PathBuf,
     installed: RwLock<BTreeMap<String, Installed>>,
     programs: program::Programs,
+    opened: opened::Opened,
 }
 
 impl ModuleHost {
@@ -91,7 +94,9 @@ pub fn setup(app: &AppHandle) -> Result<()> {
         data,
         installed: RwLock::new(installed),
         programs: program::Programs::default(),
+        opened: opened::Opened::default(),
     });
+    open_from_args(app, &std::env::args().collect::<Vec<_>>());
 
     program::sync(app, &app::settings(app));
     let handle = app.clone();

@@ -173,11 +173,13 @@ A tool is a mini-app with its own interface, such as a colour picker. The shell 
 
 ## Installable modules
 
-Built-in modules live in `src/modules/` and ship with the app. Installable modules do not: the user installs them from Settings → Modules → Catalog, or from a `.arthex` file without the network, and can uninstall them. Each element of an installed module has its switch in Settings → Modules like any other.
+Built-in modules live in `src/modules/` and ship with the app. Installable modules do not: the user installs them from Settings → Modules → Catalog (also reached from the "Add modules" tile of All pages), or from a `.arthex` file without the network, and can uninstall them. Each element of an installed module has its switch in Settings → Modules like any other.
+
+A `.arthex` file can be installed three ways: from the catalog, with "Install from a file…", or by opening it in Explorer. The installer associates `.arthex` with Arthex (`bundle.fileAssociations`), so Windows starts it, or the running instance through the single-instance plugin, with the file's path. `opened.rs` checks the package at once; the overlay asks "Install this module?" (`modules_opened`) and installs it only on confirmation (`modules_answer_opened`).
 
 - **Package** (`src-tauri/src/services/module_host/package.rs`): a `.arthex` file is a zip.
   - `files.json` holds the SHA-256 of every other file, and `files.json.sig` its minisign signature made with the update key (the `pubkey` of the updater). An unsigned, altered, missing, extra or unsafe file refuses the whole package before anything is written.
-  - `module.json` gives the `id`, `version`, `api`, `platform` (`any` or `windows-x86_64`…), the path of its program (`native`), `background` and its `elements`.
+  - `module.json` gives the `id`, `version`, `api`, `platform` (`any` or `windows-x86_64`…), the path of its program (`native`), `background`, its `elements`, and the `icon`, `tint` and `texts` (name and description per language) shown before installing an opened file.
   - `index.js` is its interface (its default export comes from `defineModule` of the SDK), `style.css` its styles.
 - **Files:** unpacked in `<local data>/modules/<id>/`, replacing the previous version in one rename. What a module keeps lives in `<data>/module-data/<id>/`, which survives updates; uninstalling deletes it only when the user ticks "Also delete its data".
 - **Serving** (`protocol.rs`): interface files only (`js`, `css`, `json`, `png`, `svg`, `woff2`), at `arthex-module://localhost/<id>/` (`http://arthex-module.localhost/<id>/` on Windows). The CSP allows scripts and styles from there and nowhere else besides the app.
@@ -267,6 +269,7 @@ Events go from Rust to the interface.
 | `updates://available`     | `{ version }`           | the check at launch found an update it does not install by itself |
 | `updates://progress`      | `{ downloaded, total }` | download progress of an update                                    |
 | `modules://changed`       | none                    | a module was installed, updated or uninstalled                    |
+| `modules://opened`        | none                    | a `.arthex` file opened from Explorer was checked                 |
 
 ## Data files
 

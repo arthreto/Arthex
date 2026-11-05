@@ -48,6 +48,17 @@
     "copyright": "© 2026 arthreto",
     "license": "PolyForm-Noncommercial-1.0.0",
     "licenseFile": "../LICENSE",
+    "fileAssociations": [
+      {
+        "ext": [
+          "arthex"
+        ],
+        "name": "Arthex module",
+        "description": "Arthex module",
+        "mimeType": "application/x-arthex-module",
+        "role": "Viewer"
+      }
+    ],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

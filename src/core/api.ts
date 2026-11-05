@@ -41,6 +41,17 @@ export interface ModuleOffer {
   state: 'available' | 'installed' | 'update' | 'outdated';
 }
 
+/** A `.arthex` file opened from Explorer, checked and waiting for the user's answer. */
+export interface InstallRequest {
+  id: string;
+  version: string;
+  icon: string;
+  tint: string;
+  elements: string[];
+  texts: ModuleOffer['texts'];
+  size: number;
+}
+
 export interface AppInfo {
   version: string;
   systemLocale: string | null;
@@ -73,6 +84,10 @@ export const commands = {
   /** Relays a call to the program of an installed module, starting it if needed. */
   modulesCall: (id: string, method: string, params: unknown) =>
     invoke<unknown>('modules_call', { id, method, params: params ?? null }),
+  /** Fails once when the opened file cannot be installed. */
+  modulesOpened: () => invoke<InstallRequest | null>('modules_opened'),
+  modulesAnswerOpened: (install: boolean) =>
+    invoke<InstalledModule | null>('modules_answer_opened', { install }),
 };
 
 /** Event names shared with `src-tauri/src/app/events.rs`. */
@@ -86,6 +101,7 @@ export const events = {
   updateAvailable: 'updates://available',
   updateProgress: 'updates://progress',
   modulesChanged: 'modules://changed',
+  modulesOpened: 'modules://opened',
 } as const;
 
 export function on<T>(event: string, handler: (payload: T) => void): Promise<UnlistenFn> {

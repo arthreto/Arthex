@@ -1,10 +1,9 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { commands, errorMessage, type ModuleOffer } from '../../core/api';
-  import { formatBytes } from '../../core/format';
-  import { getLocale, moduleText, t } from '../../core/i18n';
+  import { moduleText, t } from '../../core/i18n';
   import { ELEMENTS, elementsOf, getModule, type Element } from '../../core/modules';
-  import { TINTS, type Tint } from '../../core/modules/manifest';
+  import type { Tint } from '../../core/modules/manifest';
   import { matchesAll } from '../../core/text';
   import { toast } from '../../core/toast.svelte';
   import Button from '../../ui/Button.svelte';
@@ -15,6 +14,7 @@
   import Segmented from '../../ui/Segmented.svelte';
   import TextField from '../../ui/TextField.svelte';
   import { moduleHost } from '../moduleHost.svelte';
+  import { knownElements, pickTexts, summary, tintOf } from './moduleSummary';
   import UninstallModuleDialog from './UninstallModuleDialog.svelte';
 
   interface Row {
@@ -41,10 +41,8 @@
     ...ELEMENTS.map((element) => ({ value: element, label: t(`settings.modules.elements.${element}`) })),
   ]);
 
-  const tintOf = (name: string): Tint => TINTS.find((tint) => tint === name) ?? 'blue';
-
   function offerRow(offer: ModuleOffer): Row {
-    const texts = offer.texts[getLocale()] ?? offer.texts['en'] ?? Object.values(offer.texts)[0];
+    const texts = pickTexts(offer.texts);
     const installed = moduleHost.installed.find((module) => module.id === offer.id);
     return {
       id: offer.id,
@@ -52,7 +50,7 @@
       description: texts?.description ?? '',
       icon: offer.icon,
       tint: tintOf(offer.tint),
-      elements: ELEMENTS.filter((element) => offer.elements.includes(element)),
+      elements: knownElements(offer.elements),
       size: offer.size,
       state: installed?.dev ? 'dev' : offer.state,
     };
@@ -83,12 +81,6 @@
         matchesAll(`${row.name} ${row.description}`, query),
     );
   });
-
-  function meta(row: Row): string {
-    const parts = row.elements.map((element) => t(`settings.modules.element.${element}`));
-    if (row.size !== undefined) parts.push(formatBytes(row.size));
-    return parts.join(' · ');
-  }
 
   async function refresh() {
     failed = false;
@@ -195,7 +187,7 @@
         <span class="text">
           <span class="name">{row.name}</span>
           {#if row.description}<span class="description">{row.description}</span>{/if}
-          <span class="meta">{meta(row)}</span>
+          <span class="meta">{summary(row.elements, row.size)}</span>
         </span>
         {#if row.state === 'dev'}
           <Chip label={t('settings.modules.dev')} />

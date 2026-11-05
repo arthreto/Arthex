@@ -10,20 +10,13 @@ use tauri::{AppHandle, Manager};
 
 use super::{
     HOST_API, Installed, ModuleHost,
-    package::{self, MAX_PACKAGE_BYTES, current_platform, is_safe_path},
+    package::{self, MAX_PACKAGE_BYTES, Texts, current_platform, is_safe_path},
     public_key,
 };
 use crate::app::{self, AppError, Result, is_module_id};
 
 const BASE: &str = "https://github.com/arthreto/arthex-modules/releases/latest/download/";
 const MAX_CATALOG_BYTES: u64 = 4 * 1024 * 1024;
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct Texts {
-    pub name: String,
-    pub description: String,
-}
 
 #[derive(Debug, Clone, Deserialize)]
 struct PackageFile {
@@ -253,9 +246,7 @@ mod tests {
                 version: version.into(),
                 api: 1,
                 platform: "any".into(),
-                native: None,
-                background: false,
-                elements: Vec::new(),
+                ..package::ModuleInfo::default()
             },
         }
     }

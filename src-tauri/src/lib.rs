@@ -7,8 +7,9 @@ use tauri_plugin_autostart::MacosLauncher;
 pub fn run() {
     let builder = tauri::Builder::default()
         // Must stay first: a second launch only reopens the overlay of the running instance.
-        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
             app::overlay::show(app);
+            services::module_host::open_from_args(app, &args);
         }))
         .plugin(tauri_plugin_autostart::init(
             MacosLauncher::LaunchAgent,
@@ -43,6 +44,8 @@ pub fn run() {
             services::module_host::commands::modules_install_file,
             services::module_host::commands::modules_uninstall,
             services::module_host::commands::modules_call,
+            services::module_host::commands::modules_opened,
+            services::module_host::commands::modules_answer_opened,
             modules::shortcuts::commands::shortcuts_list,
             modules::shortcuts::commands::shortcuts_save_site,
             modules::shortcuts::commands::shortcuts_save_app,

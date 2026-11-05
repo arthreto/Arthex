@@ -21,6 +21,8 @@
   import { updates } from './updates.svelte';
   import WhatsNew from './WhatsNew.svelte';
   import { dialogs } from './dialogs.svelte';
+  import { moduleHost } from './moduleHost.svelte';
+  import OpenedModuleDialog from './OpenedModuleDialog.svelte';
 
   let shown = $state(0);
   let searchBar: SearchBar | undefined = $state();
@@ -119,6 +121,10 @@
 
 {#if tool?.module}
   <ToolSheet module={tool.module} input={tool.input} onclose={closeTool} />
+{/if}
+
+{#if moduleHost.opened}
+  <OpenedModuleDialog request={moduleHost.opened} />
 {/if}
 
 {#if dialogs.uninstall}

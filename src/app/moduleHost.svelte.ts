@@ -1,4 +1,4 @@
-import { commands, on, type InstalledModule } from '../core/api';
+import { commands, errorMessage, on, type InstallRequest, type InstalledModule } from '../core/api';
 import { getLocale, registerModule, translate } from '../core/i18n';
 import { registry, type ModuleManifest } from '../core/modules';
 import { adopt, type HostApi } from '../core/modules/foreign';
@@ -37,7 +37,17 @@ function syncStyles(installed: readonly InstalledModule[]): void {
 class ModuleHost {
   /** What Rust reports as installed, including a module that failed to load. */
   installed = $state<InstalledModule[]>([]);
+  /** A `.arthex` file opened from Explorer, waiting for the user's answer. */
+  opened = $state<InstallRequest | null>(null);
   #run = 0;
+
+  async checkOpened(): Promise<void> {
+    try {
+      this.opened = await commands.modulesOpened();
+    } catch (error) {
+      toast.show(translate('errors.generic', { message: errorMessage(error) }));
+    }
+  }
 
   /** Loads every installed module again. A newer call wins over a slower, older one. */
   async load(): Promise<void> {
