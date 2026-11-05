@@ -67,6 +67,7 @@ src-tauri/
   - The overlay covers the work area of its screen, but never a whole screen (`fitted`): when the taskbar hides itself, it stops one pixel short. Windows shows a topmost window covering a whole screen like a full-screen game, straight to the display, and the transparent page then turns black.
   - Rust hides it with `overlay::hide`, which first sends `overlay://hiding`. The page clears itself, then calls `overlay_hide`. `WebView2` shows its last frame at the next opening, so that frame is empty and the enter animation plays from the start.
   - A focus loss closes the overlay only once the foreground window is really another one: focus moving into the page reports one too.
+  - While hidden, release builds suspend `WebView2`. Debug builds do not: suspending cuts the socket of the Vite dev server, which then reloads the page at every opening. Judge how the overlay opens on a release build (`npm run tauri build -- --no-bundle`, then `src-tauri/target/release/arthex.exe`).
 
 ## Where things live
 

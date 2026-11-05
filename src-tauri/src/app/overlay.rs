@@ -369,7 +369,12 @@ fn set_resting(window: &WebviewWindow, resting: bool) {
             if let Ok(core) = core.cast::<ICoreWebView2_19>() {
                 let _ = core.SetMemoryUsageTargetLevel(level);
             }
-            if resting && let Ok(core) = core.cast::<ICoreWebView2_3>() {
+            // Suspending cuts the socket of the Vite dev server, which then reloads the whole page
+            // at every opening.
+            if resting
+                && !cfg!(debug_assertions)
+                && let Ok(core) = core.cast::<ICoreWebView2_3>()
+            {
                 let _ =
                     core.TrySuspend(&TrySuspendCompletedHandler::create(Box::new(|_, _| Ok(()))));
             }
