@@ -103,6 +103,14 @@ p {
   animation: fade-in var(--motion-base) ease-out;
 }
 
+.behind-dialogs {
+  transition: filter var(--motion-base) ease-out;
+}
+
+:root:has(.dialog-layer > *) .behind-dialogs {
+  filter: blur(22px);
+}
+
 :root[data-motion='reduced'] *,
 :root[data-motion='reduced'] *::before {
   animation: none !important;

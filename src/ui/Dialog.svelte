@@ -20,9 +20,21 @@
     event.stopPropagation();
     onclose();
   }
+
+  /**
+   * Out of the content it covers, which `base.css` blurs: `backdrop-filter` leaves the text sharp in
+   * the transparent window. Moving an element loses the focus, so it is given back, and Svelte no
+   * longer finds it to remove it.
+   */
+  function moveToLayer(scrim: HTMLElement) {
+    const focused = document.activeElement;
+    document.querySelector('.dialog-layer')?.append(scrim);
+    if (focused instanceof HTMLElement) focused.focus();
+    return { destroy: () => scrim.remove() };
+  }
 </script>
 
-<div class="scrim fade-in">
+<div class="scrim fade-in" use:moveToLayer>
   <button class="backdrop" aria-label={t('common.close')} tabindex="-1" onclick={onclose}></button>
   <div
     class="dialog enter"

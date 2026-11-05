@@ -106,7 +106,7 @@
   <button class="backdrop" tabindex="-1" aria-label={t('common.close')} onclick={hide}></button>
 
   {#key shown}
-    <section class="overlay enter" aria-label="Arthex">
+    <section class="overlay enter behind-dialogs" aria-label="Arthex">
       <div class="brand">
         <img src={logo} alt="" width="36" height="36" />
         <span>Arthex</span>
@@ -153,6 +153,8 @@
   {#if updates.whatsNew}
     <WhatsNew notes={updates.whatsNew} onclose={() => (updates.whatsNew = null)} />
   {/if}
+
+  <div class="dialog-layer"></div>
 </div>
 
 <style>
