@@ -345,6 +345,7 @@ The language appears in Settings and in the tray at the next build. No code chan
   - It fires when Shift + Win is released with no other key in between, so Win + Shift + S still works.
   - A neutral `vkE8` key press is injected so that releasing Win does not open the Start menu.
   - The hook callback does O(1) work. Windows silently removes slow hooks.
+- The window sets `dragDropEnabled: false`. Otherwise Tauri takes every drag on Windows for a file drop, and the drags inside the page (Customize in All pages, Home shortcuts) show the "forbidden" cursor.
 - The startup entry is managed by `tauri-plugin-autostart`. It launches the app with `--autostart`, so it starts silently. Debug builds never register it.
 - Install is NSIS per user. `src-tauri/windows/hooks.nsh` removes the startup entry on uninstall.
 - Data lives in the Tauri app folders named after the identifier `dev.arthreto.arthex`. The uninstaller offers to delete them.

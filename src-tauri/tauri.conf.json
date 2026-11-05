@@ -23,6 +23,7 @@
         "alwaysOnTop": true,
         "skipTaskbar": true,
         "resizable": false,
+        "dragDropEnabled": false,
         "width": 1280,
         "height": 800,
         "windowEffects": {
