@@ -7,7 +7,8 @@
   "clear": "Clear all",
   "cleared": "History cleared, pinned items are kept",
   "paused": "Paused: what you copy now is not kept.",
-  "empty": "Nothing yet. Copy text anywhere and it shows up here.",
+  "emptyTitle": "No text copied",
+  "emptyText": "Copy text anywhere and it shows up here.",
   "copy": "Copy: {text}",
   "copied": "Copied: “{text}”",
   "pin": "Pin",
@@ -24,6 +25,6 @@
   "card": {
     "title": "Last copied",
     "link": "History",
-    "empty": "Nothing copied yet"
+    "empty": "No text copied"
   }
 }

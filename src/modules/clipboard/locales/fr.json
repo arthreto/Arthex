@@ -7,7 +7,8 @@
   "clear": "Tout effacer",
   "cleared": "Historique effacé, les éléments épinglés sont gardés",
   "paused": "En pause : ce que tu copies maintenant n’est pas enregistré.",
-  "empty": "Rien pour l’instant. Copie du texte n’importe où, il apparaîtra ici.",
+  "emptyTitle": "Aucun texte copié",
+  "emptyText": "Copie du texte n’importe où, il apparaîtra ici.",
   "copy": "Copier : {text}",
   "copied": "Copié : « {text} »",
   "pin": "Épingler",
@@ -24,6 +25,6 @@
   "card": {
     "title": "Dernier copié",
     "link": "Historique",
-    "empty": "Rien de copié pour l’instant"
+    "empty": "Aucun texte copié"
   }
 }

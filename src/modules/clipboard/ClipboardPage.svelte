@@ -2,10 +2,12 @@
   import { onMount } from 'svelte';
   import { formatWhen } from '../../core/format';
   import Button from '../../ui/Button.svelte';
+  import EmptyState from '../../ui/EmptyState.svelte';
   import IconButton from '../../ui/IconButton.svelte';
   import { clipboard } from './clipboard.svelte';
   import { t } from './i18n';
   import { clipKind } from './kind';
+  import manifest from './manifest';
 
   onMount(() => {
     void clipboard.load();
@@ -16,12 +18,16 @@
 
 <div class="clipboard fade-in">
   <div class="bar">
-    <span class="count">{t('count', { count: clips.length })}</span>
+    {#if clips.length > 0}
+      <span class="count">{t('count', { count: clips.length })}</span>
+    {/if}
     <span class="spacer"></span>
     <Button aria-pressed={clipboard.paused} onclick={clipboard.togglePause}>
       {t(clipboard.paused ? 'resume' : 'pause')}
     </Button>
-    <Button onclick={() => clipboard.clear()}>{t('clear')}</Button>
+    {#if clips.length > 0}
+      <Button onclick={() => clipboard.clear()}>{t('clear')}</Button>
+    {/if}
   </div>
   {#if clipboard.paused}
     <p class="banner">{t('paused')}</p>
@@ -52,7 +58,14 @@
       {/each}
     </div>
   {:else}
-    <p class="empty">{t('empty')}</p>
+    <div class="nothing">
+      <EmptyState
+        icon={manifest.icon}
+        tint="var(--tint-violet)"
+        title={t('emptyTitle')}
+        text={t('emptyText')}
+      />
+    </div>
   {/if}
 </div>
 
@@ -144,9 +157,11 @@
     color: var(--text-subtle);
   }
 
-  .empty {
-    margin: auto auto 140px;
-    font-size: 13.5px;
-    color: var(--text-muted);
+  .nothing {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 </style>
