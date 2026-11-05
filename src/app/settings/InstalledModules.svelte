@@ -1,7 +1,7 @@
 <script lang="ts">
   import { errorMessage } from '../../core/api';
   import { moduleText, t } from '../../core/i18n';
-  import { ELEMENTS, isActive, isEnabled, modules, switchElement, type Element } from '../../core/modules';
+  import { ELEMENTS, allModules, isActive, isEnabled, switchElement, type Element } from '../../core/modules';
   import { settings } from '../../core/settings/settings.svelte';
   import { toast } from '../../core/toast.svelte';
   import Icon from '../../ui/Icon.svelte';
@@ -12,7 +12,7 @@
   const groups = $derived(
     ELEMENTS.map((element) => ({
       element,
-      modules: modules.filter((module) => !module.locked && module[element] !== undefined),
+      modules: allModules().filter((module) => !module.locked && module[element] !== undefined),
     })).filter((group) => group.modules.length > 0),
   );
 

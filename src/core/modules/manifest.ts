@@ -17,7 +17,8 @@ export interface SettingsSection {
 }
 
 /** Accent colours defined in `src/ui/tokens.css` (`--tint-<name>`), tuned for both themes. */
-export type Tint = 'blue' | 'amber' | 'green' | 'violet' | 'sky' | 'pink' | 'mint' | 'orange' | 'red';
+export const TINTS = ['blue', 'amber', 'green', 'violet', 'sky', 'pink', 'mint', 'orange', 'red'] as const;
+export type Tint = (typeof TINTS)[number];
 
 /**
  * A module and the elements it provides: `page`, `widget`, `search` and `tool`.

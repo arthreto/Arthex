@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-modules-install-file"
+description = "Enables the modules_install_file command without any pre-configured scope."
+commands.allow = ["modules_install_file"]
+
+[[permission]]
+identifier = "deny-modules-install-file"
+description = "Denies the modules_install_file command without any pre-configured scope."
+commands.deny = ["modules_install_file"]

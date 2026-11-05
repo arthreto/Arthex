@@ -5,9 +5,12 @@ type Loaded<Props extends Record<string, unknown> = Record<string, never>> = {
   default: Component<Props>;
 };
 
+const caches: Map<string, unknown>[] = [];
+
 /** Loads each component of a module the first time it is needed, then reuses it. */
 function cache<T>() {
   const promises = new Map<string, Promise<T>>();
+  caches.push(promises);
   return (id: string, load: (() => Promise<T>) | undefined): Promise<T> | null => {
     if (!load) return null;
     let promise = promises.get(id);
@@ -39,3 +42,8 @@ export const loadBadge = (id: string) => badges(id, getModule(id)?.badge);
 export const loadWidget = (id: string) => widgets(id, getModule(id)?.widget?.component);
 
 export const loadTool = (id: string) => tools(id, getModule(id)?.tool);
+
+/** Drops what was loaded for a module, after it was updated or uninstalled. */
+export function forget(id: string): void {
+  for (const promises of caches) promises.delete(id);
+}

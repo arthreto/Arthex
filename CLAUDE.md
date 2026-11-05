@@ -76,13 +76,14 @@ These come from the owner's feedback on the mockup. Do not reintroduce what was 
 ## Security
 
 - **Minimal capabilities:** only our commands and the plugin permissions actually used. No `shell` plugin.
-- **Strict CSP:** no remote content in the webview.
+- **Strict CSP:** no remote content in the webview. Installed modules are served from the app's own folder through the `arthex-module` protocol.
+- **Installable modules are signed** with the update key. Rust checks the signature and every file of a package before writing anything.
 - Every system action is a typed Rust command with validated input:
   - URLs are `http`/`https` only;
   - paths are canonicalised and must exist;
   - programs launch without arguments;
   - system commands are a closed enum.
-- No admin rights, no telemetry. The network is used only for favicons and update checks.
+- No admin rights, no telemetry. The network is used only for favicons, update checks and the module catalog.
 - Logs never contain keystrokes, clipboard content or search queries.
 - File deletion always goes to the Recycle Bin, after confirmation.
 - Clipboard history stays in memory only and skips content excluded by password managers.

@@ -126,7 +126,37 @@
         "search": "Search",
         "tool": "Tools"
       },
-      "switch": "{name}, {element}"
+      "switch": "{name}, {element}",
+      "tabs": {
+        "installed": "Installed",
+        "catalog": "Catalog"
+      },
+      "element": {
+        "page": "Page",
+        "widget": "Home card",
+        "search": "Search",
+        "tool": "Tool"
+      },
+      "all": "All",
+      "filter": "Show",
+      "search": "Search modules",
+      "fromFile": "Install from a file…",
+      "install": "Install",
+      "installing": "Installing…",
+      "update": "Update",
+      "uninstall": "Uninstall",
+      "outdated": "Update Arthex first",
+      "dev": "In development",
+      "loading": "Loading the catalog…",
+      "failed": "The catalog could not be reached.",
+      "retry": "Retry",
+      "empty": "No modules to install yet.",
+      "noMatch": "No module matches.",
+      "installed": "{name} installed",
+      "updated": "{name} updated",
+      "uninstalled": "{name} uninstalled",
+      "uninstallTitle": "Uninstall {name}?",
+      "deleteData": "Also delete its data"
     },
     "updates": {
       "check": "Check",
@@ -194,7 +224,8 @@
   },
   "files": {
     "programs": "Programs",
-    "images": "Images"
+    "images": "Images",
+    "modules": "Arthex modules"
   },
   "time": {
     "dayAt": "{day}, {time}"

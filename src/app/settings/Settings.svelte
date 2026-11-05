@@ -9,7 +9,8 @@
   import { loadSettingsSection } from '../pages';
   import GeneralSettings from './GeneralSettings.svelte';
   import HotkeySettings from './HotkeySettings.svelte';
-  import InstalledModules from './InstalledModules.svelte';
+  import ModulesSettings from './ModulesSettings.svelte';
+  import ModulesTabs from './ModulesTabs.svelte';
   import UpdatesSettings from './UpdatesSettings.svelte';
   import { updates } from '../updates.svelte';
 
@@ -23,6 +24,8 @@
     body: { component: Component } | { load: () => Promise<Loaded> | null };
     /** A button next to the section title. */
     action?: { label: string; run: () => unknown; disabled?: boolean };
+    /** Or controls of the section's own, such as tabs. */
+    header?: Component;
   }
 
   const sections = $derived<Section[]>([
@@ -42,7 +45,8 @@
       id: 'modules',
       title: t('settings.sections.modules'),
       icon: { name: 'modules' },
-      body: { component: InstalledModules },
+      body: { component: ModulesSettings },
+      header: ModulesTabs,
     },
     ...settingsModules(settings.value).map((module) => {
       const action = module.settingsSection?.action;
@@ -85,7 +89,9 @@
     <div class="content scroll">
       <div class="title">
         <h3>{current.title}</h3>
-        {#if current.action}
+        {#if current.header}
+          <current.header />
+        {:else if current.action}
           {@const action = current.action}
           <Button size="small" disabled={action.disabled} onclick={action.run}>{action.label}</Button>
         {/if}

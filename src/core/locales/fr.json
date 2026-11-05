@@ -126,7 +126,37 @@
         "search": "Recherche",
         "tool": "Outils"
       },
-      "switch": "{name}, {element}"
+      "switch": "{name}, {element}",
+      "tabs": {
+        "installed": "Installés",
+        "catalog": "Catalogue"
+      },
+      "element": {
+        "page": "Page",
+        "widget": "Carte d’accueil",
+        "search": "Recherche",
+        "tool": "Outil"
+      },
+      "all": "Tout",
+      "filter": "Afficher",
+      "search": "Rechercher un module",
+      "fromFile": "Installer depuis un fichier…",
+      "install": "Installer",
+      "installing": "Installation…",
+      "update": "Mettre à jour",
+      "uninstall": "Désinstaller",
+      "outdated": "Mets d’abord Arthex à jour",
+      "dev": "En développement",
+      "loading": "Chargement du catalogue…",
+      "failed": "Le catalogue est injoignable.",
+      "retry": "Réessayer",
+      "empty": "Aucun module à installer pour l’instant.",
+      "noMatch": "Aucun module ne correspond.",
+      "installed": "{name} installé",
+      "updated": "{name} mis à jour",
+      "uninstalled": "{name} désinstallé",
+      "uninstallTitle": "Désinstaller {name} ?",
+      "deleteData": "Supprimer aussi ses données"
     },
     "updates": {
       "check": "Rechercher",
@@ -194,7 +224,8 @@
   },
   "files": {
     "programs": "Programmes",
-    "images": "Images"
+    "images": "Images",
+    "modules": "Modules Arthex"
   },
   "time": {
     "dayAt": "{day}, {time}"

@@ -8,6 +8,8 @@ pub enum AppError {
     Invalid(String),
     #[error("not available on this system")]
     Unsupported,
+    #[error("needs a newer version of Arthex")]
+    Outdated,
     #[error("{0}")]
     Failed(String),
     #[error(transparent)]
@@ -24,6 +26,7 @@ impl AppError {
             Self::InvalidSettings(_) => "invalidSettings",
             Self::Invalid(_) => "invalid",
             Self::Unsupported => "unsupported",
+            Self::Outdated => "outdated",
             Self::Failed(_) => "failed",
             Self::Io(_) => "io",
             Self::Json(_) => "json",

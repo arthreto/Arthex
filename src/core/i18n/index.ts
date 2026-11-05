@@ -5,7 +5,8 @@ import type { MessageKey, MessageTree, MessageValues } from './types';
 
 export { availableLocales } from './catalog';
 export { getLocale, resolveLocale, setLocale } from './i18n.svelte';
-export type { LocaleMeta, MessageKey, MessageValues } from './types';
+export { translate } from './i18n.svelte';
+export type { LocaleMeta, MessageKey, MessageTree, MessageValues } from './types';
 
 type Catalog = { default: MessageTree };
 
@@ -42,6 +43,13 @@ export function moduleTranslator<Messages>(id: string) {
 /** Name or description of any module, used by the shell (tab bar, hub, settings). */
 export function moduleText(id: string, field: 'name' | 'description'): string {
   return translate(`modules.${id}.${field}`);
+}
+
+/** The texts of an installed module, by language code, under `modules.<id>`. */
+export function registerModule(id: string, locales: Record<string, MessageTree>): void {
+  for (const [locale, messages] of Object.entries(locales)) {
+    if (/^[a-z]{2,3}(-[A-Za-z0-9]+)*$/.test(locale)) register(locale, `modules.${id}`, messages);
+  }
 }
 
 /** The optional `keywords` of a module, which help the search find its tool. */

@@ -1,10 +1,11 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { commands } from '../core/api';
+  import { commands, events, on } from '../core/api';
   import { applyAppearance, onSystemThemeChange } from '../core/appearance';
   import { resolveLocale, setLocale } from '../core/i18n';
   import { settings } from '../core/settings/settings.svelte';
   import Toast from '../ui/Toast.svelte';
+  import { installHostApi, moduleHost } from './moduleHost.svelte';
   import Onboarding from './onboarding/Onboarding.svelte';
   import Overlay from './Overlay.svelte';
 
@@ -14,7 +15,14 @@
   onMount(() => {
     void commands.appInfo().then((info) => (systemLocale = info.systemLocale));
     void settings.load();
-    return onSystemThemeChange(() => (systemThemeTick += 1));
+    installHostApi();
+    void moduleHost.load();
+    const modulesChanged = on(events.modulesChanged, () => void moduleHost.load());
+    const stopThemeWatch = onSystemThemeChange(() => (systemThemeTick += 1));
+    return () => {
+      stopThemeWatch();
+      void modulesChanged.then((unlisten) => unlisten());
+    };
   });
 
   $effect(() => {

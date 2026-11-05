@@ -50,7 +50,7 @@ src-tauri/
   build.rs        declares the commands granted in capabilities/ + embeds the core locales for Rust
   capabilities/   what the window may call
   src/app/        setup, settings store, overlay window, tray, hotkey, autostart, i18n, logging, storage, commands
-  src/services/   system services shared by modules (file index, icons, installed programs, Windows shell, text folding)
+  src/services/   system services shared by modules (file index, icons, installed programs, Windows shell, text folding, module host)
   src/modules/<id>/  Rust side of a module: its state, commands and events
   windows/        NSIS installer hooks
 ```
@@ -166,6 +166,21 @@ A tool is a mini-app with its own interface, such as a colour picker. The shell 
 4. Write `TimerPage.svelte` with components from `src/ui/` and text from `t('start')`.
 5. Run `npm run i18n:check`. The page appears in All pages and in Settings → Modules.
 
+## Installable modules
+
+Built-in modules live in `src/modules/` and ship with the app. Installable modules do not: the user installs them from Settings → Modules → Catalog, or from a `.arthex` file without the network, and can uninstall them. Each element of an installed module has its switch in Settings → Modules like any other.
+
+- **Package** (`src-tauri/src/services/module_host/package.rs`): a `.arthex` file is a zip.
+  - `files.json` holds the SHA-256 of every other file, and `files.json.sig` its minisign signature made with the update key (the `pubkey` of the updater). An unsigned, altered, missing, extra or unsafe file refuses the whole package before anything is written.
+  - `module.json` gives the `id`, `version`, `api`, `platform` (`any` or `windows-x86_64`…), the path of its program (`native`), `background` and its `elements`.
+  - `index.js` is its interface (its default export comes from `defineModule` of the SDK), `style.css` its styles.
+- **Files:** unpacked in `<local data>/modules/<id>/`, replacing the previous version in one rename. What a module keeps lives in `<data>/module-data/<id>/`, which survives updates; uninstalling deletes it only when the user ticks "Also delete its data".
+- **Serving** (`protocol.rs`): interface files only (`js`, `css`, `json`, `png`, `svg`, `woff2`), at `arthex-module://localhost/<id>/` (`http://arthex-module.localhost/<id>/` on Windows). The CSP allows scripts and styles from there and nowhere else besides the app.
+- **Catalog** (`catalog.rs`): `catalog.json` and `catalog.json.sig` from the latest release of `arthreto/arthex-modules`. They are read when the Catalog tab opens, and 40 s after launch only when modules are installed and updates install automatically. Each entry gives the module's texts, icon, tint, elements and one package per platform (or `any`).
+- **Interface** (`src/app/moduleHost.svelte.ts`): imports each installed `index.js`, checks its export with `adopt` (`src/core/modules/foreign.ts`) and adds the module to the registry. An installed module brings its own Svelte: each of its views is a `mount(target, props)` that `ForeignView` shows. It reaches the shell only through `window.__ARTHEX__` (`HostApi`): translations, toast, tools and navigation.
+- **Versions:** `HOST_API` in `package.rs` versions `HostApi`. Only add to it, or raise the version; a module built for a newer one is refused with "Update Arthex first".
+- **Development:** a debug build loads unsigned modules from `ARTHEX_DEV_MODULES=<folder>`, one built module per `<folder>/<id>/`. Release builds never do.
+
 ## Rust commands and events
 
 The interface talks to Rust only through typed commands. The window may only call what `src-tauri/capabilities/main.json` grants.
@@ -200,20 +215,23 @@ Events go from Rust to the interface.
 | `clipboard://changed`     | none                    | the clipboard history changed (Windows)                           |
 | `updates://available`     | `{ version }`           | the check at launch found an update it does not install by itself |
 | `updates://progress`      | `{ downloaded, total }` | download progress of an update                                    |
+| `modules://changed`       | none                    | a module was installed, updated or uninstalled                    |
 
 ## Data files
 
 Modules keep their data in JSON files of the app data folder, read and written with `storage::read_json` and `storage::write_json` (`src-tauri/src/app/storage.rs`). Writes are atomic, and a corrupt file is set aside instead of crashing.
 
-| File               | Folder     | Content                                                        |
-| ------------------ | ---------- | -------------------------------------------------------------- |
-| `settings.json`    | config     | settings (see below)                                           |
-| `shortcuts.json`   | data       | Home shortcuts                                                 |
-| `recent.json`      | data       | recently used programs (path, name, time; never window titles) |
-| `notes.json`       | data       | notes (id, title, Markdown text, time)                         |
-| `whats-new.json`   | data       | notes of an update being installed, shown once after it        |
-| `file-search.json` | config     | folders added to the file index and the exclusions             |
-| `index.bin`        | local data | the file index cache, rebuilt from the drives when missing     |
+| File                | Folder     | Content                                                        |
+| ------------------- | ---------- | -------------------------------------------------------------- |
+| `settings.json`     | config     | settings (see below)                                           |
+| `shortcuts.json`    | data       | Home shortcuts                                                 |
+| `recent.json`       | data       | recently used programs (path, name, time; never window titles) |
+| `notes.json`        | data       | notes (id, title, Markdown text, time)                         |
+| `whats-new.json`    | data       | notes of an update being installed, shown once after it        |
+| `file-search.json`  | config     | folders added to the file index and the exclusions             |
+| `index.bin`         | local data | the file index cache, rebuilt from the drives when missing     |
+| `modules/<id>/`     | local data | an installed module, as its package held it                    |
+| `module-data/<id>/` | data       | what an installed module keeps                                 |
 
 Icons reach the interface as small PNG data URLs made by `services::icons::png_data_url`, so the webview never loads a file or a remote image.
 

@@ -33,7 +33,7 @@ impl Element {
         }
     }
 
-    fn parse(name: &str) -> Option<Self> {
+    pub fn parse(name: &str) -> Option<Self> {
         Self::ALL
             .into_iter()
             .find(|element| element.as_str() == name)
@@ -149,7 +149,7 @@ fn dedupe_ids(ids: &mut Vec<String>) {
     });
 }
 
-fn is_module_id(id: &str) -> bool {
+pub fn is_module_id(id: &str) -> bool {
     (1..=32).contains(&id.len())
         && id
             .bytes()

@@ -17,6 +17,30 @@ export interface UpdateProgress {
   total: number | null;
 }
 
+/** A module installed from the catalog or a file, as `src-tauri/src/services/module_host` lists it. */
+export interface InstalledModule {
+  id: string;
+  version: string;
+  /** Where its files are served from, ending with `/`. */
+  url: string;
+  style: boolean;
+  /** Loaded unsigned from `ARTHEX_DEV_MODULES` (development builds). */
+  dev: boolean;
+}
+
+/** A module of the catalog that runs on this system. */
+export interface ModuleOffer {
+  id: string;
+  version: string;
+  icon: string;
+  tint: string;
+  elements: string[];
+  /** Name and description by language code. */
+  texts: Record<string, { name: string; description: string }>;
+  size: number;
+  state: 'available' | 'installed' | 'update' | 'outdated';
+}
+
 export interface AppInfo {
   version: string;
   systemLocale: string | null;
@@ -37,6 +61,15 @@ export const commands = {
   /** Downloads, checks the signature, installs and restarts. */
   updatesInstall: () => invoke<null>('updates_install'),
   updatesWhatsNew: () => invoke<WhatsNew | null>('updates_whats_new'),
+  modulesList: () => invoke<InstalledModule[]>('modules_list'),
+  /** Reads the signed catalog online. Empty while nothing is published. */
+  modulesCatalog: () => invoke<ModuleOffer[]>('modules_catalog'),
+  /** Installs or updates a module of the catalog. */
+  modulesInstall: (id: string) => invoke<InstalledModule>('modules_install', { id }),
+  /** Asks for a `.arthex` file, then installs it. `null` when the user cancels. */
+  modulesInstallFile: () => invoke<InstalledModule | null>('modules_install_file'),
+  modulesUninstall: (id: string, deleteData: boolean) =>
+    invoke<null>('modules_uninstall', { id, deleteData }),
 };
 
 /** Event names shared with `src-tauri/src/app/events.rs`. */
@@ -49,6 +82,7 @@ export const events = {
   hotkeyRecorded: 'hotkey://recorded',
   updateAvailable: 'updates://available',
   updateProgress: 'updates://progress',
+  modulesChanged: 'modules://changed',
 } as const;
 
 export function on<T>(event: string, handler: (payload: T) => void): Promise<UnlistenFn> {

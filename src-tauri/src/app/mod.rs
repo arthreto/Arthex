@@ -18,7 +18,7 @@ use tauri::{AppHandle, Emitter, Manager};
 
 pub use error::{AppError, Result};
 use settings::SettingsStore;
-pub use settings::{Element, Settings};
+pub use settings::{Element, Settings, is_module_id};
 
 pub struct AppState {
     settings: SettingsStore,

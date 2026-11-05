@@ -34,7 +34,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; img-src 'self' data: asset: http://asset.localhost; style-src 'self' 'unsafe-inline'; font-src 'self'; connect-src ipc: http://ipc.localhost",
+      "csp": "default-src 'self'; script-src 'self' arthex-module: http://arthex-module.localhost; img-src 'self' data: asset: http://asset.localhost arthex-module: http://arthex-module.localhost; style-src 'self' 'unsafe-inline' arthex-module: http://arthex-module.localhost; font-src 'self' arthex-module: http://arthex-module.localhost; connect-src ipc: http://ipc.localhost",
       "capabilities": [
         "main"
       ]

@@ -17,7 +17,11 @@ pub fn run() {
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init())
-        .plugin(tauri_plugin_updater::Builder::new().build());
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .register_uri_scheme_protocol(
+            services::module_host::SCHEME,
+            services::module_host::protocol::handle,
+        );
     #[cfg(not(windows))]
     let builder = builder.plugin(tauri_plugin_global_shortcut::Builder::new().build());
 
@@ -33,6 +37,11 @@ pub fn run() {
             app::commands::updates_check,
             app::commands::updates_install,
             app::commands::updates_whats_new,
+            services::module_host::commands::modules_list,
+            services::module_host::commands::modules_catalog,
+            services::module_host::commands::modules_install,
+            services::module_host::commands::modules_install_file,
+            services::module_host::commands::modules_uninstall,
             modules::shortcuts::commands::shortcuts_list,
             modules::shortcuts::commands::shortcuts_save_site,
             modules::shortcuts::commands::shortcuts_save_app,
@@ -80,6 +89,7 @@ pub fn run() {
         .setup(|tauri_app| {
             app::setup(tauri_app.handle())?;
             modules::setup(tauri_app.handle())?;
+            services::module_host::setup(tauri_app.handle())?;
             Ok(())
         })
         .on_window_event(app::overlay::on_window_event)
