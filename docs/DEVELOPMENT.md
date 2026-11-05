@@ -267,6 +267,8 @@ Installable modules live outside this repository, in [`arthreto/arthex-modules`]
    - `targets` are `file`, `folder`, `folder-background` (the empty space of an open folder) and `drive`.
    - Arthex writes one verb per target in `HKCU\Software\Classes` (`context_menu.rs`) while the element is on, in the language of the interface. The click starts `arthex.exe --module-action <module> <action> <path>`, or reaches the running Arthex through the single-instance plugin, and the program receives the checked path. The overlay stays closed: to show it, the program calls `set_overlay_visible`.
    - Each selected item is one call.
+   - `submenu: [{ id: 'jpeg', label: 'JPEG' }]` shows choices under the entry (`SubCommands`, up to 32); the program receives `<id>:<choice>`. `openPage: true` opens the overlay on the module's page once the program has answered. Both need `api: 5`.
+   - A program can come with files: `native/bundle/` is copied next to it, and `native/prepare.mjs`, when present, runs first to fetch them. A package holds 64 MB at most.
    - Windows 11 shows these actions under "Show more options". Its first menu only takes commands of a signed, packaged app, which Arthex is not.
 
 5. Develop it without signing: `npx arthex build <module> --out dev-modules`, then `ARTHEX_DEV_MODULES=<full path of dev-modules> npm run tauri dev`.

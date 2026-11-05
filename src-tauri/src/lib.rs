@@ -69,6 +69,7 @@ pub fn run() {
             services::module_host::commands::modules_hide_overlay,
             services::module_host::commands::modules_show_overlay,
             services::module_host::commands::modules_opened,
+            services::module_host::commands::modules_pending_page,
             services::module_host::commands::modules_answer_opened,
             modules::shortcuts::commands::shortcuts_list,
             modules::shortcuts::commands::shortcuts_save,

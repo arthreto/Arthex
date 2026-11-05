@@ -32,6 +32,10 @@ export interface ContextMenuAction {
   extensions?: readonly string[];
   /** A `.ico` of the module's folder. The icon of Arthex when absent. */
   icon?: string;
+  /** Choices under this entry, such as formats. The program gets `<id>:<choice>`. Needs `api: 5`. */
+  submenu?: readonly { id: string; label: string }[];
+  /** Opens the overlay on the module's page when the action runs. Needs `api: 5`. */
+  openPage?: boolean;
 }
 
 /**

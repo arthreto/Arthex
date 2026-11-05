@@ -11,15 +11,18 @@ use std::{
 
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 
 use super::{ModuleHost, package::is_safe_path, program};
-use crate::app::{self, Element, Settings, is_module_id};
+use crate::app::{self, Element, Settings, is_module_id, overlay};
 
 const VERB_PREFIX: &str = "Arthex.";
 const ARGUMENT: &str = "--module-action";
 const METHOD: &str = "contextMenu";
+/// Sent when an action asks for its module's page; the interface then asks `modules_pending_page`.
+pub const OPEN_PAGE: &str = "modules://open-page";
 pub const MAX_ACTIONS: usize = 16;
+const MAX_SUBMENU: usize = 32;
 const MAX_LABEL_CHARS: usize = 64;
 const MAX_EXTENSION_CHARS: usize = 16;
 const FALLBACK_LANGUAGE: &str = "en";
@@ -34,8 +37,16 @@ pub enum Target {
     Drive,
 }
 
+/// An entry of a submenu. Its label is a name such as a format, the same in every language.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SubAction {
+    pub id: String,
+    pub label: String,
+}
+
 /// An entry of `contextMenu` in `module.json`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Action {
     pub id: String,
     pub targets: Vec<Target>,
@@ -45,6 +56,12 @@ pub struct Action {
     /// A `.ico` inside the module. The icon of Arthex when absent.
     #[serde(default)]
     pub icon: Option<String>,
+    /// Choices shown under this entry, which then runs nothing by itself.
+    #[serde(default)]
+    pub submenu: Vec<SubAction>,
+    /// Opens the overlay on the module's page when the action runs.
+    #[serde(default)]
+    pub open_page: bool,
     /// By language code.
     pub labels: BTreeMap<String, String>,
 }
@@ -61,6 +78,19 @@ impl Action {
             && self.icon.as_deref().is_none_or(is_icon_path)
             && !self.labels.is_empty()
             && self.labels.values().all(|label| is_label(label))
+            && self.submenu.len() <= MAX_SUBMENU
+            && self
+                .submenu
+                .iter()
+                .all(|entry| is_module_id(&entry.id) && is_label(&entry.label))
+    }
+
+    /// `choice` is the entry of the submenu clicked, when the action has one.
+    fn runs(&self, choice: Option<&str>) -> bool {
+        match choice {
+            Some(choice) => self.submenu.iter().any(|entry| entry.id == choice),
+            None => self.submenu.is_empty(),
+        }
     }
 
     fn label(&self, language: &str) -> &str {
@@ -89,13 +119,20 @@ fn is_label(value: &str) -> bool {
     (1..=MAX_LABEL_CHARS).contains(&length) && !value.chars().any(char::is_control)
 }
 
+#[derive(Debug, PartialEq, Eq)]
+enum Runs {
+    Command(String),
+    /// `(key name, label, command)`. Explorer sorts them by key name, so it starts with their rank.
+    Submenu(Vec<(String, String, String)>),
+}
+
 /// A verb to write, by its key under `Software\Classes`.
 #[derive(Debug, PartialEq, Eq)]
 struct Verb {
     key: String,
     label: String,
     icon: String,
-    command: String,
+    runs: Runs,
 }
 
 fn classes_of(action: &Action) -> Vec<(String, &'static str)> {
@@ -115,6 +152,10 @@ fn classes_of(action: &Action) -> Vec<(String, &'static str)> {
         }
     }
     classes
+}
+
+fn command(program: &str, module: &str, action: &str, argument: &str) -> String {
+    format!("\"{program}\" {ARGUMENT} {module} {action} \"{argument}\"")
 }
 
 fn verbs_of(
@@ -140,10 +181,25 @@ fn verbs_of(
                     key: format!(r"{class}\shell\{VERB_PREFIX}{module}.{}", action.id),
                     label: action.label(language).to_string(),
                     icon: icon.clone(),
-                    command: format!(
-                        "\"{program_text}\" {ARGUMENT} {module} {} \"{argument}\"",
-                        action.id
-                    ),
+                    runs: if action.submenu.is_empty() {
+                        Runs::Command(command(program_text, module, &action.id, argument))
+                    } else {
+                        Runs::Submenu(
+                            action
+                                .submenu
+                                .iter()
+                                .enumerate()
+                                .map(|(rank, entry)| {
+                                    let token = format!("{}:{}", action.id, entry.id);
+                                    (
+                                        format!("{rank:02}-{}", entry.id),
+                                        entry.label.clone(),
+                                        command(program_text, module, &token, argument),
+                                    )
+                                })
+                                .collect(),
+                        )
+                    },
                 })
         })
         .collect()
@@ -155,11 +211,13 @@ mod registry {
 
     use winreg::{RegKey, enums::HKEY_CURRENT_USER};
 
-    use super::{VERB_PREFIX, Verb};
+    use super::{Runs, VERB_PREFIX, Verb};
 
     const CLASSES: &str = r"Software\Classes";
     const ROOTS: [&str; 4] = ["*", "Directory", r"Directory\Background", "Drive"];
     const FILE_TYPES: &str = "SystemFileAssociations";
+    /// Keeps the entry when many files are selected, where Explorer otherwise hides it.
+    const MULTI_SELECT: (&str, &str) = ("MultiSelectModel", "Player");
 
     pub fn classes() -> io::Result<RegKey> {
         Ok(RegKey::predef(HKEY_CURRENT_USER).create_subkey(CLASSES)?.0)
@@ -200,11 +258,28 @@ mod registry {
             }
         }
         for verb in verbs {
+            // From scratch: a verb that had a submenu must not keep it.
+            if classes.open_subkey(&verb.key).is_ok() {
+                classes.delete_subkey_all(&verb.key)?;
+            }
             let (key, _) = classes.create_subkey(&verb.key)?;
-            key.set_value("", &verb.label)?;
+            key.set_value("MUIVerb", &verb.label)?;
             key.set_value("Icon", &verb.icon)?;
-            let (command, _) = key.create_subkey("command")?;
-            command.set_value("", &verb.command)?;
+            key.set_value(MULTI_SELECT.0, &MULTI_SELECT.1)?;
+            match &verb.runs {
+                Runs::Command(command) => {
+                    key.create_subkey("command")?.0.set_value("", command)?;
+                }
+                Runs::Submenu(entries) => {
+                    key.set_value("SubCommands", &"")?;
+                    for (name, label, command) in entries {
+                        let (entry, _) = key.create_subkey(format!(r"shell\{name}"))?;
+                        entry.set_value("MUIVerb", label)?;
+                        entry.set_value(MULTI_SELECT.0, &MULTI_SELECT.1)?;
+                        entry.create_subkey("command")?.0.set_value("", command)?;
+                    }
+                }
+            }
         }
         Ok(())
     }
@@ -218,7 +293,7 @@ mod registry {
                 key: key.to_string(),
                 label: "Label".to_string(),
                 icon: "icon.ico".to_string(),
-                command: "\"a.exe\" \"%1\"".to_string(),
+                runs: Runs::Command("\"a.exe\" \"%1\"".to_string()),
             }
         }
 
@@ -239,6 +314,24 @@ mod registry {
                 .get_value("")
                 .unwrap();
             assert_eq!(command, "\"a.exe\" \"%1\"");
+
+            let menu = Verb {
+                runs: Runs::Submenu(vec![(
+                    "00-png".to_string(),
+                    "PNG".to_string(),
+                    "\"a.exe\" png".to_string(),
+                )]),
+                ..verb(keep)
+            };
+            apply(&root, &[menu]).unwrap();
+            assert!(root.open_subkey(format!(r"{keep}\command")).is_err());
+            let entry: String = root
+                .open_subkey(format!(r"{keep}\shell\00-png\command"))
+                .unwrap()
+                .get_value("")
+                .unwrap();
+            assert_eq!(entry, "\"a.exe\" png");
+            apply(&root, &[verb(keep), verb(gone)]).unwrap();
 
             apply(&root, &[verb(keep)]).unwrap();
             assert_eq!(written(&root), [keep]);
@@ -315,18 +408,22 @@ fn run(app: &AppHandle, module: &str, action: &str, path: &str) -> app::Result<(
     let host = app
         .try_state::<ModuleHost>()
         .ok_or_else(|| app::AppError::Failed("modules are not ready".into()))?;
-    let known = host.get(module).is_some_and(|installed| {
+    let (id, choice) = action
+        .split_once(':')
+        .map_or((action, None), |(id, choice)| (id, Some(choice)));
+    let entry = host.get(module).and_then(|installed| {
         installed
             .info
             .context_menu
-            .iter()
-            .any(|entry| entry.id == action && entry.is_valid())
+            .into_iter()
+            .find(|entry| entry.id == id && entry.is_valid() && entry.runs(choice))
     });
-    if !known || !app::settings(app).is_element_enabled(module, Element::ContextMenu) {
+    let enabled = app::settings(app).is_element_enabled(module, Element::ContextMenu);
+    let (Some(entry), true) = (entry, enabled) else {
         return Err(app::AppError::Invalid(format!(
             "{module} has no action {action}"
         )));
-    }
+    };
     let path = plain_path(&Path::new(path).canonicalize()?);
     program::call(
         app,
@@ -334,6 +431,11 @@ fn run(app: &AppHandle, module: &str, action: &str, path: &str) -> app::Result<(
         METHOD,
         json!({ "action": action, "path": path.display().to_string() }),
     )?;
+    if entry.open_page {
+        host.set_pending_page(module);
+        overlay::show(app);
+        app.emit(OPEN_PAGE, ())?;
+    }
     Ok(())
 }
 
@@ -370,6 +472,8 @@ mod tests {
             targets: vec![Target::File],
             extensions: Vec::new(),
             icon: None,
+            submenu: Vec::new(),
+            open_page: false,
             labels: BTreeMap::from([
                 ("en".to_string(), "Compress".to_string()),
                 ("fr".to_string(), "Compresser".to_string()),
@@ -437,12 +541,12 @@ mod tests {
         assert_eq!(verbs[0].label, "Compresser");
         assert_eq!(verbs[0].icon, "\"arthex.exe\",0");
         assert_eq!(
-            verbs[0].command,
-            "\"arthex.exe\" --module-action tools compress \"%1\""
+            verbs[0].runs,
+            Runs::Command("\"arthex.exe\" --module-action tools compress \"%1\"".to_string())
         );
         assert_eq!(
-            verbs[2].command,
-            "\"arthex.exe\" --module-action tools compress \"%V\""
+            verbs[2].runs,
+            Runs::Command("\"arthex.exe\" --module-action tools compress \"%V\"".to_string())
         );
     }
 
@@ -473,6 +577,49 @@ mod tests {
                 .display()
                 .to_string()
         );
+    }
+
+    #[test]
+    fn a_submenu_runs_its_entries_in_their_order() {
+        let mut action = action();
+        action.submenu = vec![
+            SubAction {
+                id: "png".into(),
+                label: "PNG".into(),
+            },
+            SubAction {
+                id: "jpeg".into(),
+                label: "JPEG".into(),
+            },
+        ];
+        assert!(action.is_valid());
+        assert!(action.runs(Some("jpeg")));
+        assert!(!action.runs(Some("gif")));
+        assert!(!action.runs(None));
+        let verbs = verbs_of(
+            "tools",
+            Path::new("d"),
+            &[action.clone()],
+            Path::new("a.exe"),
+            "en",
+        );
+        assert_eq!(
+            verbs[0].runs,
+            Runs::Submenu(vec![
+                (
+                    "00-png".to_string(),
+                    "PNG".to_string(),
+                    "\"a.exe\" --module-action tools compress:png \"%1\"".to_string(),
+                ),
+                (
+                    "01-jpeg".to_string(),
+                    "JPEG".to_string(),
+                    "\"a.exe\" --module-action tools compress:jpeg \"%1\"".to_string(),
+                ),
+            ])
+        );
+        action.submenu[0].id = "a b".into();
+        assert!(!action.is_valid());
     }
 
     #[test]

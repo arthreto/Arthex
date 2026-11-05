@@ -18,7 +18,7 @@ import { moduleConfig } from './vite.js';
 import { zip } from './zip.js';
 
 /** `HOST_API` of the app this SDK comes with. */
-const API = 4;
+const API = 5;
 const ELEMENTS = ['page', 'widget', 'search', 'tool', 'contextMenu'];
 const require = createRequire(import.meta.url);
 
@@ -70,10 +70,14 @@ function buildProgram(dir, staging, id, target) {
   const name = /^\s*name\s*=\s*"([^"]+)"/m.exec(fs.readFileSync(cargo, 'utf8'))?.[1];
   if (!name) fail('native/Cargo.toml has no package name');
   const extension = platformOf(target).startsWith('windows') ? '.exe' : '';
+  const prepare = path.join(dir, 'native', 'prepare.mjs');
+  if (fs.existsSync(prepare)) execFileSync(process.execPath, [prepare], { stdio: 'inherit' });
   const built = path.join(dir, 'native', 'target', target ?? '', 'release', `${name}${extension}`);
   const packed = `native/${id}${extension}`;
   fs.mkdirSync(path.join(staging, 'native'), { recursive: true });
   fs.copyFileSync(built, path.join(staging, packed));
+  const bundle = path.join(dir, 'native', 'bundle');
+  if (fs.existsSync(bundle)) fs.cpSync(bundle, path.join(staging, 'native'), { recursive: true });
   return packed;
 }
 
@@ -83,6 +87,9 @@ function contextMenuOf(dir, staging, module, native) {
   if (!actions) return undefined;
   if (module.api < 4) fail('a right-click action needs api: 4 in manifest.ts');
   if (!native) fail('a right-click action needs a program in native/, which runs it');
+  if (module.api < 5 && actions.some((action) => action.submenu || action.openPage)) {
+    fail('submenu and openPage need api: 5 in manifest.ts');
+  }
   return actions.map((action) => {
     const labels = Object.fromEntries(
       Object.entries(module.locales).flatMap(([language, messages]) => {

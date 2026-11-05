@@ -92,6 +92,8 @@ export const commands = {
     invoke<unknown>('modules_call', { id, method, params: params ?? null }),
   /** Fails once when the opened file cannot be installed. */
   modulesOpened: () => invoke<InstallRequest | null>('modules_opened'),
+  /** The module whose page a right-click action asked for, once. */
+  modulesPendingPage: () => invoke<string | null>('modules_pending_page'),
   modulesCallHidden: (id: string, method: string, params: unknown) =>
     invoke<unknown>('modules_call_hidden', { id, method, params: params ?? null }),
   modulesHideOverlay: () => invoke<null>('modules_hide_overlay'),
@@ -113,6 +115,7 @@ export const events = {
   updateProgress: 'updates://progress',
   modulesChanged: 'modules://changed',
   modulesOpened: 'modules://opened',
+  modulesOpenPage: 'modules://open-page',
 } as const;
 
 export function on<T>(event: string, handler: (payload: T) => void): Promise<UnlistenFn> {
