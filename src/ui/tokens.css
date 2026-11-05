@@ -55,7 +55,7 @@
   --border-strong: rgba(255, 255, 255, 0.15);
   --scrim: rgba(6, 8, 12, 0.58);
   --dialog-scrim: rgba(8, 10, 15, 0.42);
-  --dialog-surface: rgba(255, 255, 255, 0.045);
+  --dialog-surface: rgba(36, 39, 46, 0.55);
   --dialog-border: rgba(255, 255, 255, 0.12);
   --veil: radial-gradient(
     ellipse 78% 88% at 50% 46%,
@@ -107,7 +107,7 @@
   --border-strong: rgba(17, 24, 39, 0.18);
   --scrim: rgba(17, 24, 39, 0.28);
   --dialog-scrim: rgba(17, 24, 39, 0.16);
-  --dialog-surface: rgba(255, 255, 255, 0.62);
+  --dialog-surface: rgba(255, 255, 255, 0.78);
   --dialog-border: rgba(17, 24, 39, 0.12);
   --veil: radial-gradient(
     ellipse 78% 88% at 50% 46%,
