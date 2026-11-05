@@ -67,7 +67,7 @@ export const commands = {
   /** Resolves to `false` where the interface has to read the keys itself (macOS, Linux). */
   hotkeyRecord: (active: boolean) => invoke<boolean>('hotkey_record', { active }),
   appInfo: () => invoke<AppInfo>('app_info'),
-  appOpenDataDir: () => invoke<null>('app_open_data_dir'),
+  appOpenInstallDir: () => invoke<null>('app_open_install_dir'),
   appOpenLogDir: () => invoke<null>('app_open_log_dir'),
   appNoteRenderer: (renderer: string) => invoke<null>('app_note_renderer', { renderer }),
   appUninstall: () => invoke<null>('app_uninstall'),

@@ -13,7 +13,7 @@
     "allow-overlay-hide",
     "allow-hotkey-record",
     "allow-app-info",
-    "allow-app-open-data-dir",
+    "allow-app-open-install-dir",
     "allow-app-open-log-dir",
     "allow-app-note-renderer",
     "allow-app-uninstall",

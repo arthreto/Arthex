@@ -40,7 +40,7 @@ pub fn run() {
             app::commands::overlay_hide,
             app::commands::hotkey_record,
             app::commands::app_info,
-            app::commands::app_open_data_dir,
+            app::commands::app_open_install_dir,
             app::commands::app_open_log_dir,
             app::commands::app_note_renderer,
             app::commands::app_uninstall,

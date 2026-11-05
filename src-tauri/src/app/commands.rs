@@ -44,8 +44,8 @@ pub fn app_info(app: AppHandle) -> AppInfo {
 }
 
 #[tauri::command]
-pub fn app_open_data_dir(app: AppHandle) -> Result<()> {
-    system::open_data_dir(&app)
+pub fn app_open_install_dir(app: AppHandle) -> Result<()> {
+    system::open_install_dir(&app)
 }
 
 /// The graphics the page renders with, for the debug log: software rendering cannot be

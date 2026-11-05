@@ -3,7 +3,7 @@
   import type { HTMLButtonAttributes } from 'svelte/elements';
 
   interface Props extends HTMLButtonAttributes {
-    variant?: 'default' | 'primary' | 'danger';
+    variant?: 'default' | 'primary' | 'danger' | 'quiet-danger';
     /** `large` is the 48 px pill of full-screen flows such as the first launch. */
     size?: 'small' | 'default' | 'large';
     children: Snippet;
@@ -54,6 +54,10 @@
 
   .danger:hover:not(:disabled) {
     background: var(--danger-hover);
+  }
+
+  .quiet-danger {
+    color: var(--danger-text);
   }
 
   .small {

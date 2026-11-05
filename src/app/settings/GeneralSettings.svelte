@@ -108,8 +108,10 @@
   <div class="about">
     <img src={logo} alt="" width="34" height="34" />
     <span class="version">{t('settings.general.version', { version })}</span>
-    <Button onclick={() => open(commands.appOpenDataDir)}>{t('settings.general.data')}</Button>
-    <Button onclick={() => (dialogs.uninstall = true)}>{t('settings.general.uninstall')}</Button>
+    <Button onclick={() => open(commands.appOpenInstallDir)}>{t('settings.general.installFolder')}</Button>
+    <Button variant="quiet-danger" onclick={() => (dialogs.uninstall = true)}
+      >{t('settings.general.uninstall')}</Button
+    >
   </div>
 </Panel>
 

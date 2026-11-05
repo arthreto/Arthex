@@ -92,8 +92,8 @@
       "openLogs": "Open the logs",
       "reduceMotion": "Reduce motion",
       "version": "Arthex {version}",
-      "data": "Data",
-      "uninstall": "Uninstall…"
+      "installFolder": "Install folder",
+      "uninstall": "Uninstall"
     },
     "hotkey": {
       "intro": "One key or a combination. Shift + Win fires when you release the keys without pressing any other, so Win + Shift + S and the other Windows shortcuts keep working.",

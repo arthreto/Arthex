@@ -43,9 +43,11 @@ pub fn log_display() {
 #[cfg(not(windows))]
 pub fn log_display() {}
 
-pub fn open_data_dir(app: &AppHandle) -> Result<()> {
-    let dir = app.path().app_data_dir()?;
-    fs::create_dir_all(&dir)?;
+pub fn open_install_dir(app: &AppHandle) -> Result<()> {
+    let program = std::env::current_exe()?;
+    let dir = program
+        .parent()
+        .ok_or_else(|| AppError::Failed("the program has no folder".into()))?;
     app.opener()
         .open_path(dir.to_string_lossy(), None::<&str>)
         .map_err(|error| AppError::Failed(error.to_string()))

@@ -92,8 +92,8 @@
       "openLogs": "Ouvrir les journaux",
       "reduceMotion": "Réduire les animations",
       "version": "Arthex {version}",
-      "data": "Données",
-      "uninstall": "Désinstaller…"
+      "installFolder": "Dossier d’installation",
+      "uninstall": "Désinstaller"
     },
     "hotkey": {
       "intro": "Une touche ou une combinaison. Shift + Win se déclenche quand tu relâches les touches sans en avoir appuyé d'autre : Win + Shift + S et les autres raccourcis Windows continuent de marcher.",
