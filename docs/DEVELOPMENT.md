@@ -62,6 +62,9 @@ src-tauri/
 
 - **Stack:** [Tauri 2](https://tauri.app) (Rust) with a [Svelte 5](https://svelte.dev) + TypeScript interface, built by Vite.
 - **Single window:** it is created hidden at startup and only shown by the hotkey or the tray, which keeps opening instant.
+  - Windows blurs what is behind it (`windowEffects`: `blur`), whether or not the overlay has the focus.
+  - Rust hides it with `overlay::hide`, which first sends `overlay://hiding`. The page clears itself, then calls `overlay_hide`. `WebView2` shows its last frame at the next opening, so that frame is empty and the enter animation plays from the start.
+  - A focus loss closes the overlay only once the foreground window is really another one: focus moving into the page reports one too.
 
 ## Where things live
 
@@ -260,6 +263,7 @@ Events go from Rust to the interface.
 | Event                     | Payload                 | Meaning                                                           |
 | ------------------------- | ----------------------- | ----------------------------------------------------------------- |
 | `overlay://shown`         | none                    | the overlay was just shown                                        |
+| `overlay://hiding`        | none                    | clear the page, then call `overlay_hide`                          |
 | `settings://changed`      | `Settings`              | settings changed, from any source                                 |
 | `app://navigate`          | target id               | open `hub`, `settings` or a page                                  |
 | `app://confirm-uninstall` | none                    | the tray asked to uninstall                                       |

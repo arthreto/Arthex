@@ -1,8 +1,9 @@
 use std::{
     sync::{
         Mutex, PoisonError,
-        atomic::{AtomicUsize, Ordering},
+        atomic::{AtomicU64, AtomicUsize, Ordering},
     },
+    thread,
     time::{Duration, Instant},
 };
 
@@ -18,6 +19,11 @@ pub const LABEL: &str = "main";
 /// Windows may report a focus loss right after the window is shown, and clicking the tray icon
 /// blurs the overlay just before the click arrives. Both are ignored within this delay.
 const GRACE: Duration = Duration::from_millis(400);
+/// A focus loss is checked once the foreground window has settled: focus moving into the page
+/// itself also reports one.
+const SETTLE: Duration = Duration::from_millis(100);
+/// How long the page gets to clear itself before the overlay is hidden anyway.
+const CLEARING: Duration = Duration::from_millis(300);
 
 #[derive(Default)]
 struct Timeline {
@@ -25,6 +31,8 @@ struct Timeline {
     hidden_at: Mutex<Option<Instant>>,
     /// Open system dialogs: they take the focus, which must not close the overlay.
     held: AtomicUsize,
+    /// Counts the openings, so a late hide never closes a newer opening.
+    openings: AtomicU64,
 }
 
 impl Timeline {
@@ -79,6 +87,7 @@ pub fn show(app: &AppHandle) {
     };
     if let Some(timeline) = app.try_state::<Timeline>() {
         Timeline::mark(&timeline.shown_at);
+        timeline.openings.fetch_add(1, Ordering::SeqCst);
     }
     if let Err(error) = present(&window) {
         tracing::warn!(%error, "could not show the overlay");
@@ -87,19 +96,60 @@ pub fn show(app: &AppHandle) {
     let _ = app.emit_to(LABEL, events::OVERLAY_SHOWN, ());
 }
 
+/// `WebView2` shows its last frame when the overlay opens again. The page is asked to clear
+/// itself first and then calls `conceal`, so every opening starts on the enter animation.
 pub fn hide(app: &AppHandle) {
     let Some(window) = app.get_webview_window(LABEL) else {
         return;
     };
+    if !window.is_visible().unwrap_or(false) {
+        return;
+    }
+    leave(app);
+    let Some(timeline) = app.try_state::<Timeline>() else {
+        conceal(app);
+        return;
+    };
+    let opening = timeline.openings.load(Ordering::SeqCst);
+    if app.emit_to(LABEL, events::OVERLAY_HIDING, ()).is_err() {
+        conceal(app);
+        return;
+    }
+    let app = app.clone();
+    thread::spawn(move || {
+        thread::sleep(CLEARING);
+        let handle = app.clone();
+        let _ = app.run_on_main_thread(move || {
+            let current = handle
+                .try_state::<Timeline>()
+                .is_some_and(|timeline| timeline.openings.load(Ordering::SeqCst) == opening);
+            let visible = handle
+                .get_webview_window(LABEL)
+                .is_some_and(|window| window.is_visible().unwrap_or(false));
+            if current && visible {
+                conceal(&handle);
+            }
+        });
+    });
+}
+
+pub fn conceal(app: &AppHandle) {
+    let Some(window) = app.get_webview_window(LABEL) else {
+        return;
+    };
+    leave(app);
+    if let Err(error) = window.hide() {
+        tracing::warn!(%error, "could not hide the overlay");
+    }
+    set_resting(&window, true);
+}
+
+fn leave(app: &AppHandle) {
     // A recording left running would keep hiding every key press from the whole system.
     hotkey::record(false);
     if let Some(timeline) = app.try_state::<Timeline>() {
         Timeline::mark(&timeline.hidden_at);
     }
-    if let Err(error) = window.hide() {
-        tracing::warn!(%error, "could not hide the overlay");
-    }
-    set_resting(&window, true);
 }
 
 pub fn toggle(app: &AppHandle) {
@@ -127,16 +177,41 @@ pub fn on_window_event(window: &Window, event: &WindowEvent) {
             hide(app);
         }
         WindowEvent::Focused(false) => {
-            let keep = app.try_state::<Timeline>().is_some_and(|timeline| {
-                Timeline::within_grace(&timeline.shown_at)
-                    || timeline.held.load(Ordering::SeqCst) > 0
+            let app = app.clone();
+            thread::spawn(move || {
+                thread::sleep(SETTLE);
+                let handle = app.clone();
+                let _ = app.run_on_main_thread(move || on_focus_lost(&handle));
             });
-            if !keep {
-                hide(app);
-            }
         }
         _ => {}
     }
+}
+
+fn on_focus_lost(app: &AppHandle) {
+    let Some(window) = app.get_webview_window(LABEL) else {
+        return;
+    };
+    let keep = app.try_state::<Timeline>().is_some_and(|timeline| {
+        Timeline::within_grace(&timeline.shown_at) || timeline.held.load(Ordering::SeqCst) > 0
+    });
+    if !keep && !is_foreground(&window) {
+        hide(app);
+    }
+}
+
+#[cfg(windows)]
+fn is_foreground(window: &WebviewWindow) -> bool {
+    use windows_sys::Win32::UI::WindowsAndMessaging::GetForegroundWindow;
+
+    // SAFETY: only reads which top-level window is in the foreground.
+    let foreground = unsafe { GetForegroundWindow() };
+    window.hwnd().is_ok_and(|hwnd| hwnd.0 == foreground)
+}
+
+#[cfg(not(windows))]
+fn is_foreground(window: &WebviewWindow) -> bool {
+    window.is_focused().unwrap_or(false)
 }
 
 /// Covers the work area of the monitor under the cursor, then takes the focus.

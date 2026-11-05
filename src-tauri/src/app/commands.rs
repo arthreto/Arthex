@@ -19,7 +19,7 @@ pub fn settings_update(app: AppHandle, patch: Value) -> Result<Settings> {
 
 #[tauri::command]
 pub fn overlay_hide(app: AppHandle) {
-    overlay::hide(&app);
+    overlay::conceal(&app);
 }
 
 /// Returns `false` where the interface has to read the keys itself.

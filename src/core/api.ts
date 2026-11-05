@@ -93,6 +93,7 @@ export const commands = {
 /** Event names shared with `src-tauri/src/app/events.rs`. */
 export const events = {
   overlayShown: 'overlay://shown',
+  overlayHiding: 'overlay://hiding',
   settingsChanged: 'settings://changed',
   navigate: 'app://navigate',
   confirmUninstall: 'app://confirm-uninstall',

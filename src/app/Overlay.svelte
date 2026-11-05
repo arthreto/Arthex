@@ -25,6 +25,8 @@
   import OpenedModuleDialog from './OpenedModuleDialog.svelte';
 
   let shown = $state(0);
+  // Hidden while the overlay is away: WebView2 shows its last frame when the overlay opens again.
+  let resting = $state(false);
   let searchBar: SearchBar | undefined = $state();
 
   const tool = $derived(
@@ -42,10 +44,12 @@
     void updates.loadWhatsNew();
     const listeners = [
       on(events.overlayShown, async () => {
+        resting = false;
         shown += 1;
         await tick();
         searchBar?.focus();
       }),
+      on(events.overlayHiding, hide),
       on<string>(events.navigate, (target) => {
         search.clear();
         navigation.openTarget(target);
@@ -56,8 +60,12 @@
     return () => listeners.forEach((listener) => listener.then((unlisten) => unlisten()));
   });
 
-  function hide() {
-    void commands.overlayHide();
+  async function hide() {
+    if (resting) return;
+    resting = true;
+    await tick();
+    await new Promise((painted) => requestAnimationFrame(() => requestAnimationFrame(painted)));
+    if (resting) await commands.overlayHide();
   }
 
   function cycleTabs(step: number) {
@@ -73,7 +81,7 @@
     if (event.defaultPrevented) return;
     if (event.key === 'Escape') {
       event.preventDefault();
-      hide();
+      void hide();
     } else if (event.key === 'Tab' && event.ctrlKey) {
       event.preventDefault();
       cycleTabs(event.shiftKey ? -1 : 1);
@@ -84,62 +92,68 @@
 <svelte:window {onkeydown} />
 
 <div class="veil" aria-hidden="true"></div>
-<button class="backdrop" tabindex="-1" aria-label={t('common.close')} onclick={hide}></button>
+<div class:resting>
+  <button class="backdrop" tabindex="-1" aria-label={t('common.close')} onclick={hide}></button>
 
-{#key shown}
-  <section class="overlay enter" aria-label="Arthex">
-    <div class="brand">
-      <img src={logo} alt="" width="36" height="36" />
-      <span>Arthex</span>
-    </div>
-    <SearchBar bind:this={searchBar} />
-    <TabBar />
-    <div class="badges">
-      {#each badgeModules(settings.value) as module (module.id)}
-        {#await loadBadge(module.id) then loaded}
-          {#if loaded}
-            {@const Badge = loaded.default}
-            <Badge />
-          {/if}
-        {/await}
-      {/each}
-    </div>
-    <main class="content">
-      {#if search.active}
-        <SearchResults />
-      {:else if navigation.view.kind === 'hub'}
-        <Hub />
-      {:else if navigation.view.kind === 'settings'}
-        <Settings />
-      {:else}
-        <PageView id={navigation.view.id} />
-      {/if}
-    </main>
-    <KeyHints />
-  </section>
-{/key}
+  {#key shown}
+    <section class="overlay enter" aria-label="Arthex">
+      <div class="brand">
+        <img src={logo} alt="" width="36" height="36" />
+        <span>Arthex</span>
+      </div>
+      <SearchBar bind:this={searchBar} />
+      <TabBar />
+      <div class="badges">
+        {#each badgeModules(settings.value) as module (module.id)}
+          {#await loadBadge(module.id) then loaded}
+            {#if loaded}
+              {@const Badge = loaded.default}
+              <Badge />
+            {/if}
+          {/await}
+        {/each}
+      </div>
+      <main class="content">
+        {#if search.active}
+          <SearchResults />
+        {:else if navigation.view.kind === 'hub'}
+          <Hub />
+        {:else if navigation.view.kind === 'settings'}
+          <Settings />
+        {:else}
+          <PageView id={navigation.view.id} />
+        {/if}
+      </main>
+      <KeyHints />
+    </section>
+  {/key}
 
-{#if tool?.module}
-  <ToolSheet module={tool.module} input={tool.input} onclose={closeTool} />
-{/if}
+  {#if tool?.module}
+    <ToolSheet module={tool.module} input={tool.input} onclose={closeTool} />
+  {/if}
 
-{#if moduleHost.opened}
-  <OpenedModuleDialog request={moduleHost.opened} />
-{/if}
+  {#if moduleHost.opened}
+    <OpenedModuleDialog request={moduleHost.opened} />
+  {/if}
 
-{#if dialogs.uninstall}
-  <UninstallDialog onclose={() => (dialogs.uninstall = false)} />
-{/if}
+  {#if dialogs.uninstall}
+    <UninstallDialog onclose={() => (dialogs.uninstall = false)} />
+  {/if}
 
-{#if updates.whatsNew}
-  <WhatsNew notes={updates.whatsNew} onclose={() => (updates.whatsNew = null)} />
-{/if}
+  {#if updates.whatsNew}
+    <WhatsNew notes={updates.whatsNew} onclose={() => (updates.whatsNew = null)} />
+  {/if}
+</div>
 
 <style>
   .veil {
     position: fixed;
     inset: 0;
     background: var(--veil);
+  }
+
+  .resting {
+    visibility: hidden;
   }
 
   .backdrop {
