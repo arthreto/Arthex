@@ -14,6 +14,7 @@ Arthex is a fast, secure overlay utility. **Shift + Win** opens a full-screen tr
    - Work and push directly on `main`. No feature or tool-named branches, no pull requests unless the owner asks.
    - Commits are authored as the owner (`arthreto <86776616+arthreto@users.noreply.github.com>`) and carry no co-author or session trailers.
 3. **Every release has a changelog** as its description, in English and French, in the format given in `docs/DEVELOPMENT.md` → Releasing. Users see it in "What's new" at their next launch, so a release without one is a broken release.
+   - Start the release right after pushing, alongside CI, never after waiting for it: its own Windows build fails on code that does not compile, and then nothing is published.
 4. **English everywhere** in the repository: code, comments, commits, README, this file. The interface is translated through i18n. The owner writes in French; answer them in French.
 5. **Three markdown files only**, each with one role. No other markdown file.
    - `README.md`: presentation, installation and credits, for users. Screenshots: one large Home image, then Search and FileSize only, in English, over a desktop wallpaper.
