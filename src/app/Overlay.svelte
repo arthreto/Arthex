@@ -40,15 +40,17 @@
     searchBar?.focus();
   }
 
+  async function wake() {
+    resting = false;
+    shown += 1;
+    await tick();
+    searchBar?.focus();
+  }
+
   onMount(() => {
     void updates.loadWhatsNew();
     const listeners = [
-      on(events.overlayShown, async () => {
-        resting = false;
-        shown += 1;
-        await tick();
-        searchBar?.focus();
-      }),
+      on(events.overlayShown, wake),
       on(events.overlayHiding, hide),
       on<string>(events.navigate, (target) => {
         search.clear();
@@ -56,8 +58,16 @@
       }),
       on(events.confirmUninstall, () => (dialogs.uninstall = true)),
     ];
+    // Should the shown event be lost while the page wakes up, the page would stay hidden.
+    const onVisible = () => {
+      if (document.visibilityState === 'visible' && resting) void wake();
+    };
+    document.addEventListener('visibilitychange', onVisible);
     searchBar?.focus();
-    return () => listeners.forEach((listener) => listener.then((unlisten) => unlisten()));
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      listeners.forEach((listener) => listener.then((unlisten) => unlisten()));
+    };
   });
 
   async function hide() {

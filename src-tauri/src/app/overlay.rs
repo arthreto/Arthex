@@ -93,7 +93,23 @@ pub fn show(app: &AppHandle) {
         tracing::warn!(%error, "could not show the overlay");
         return;
     }
+    tracing::info!("overlay shown");
     let _ = app.emit_to(LABEL, events::OVERLAY_SHOWN, ());
+    // Windows may refuse the foreground to an app the user is not typing in: ask once more.
+    let app = app.clone();
+    thread::spawn(move || {
+        thread::sleep(SETTLE);
+        let handle = app.clone();
+        let _ = app.run_on_main_thread(move || {
+            if let Some(window) = handle.get_webview_window(LABEL)
+                && window.is_visible().unwrap_or(false)
+                && !is_foreground(&window)
+            {
+                tracing::warn!("the overlay did not get the focus, asking again");
+                let _ = window.set_focus();
+            }
+        });
+    });
 }
 
 /// `WebView2` shows its last frame when the overlay opens again. The page is asked to clear
@@ -105,6 +121,7 @@ pub fn hide(app: &AppHandle) {
     if !window.is_visible().unwrap_or(false) {
         return;
     }
+    tracing::info!("overlay hiding");
     leave(app);
     let Some(timeline) = app.try_state::<Timeline>() else {
         conceal(app);
@@ -142,6 +159,7 @@ pub fn conceal(app: &AppHandle) {
         tracing::warn!(%error, "could not hide the overlay");
     }
     set_resting(&window, true);
+    tracing::info!("overlay hidden");
 }
 
 fn leave(app: &AppHandle) {
@@ -159,6 +177,7 @@ pub fn toggle(app: &AppHandle) {
     let just_hidden = app
         .try_state::<Timeline>()
         .is_some_and(|timeline| Timeline::within_grace(&timeline.hidden_at));
+    tracing::info!(visible, just_hidden, "the hotkey toggles the overlay");
     if visible || just_hidden {
         hide(app);
     } else {
@@ -195,7 +214,9 @@ fn on_focus_lost(app: &AppHandle) {
     let keep = app.try_state::<Timeline>().is_some_and(|timeline| {
         Timeline::within_grace(&timeline.shown_at) || timeline.held.load(Ordering::SeqCst) > 0
     });
-    if !keep && !is_foreground(&window) {
+    let foreground = is_foreground(&window);
+    tracing::info!(keep, foreground, "the overlay lost the focus");
+    if !keep && !foreground {
         hide(app);
     }
 }
