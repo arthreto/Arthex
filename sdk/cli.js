@@ -95,6 +95,14 @@ async function stage(dir, target) {
     ...(native && { native }),
     background: module.background,
     elements: ELEMENTS.filter((element) => module[element] !== undefined),
+    icon: module.icon,
+    tint: module.tint,
+    texts: Object.fromEntries(
+      Object.entries(module.locales).map(([language, messages]) => [
+        language,
+        { name: messages.name ?? module.id, description: messages.description ?? '' },
+      ]),
+    ),
   };
   fs.writeFileSync(path.join(staging, 'module.json'), JSON.stringify(info, null, 2));
   return { staging, module, info };
@@ -135,20 +143,7 @@ async function pack(args) {
   );
   fs.mkdirSync(out, { recursive: true });
   fs.writeFileSync(path.join(out, `${name}.arthex`), archive);
-  const texts = Object.fromEntries(
-    Object.entries(module.locales).map(([language, messages]) => [
-      language,
-      { name: messages.name ?? module.id, description: messages.description ?? '' },
-    ]),
-  );
-  const entry = {
-    ...info,
-    icon: module.icon,
-    tint: module.tint,
-    texts,
-    file: `${name}.arthex`,
-    size: archive.length,
-  };
+  const entry = { ...info, file: `${name}.arthex`, size: archive.length };
   fs.writeFileSync(path.join(out, `${name}.json`), JSON.stringify(entry, null, 2));
   fs.rmSync(staging, { recursive: true, force: true });
   console.log(`${name}.arthex`);

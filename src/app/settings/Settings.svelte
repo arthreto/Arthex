@@ -6,6 +6,7 @@
   import Button from '../../ui/Button.svelte';
   import Icon from '../../ui/Icon.svelte';
   import type { IconName } from '../../ui/icons';
+  import { navigation } from '../navigation.svelte';
   import { loadSettingsSection } from '../pages';
   import GeneralSettings from './GeneralSettings.svelte';
   import HotkeySettings from './HotkeySettings.svelte';
@@ -67,7 +68,9 @@
     },
   ]);
 
-  let currentId = $state('general');
+  let currentId = $state(
+    navigation.view.kind === 'settings' ? (navigation.view.section ?? 'general') : 'general',
+  );
   const current = $derived(sections.find((s) => s.id === currentId) ?? sections[0]);
 </script>
 

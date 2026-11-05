@@ -64,7 +64,8 @@
     "startPage": "Page de départ",
     "locked": "{name} reste toujours dans la barre",
     "barFull": "{max} onglets maximum dans la barre",
-    "turnedOff": "{name} désactivée"
+    "turnedOff": "{name} désactivée",
+    "addModules": "Ajouter des modules"
   },
   "settings": {
     "label": "Sections des paramètres",
@@ -156,7 +157,9 @@
       "updated": "{name} mis à jour",
       "uninstalled": "{name} désinstallé",
       "uninstallTitle": "Désinstaller {name} ?",
-      "deleteData": "Supprimer aussi ses données"
+      "deleteData": "Supprimer aussi ses données",
+      "installTitle": "Installer ce module ?",
+      "version": "version {version}"
     },
     "updates": {
       "check": "Rechercher",

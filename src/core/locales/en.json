@@ -64,7 +64,8 @@
     "startPage": "Start page",
     "locked": "{name} always stays in the bar",
     "barFull": "{max} tabs at most in the bar",
-    "turnedOff": "{name} turned off"
+    "turnedOff": "{name} turned off",
+    "addModules": "Add modules"
   },
   "settings": {
     "label": "Settings sections",
@@ -156,7 +157,9 @@
       "updated": "{name} updated",
       "uninstalled": "{name} uninstalled",
       "uninstallTitle": "Uninstall {name}?",
-      "deleteData": "Also delete its data"
+      "deleteData": "Also delete its data",
+      "installTitle": "Install this module?",
+      "version": "version {version}"
     },
     "updates": {
       "check": "Check",

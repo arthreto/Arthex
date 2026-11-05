@@ -1,6 +1,6 @@
 import { HOME_ID, getModule } from '../core/modules';
 
-export type View = { kind: 'page'; id: string } | { kind: 'hub' } | { kind: 'settings' };
+export type View = { kind: 'page'; id: string } | { kind: 'hub' } | { kind: 'settings'; section?: string };
 
 class Navigation {
   view = $state<View>({ kind: 'page', id: HOME_ID });

@@ -40,7 +40,7 @@ These come from the owner's feedback on the mockup. Do not reintroduce what was 
   - Escape or a click outside closes it.
 - **Pinning** a page means it appears **first in "All pages"**. It does **not** add the page to the tab bar. `settings.favorites` and `settings.tabBar` are independent.
 - **"All pages" hub:**
-  - a launcher of sober 96 px icons;
+  - a launcher of sober 96 px icons, ending with an "Add modules" tile that opens Settings → Modules → Catalog;
   - a "Customize" mode with three drag zones: "In the bar" (max 6), "Other pages" and "Turned off";
   - Home is locked first in the bar.
   - **Settings is never a page.** It is the ⚙ icon next to ▦ "All pages".

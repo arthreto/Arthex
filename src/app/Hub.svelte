@@ -8,6 +8,7 @@
   import Icon from '../ui/Icon.svelte';
   import HubZones from './HubZones.svelte';
   import { navigation } from './navigation.svelte';
+  import { modulesView } from './settings/modulesView.svelte';
 
   let customizing = $state(false);
 
@@ -29,6 +30,11 @@
   function open(id: string, enabled: boolean) {
     if (enabled) navigation.open({ kind: 'page', id });
     else toast.show(t('hub.off', { name: moduleText(id, 'name') }));
+  }
+
+  function addModules() {
+    modulesView.tab = 'catalog';
+    navigation.open({ kind: 'settings', section: 'modules' });
   }
 
   async function pin(id: string, favorite: boolean) {
@@ -89,6 +95,12 @@
             {/if}
           </li>
         {/each}
+        <li class="card">
+          <button class="open" onclick={addModules}>
+            <span class="icon add"><Icon name="plus" size={40} stroke={1.6} /></span>
+            <span class="name">{t('hub.addModules')}</span>
+          </button>
+        </li>
       </ul>
     </div>
   {/if}
@@ -186,6 +198,12 @@
   .description {
     font-size: 12.5px;
     line-height: 1.45;
+    color: var(--text-muted);
+  }
+
+  .add {
+    background: none;
+    border: 1.5px dashed var(--border-strong);
     color: var(--text-muted);
   }
 
