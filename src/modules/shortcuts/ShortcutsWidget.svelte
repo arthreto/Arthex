@@ -147,8 +147,6 @@
   }
 
   .hint {
-    position: relative;
-    top: -4px;
     display: flex;
     align-items: center;
     gap: 9px;
