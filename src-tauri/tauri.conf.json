@@ -28,7 +28,6 @@
         "height": 800,
         "windowEffects": {
           "effects": [
-            "blur",
             "hudWindow"
           ]
         }

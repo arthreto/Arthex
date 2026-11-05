@@ -238,6 +238,7 @@ fn is_foreground(window: &WebviewWindow) -> bool {
 /// Covers the work area of the monitor under the cursor, then takes the focus.
 fn present(window: &WebviewWindow) -> tauri::Result<()> {
     set_resting(window, false);
+    see_through(window);
     let cursor = window.cursor_position()?;
     let monitor = match window.monitor_from_point(cursor.x, cursor.y)? {
         Some(monitor) => Some(monitor),
@@ -251,6 +252,51 @@ fn present(window: &WebviewWindow) -> tauri::Result<()> {
     window.show()?;
     window.set_focus()
 }
+
+/// A borderless window lets the desktop show through only once the DWM frame covers all of it;
+/// without that, Windows fills what the page leaves transparent with black. Windows 11 then puts
+/// its acrylic behind it. Older versions, which lack that backdrop, get the plain blur instead.
+#[cfg(windows)]
+fn see_through(window: &WebviewWindow) {
+    use tauri::window::{Effect, EffectsBuilder};
+    use windows_sys::Win32::{
+        Graphics::Dwm::{
+            DWMSBT_TRANSIENTWINDOW, DWMWA_SYSTEMBACKDROP_TYPE, DwmExtendFrameIntoClientArea,
+            DwmSetWindowAttribute,
+        },
+        UI::Controls::MARGINS,
+    };
+
+    let Ok(hwnd) = window.hwnd() else {
+        return;
+    };
+    let whole = MARGINS {
+        cxLeftWidth: -1,
+        cxRightWidth: -1,
+        cyTopHeight: -1,
+        cyBottomHeight: -1,
+    };
+    let backdrop = DWMSBT_TRANSIENTWINDOW;
+    // SAFETY: DWM calls on our own window, with values that outlive the calls.
+    let (frame, acrylic) = unsafe {
+        (
+            DwmExtendFrameIntoClientArea(hwnd.0, &raw const whole),
+            DwmSetWindowAttribute(
+                hwnd.0,
+                DWMWA_SYSTEMBACKDROP_TYPE.cast_unsigned(),
+                (&raw const backdrop).cast(),
+                u32::try_from(size_of_val(&backdrop)).unwrap_or_default(),
+            ),
+        )
+    };
+    tracing::debug!(frame, acrylic, "overlay backdrop");
+    if acrylic != 0 {
+        let _ = window.set_effects(EffectsBuilder::new().effect(Effect::Blur).build());
+    }
+}
+
+#[cfg(not(windows))]
+fn see_through(_window: &WebviewWindow) {}
 
 /// While the overlay is hidden, `WebView2` is made invisible, suspended (its page stops running)
 /// and asked to give memory back. Showing it again resumes it.

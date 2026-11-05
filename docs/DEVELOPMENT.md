@@ -62,7 +62,7 @@ src-tauri/
 
 - **Stack:** [Tauri 2](https://tauri.app) (Rust) with a [Svelte 5](https://svelte.dev) + TypeScript interface, built by Vite.
 - **Single window:** it is created hidden at startup and only shown by the hotkey or the tray, which keeps opening instant.
-  - Windows blurs what is behind it (`windowEffects`: `blur`), whether or not the overlay has the focus.
+  - On Windows, `see_through` in `overlay.rs` extends the DWM frame over the whole borderless window at each opening. Without it, Windows fills what the page leaves transparent with black. Windows 11 then puts its acrylic behind the page (`DWMSBT_TRANSIENTWINDOW`); older versions, which lack it, get the plain blur. macOS uses the `hudWindow` effect of the config.
   - Rust hides it with `overlay::hide`, which first sends `overlay://hiding`. The page clears itself, then calls `overlay_hide`. `WebView2` shows its last frame at the next opening, so that frame is empty and the enter animation plays from the start.
   - A focus loss closes the overlay only once the foreground window is really another one: focus moving into the page reports one too.
 
