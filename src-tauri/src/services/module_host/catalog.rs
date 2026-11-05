@@ -1,6 +1,6 @@
 //! The catalog: a signed `catalog.json` published next to the packages in the releases of the
-//! modules repository. It is fetched when the Catalog tab opens, and once at launch to update
-//! installed modules when updates install automatically.
+//! modules repository. It is fetched when the Catalog tab opens or the user checks for updates,
+//! and once at launch to update installed modules when updates install automatically.
 
 use std::{collections::BTreeMap, time::Duration};
 

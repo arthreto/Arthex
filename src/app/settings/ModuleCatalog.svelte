@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { commands, errorMessage, type ModuleOffer } from '../../core/api';
+  import { commands, errorMessage, type InstalledModule, type ModuleOffer } from '../../core/api';
   import { moduleText, t } from '../../core/i18n';
   import {
     ELEMENTS,
@@ -36,6 +36,10 @@
     elements: Element[];
     tags: Tag[];
     size?: number;
+    /** What is installed, or else what the catalog offers. */
+    version: string;
+    /** What an update brings. */
+    nextVersion?: string;
     state: ModuleOffer['state'] | 'dev';
   }
 
@@ -46,6 +50,7 @@
   let filter = $state<Element | 'all'>('all');
   let tag = $state<Tag | null>(null);
   let busy = $state<string | null>(null);
+  let checking = $state(false);
   let uninstalling = $state<Row | null>(null);
 
   const filters = $derived([
@@ -65,12 +70,14 @@
       elements: knownElements(offer.elements),
       tags: knownTags(offer.tags),
       size: offer.size,
+      version: installed?.version ?? offer.version,
+      nextVersion: offer.state === 'update' ? offer.version : undefined,
       state: installed?.dev ? 'dev' : offer.state,
     };
   }
 
   /** Installed from a file, or missing from the catalog: still listed, so it can be uninstalled. */
-  function installedRow(id: string, dev: boolean): Row {
+  function installedRow({ id, version, dev }: InstalledModule): Row {
     const module = getModule(id);
     return {
       id,
@@ -80,17 +87,23 @@
       tint: module?.tint ?? 'blue',
       elements: module ? elementsOf(module) : [],
       tags: [...(module?.tags ?? [])],
+      version,
       state: dev ? 'dev' : 'installed',
     };
   }
 
   const tagLabel = (name: Tag) => t(`settings.modules.tags.${name}`);
 
+  const versionLabel = ({ version, nextVersion }: Row) =>
+    nextVersion
+      ? t('settings.modules.versionUpdate', { from: version, to: nextVersion })
+      : t('settings.modules.version', { version });
+
   const allRows = $derived.by(() => {
     const listed = (offers ?? []).map(offerRow);
     const others = moduleHost.installed
       .filter((module) => !listed.some((row) => row.id === module.id))
-      .map((module) => installedRow(module.id, module.dev));
+      .map(installedRow);
     return [...listed, ...others];
   });
 
@@ -114,6 +127,17 @@
       failed = true;
       offers = [];
     }
+  }
+
+  async function checkUpdates() {
+    checking = true;
+    await refresh();
+    checking = false;
+    if (failed) return;
+    const count = allRows.filter((row) => row.state === 'update').length;
+    if (count === 0) toast.show(t('settings.modules.upToDate'));
+    else if (count === 1) toast.show(t('settings.modules.updateFound'));
+    else toast.show(t('settings.modules.updatesFound', { count }));
   }
 
   const narrowed = $derived(query.trim() !== '' || filter !== 'all' || tag !== null);
@@ -157,7 +181,7 @@
       await moduleHost.load();
       const offer = offers?.find((candidate) => candidate.id === installed.id);
       if (offer?.version === installed.version) markOffer(installed.id, 'installed');
-      toast.show(t('settings.modules.installed', { name: installedRow(installed.id, false).name }));
+      toast.show(t('settings.modules.installed', { name: installedRow(installed).name }));
     } catch (error) {
       report(error);
     }
@@ -187,6 +211,9 @@
       bind:value={query}
     />
   </div>
+  <Button disabled={checking} onclick={checkUpdates}>
+    {t(checking ? 'settings.modules.checking' : 'settings.modules.check')}
+  </Button>
   <Button onclick={installFile}>{t('settings.modules.fromFile')}</Button>
 </div>
 <Segmented
@@ -242,7 +269,9 @@
         <span class="text">
           <span class="name">{row.name}</span>
           {#if row.description}<span class="description">{row.description}</span>{/if}
-          <span class="meta">{[...row.tags.map(tagLabel), summary(row.elements, row.size)].join(' · ')}</span>
+          <span class="meta">
+            {[...row.tags.map(tagLabel), summary(row.elements, row.size), versionLabel(row)].join(' · ')}
+          </span>
         </span>
         {#if row.state === 'dev'}
           <Chip label={t('settings.modules.dev')} />
