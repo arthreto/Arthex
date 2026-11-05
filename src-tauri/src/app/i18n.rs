@@ -87,7 +87,7 @@ mod tests {
     fn every_locale_has_the_tray_strings() {
         for (code, _) in LOCALES {
             let messages = catalog(code);
-            for key in ["open", "settings", "autostart", "uninstall", "quit"] {
+            for key in ["open", "settings", "autostart", "quit"] {
                 assert!(
                     lookup(&messages, &format!("tray.{key}")).is_some(),
                     "{code} lacks tray.{key}"

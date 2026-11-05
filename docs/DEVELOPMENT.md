@@ -300,22 +300,21 @@ Events go from Rust to the interface.
 - Shell events are declared in `src-tauri/src/app/events.rs` and in `events` in `src/core/api.ts`.
 - Module events are named `<id>://<event>`.
 
-| Event                     | Payload                 | Meaning                                                           |
-| ------------------------- | ----------------------- | ----------------------------------------------------------------- |
-| `overlay://shown`         | none                    | the overlay was just shown                                        |
-| `overlay://hiding`        | none                    | clear the page, then call `overlay_hide`                          |
-| `settings://changed`      | `Settings`              | settings changed, from any source                                 |
-| `app://navigate`          | target id               | open `hub`, `settings` or a page                                  |
-| `app://confirm-uninstall` | none                    | the tray asked to uninstall                                       |
-| `hotkey://held`           | key names               | modifiers held while recording (Windows)                          |
-| `hotkey://recorded`       | key names               | recording finished, `[]` when cancelled (Windows)                 |
-| `file-index://updated`    | none                    | a file index scan finished                                        |
-| `file-index://building`   | `{ items, percent }`    | progress of the first scan, then `null` when it ends              |
-| `clipboard://changed`     | none                    | the clipboard history changed (Windows)                           |
-| `updates://available`     | `{ version }`           | the check at launch found an update it does not install by itself |
-| `updates://progress`      | `{ downloaded, total }` | download progress of an update                                    |
-| `modules://changed`       | none                    | a module was installed, updated or uninstalled                    |
-| `modules://opened`        | none                    | a `.arthex` file opened from Explorer was checked                 |
+| Event                   | Payload                 | Meaning                                                           |
+| ----------------------- | ----------------------- | ----------------------------------------------------------------- |
+| `overlay://shown`       | none                    | the overlay was just shown                                        |
+| `overlay://hiding`      | none                    | clear the page, then call `overlay_hide`                          |
+| `settings://changed`    | `Settings`              | settings changed, from any source                                 |
+| `app://navigate`        | target id               | open `hub`, `settings` or a page                                  |
+| `hotkey://held`         | key names               | modifiers held while recording (Windows)                          |
+| `hotkey://recorded`     | key names               | recording finished, `[]` when cancelled (Windows)                 |
+| `file-index://updated`  | none                    | a file index scan finished                                        |
+| `file-index://building` | `{ items, percent }`    | progress of the first scan, then `null` when it ends              |
+| `clipboard://changed`   | none                    | the clipboard history changed (Windows)                           |
+| `updates://available`   | `{ version }`           | the check at launch found an update it does not install by itself |
+| `updates://progress`    | `{ downloaded, total }` | download progress of an update                                    |
+| `modules://changed`     | none                    | a module was installed, updated or uninstalled                    |
+| `modules://opened`      | none                    | a `.arthex` file opened from Explorer was checked                 |
 
 ## Data files
 

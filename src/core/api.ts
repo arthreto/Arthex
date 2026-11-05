@@ -106,7 +106,6 @@ export const events = {
   overlayHiding: 'overlay://hiding',
   settingsChanged: 'settings://changed',
   navigate: 'app://navigate',
-  confirmUninstall: 'app://confirm-uninstall',
   hotkeyHeld: 'hotkey://held',
   hotkeyRecorded: 'hotkey://recorded',
   updateAvailable: 'updates://available',

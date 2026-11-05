@@ -52,7 +52,7 @@ Languages: English and French.
 
 The installer is not code-signed yet, so Windows SmartScreen may warn you: click **More info → Run anyway**.
 
-To uninstall, use the tray menu (**Uninstall…**) or Windows Settings → Apps.
+To uninstall, use **Settings → General → Uninstall** in Arthex, or Windows Settings → Apps.
 
 ## Modules
 

@@ -56,7 +56,6 @@
         search.clear();
         navigation.openTarget(target);
       }),
-      on(events.confirmUninstall, () => (dialogs.uninstall = true)),
     ];
     // Should the shown event be lost while the page wakes up, the page would stay hidden.
     const onVisible = () => {

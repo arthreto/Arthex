@@ -49,13 +49,6 @@ fn menu(app: &AppHandle) -> tauri::Result<Menu<Wry>> {
                 None::<&str>,
             )?,
             &PredefinedMenuItem::separator(app)?,
-            &MenuItem::with_id(
-                app,
-                "uninstall",
-                text.t("tray.uninstall"),
-                cfg!(windows),
-                None::<&str>,
-            )?,
             &MenuItem::with_id(app, "quit", text.t("tray.quit"), true, None::<&str>)?,
         ],
     )
@@ -73,10 +66,6 @@ fn on_menu_event(app: &AppHandle, event: MenuEvent) {
             if let Err(error) = super::update_settings(app, &json!({ "autostart": !enabled })) {
                 tracing::warn!(%error, "could not toggle the startup entry");
             }
-        }
-        "uninstall" => {
-            overlay::show(app);
-            let _ = app.emit_to(overlay::LABEL, events::CONFIRM_UNINSTALL, ());
         }
         "quit" => app.exit(0),
         _ => {}
