@@ -36,7 +36,7 @@
 
 {#if apps.length > 0}
   <h2 class="section-title">{t('title')}</h2>
-  <div class="list">
+  <div class="list scroll">
     {#each apps as app (app.path)}
       <button class="row" title={app.path} onclick={() => open(app)}>
         {#if app.icon}
@@ -63,7 +63,6 @@
     min-height: 0;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
   }
 
   .row {
