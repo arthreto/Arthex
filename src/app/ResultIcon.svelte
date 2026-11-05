@@ -13,6 +13,10 @@
     <span class="letter" style:font-size="{Math.round(size * 0.4)}px">{icon.text}</span>
   {:else if icon.kind === 'folder' || icon.kind === 'file'}
     <FileIcon folder={icon.kind === 'folder'} size={Math.round(size * 0.82)} />
+  {:else if icon.kind === 'symbol'}
+    <span class="symbol" style:color="var(--tint-{icon.tint})">
+      <Icon path={icon.path} size={Math.round(size * 0.5)} />
+    </span>
   {:else if icon.kind === 'calc'}
     <span class="accent"><Icon name="calculator" size={Math.round(size * 0.8)} stroke={1.8} /></span>
   {:else}
@@ -48,6 +52,17 @@
     align-items: center;
     justify-content: center;
     font-weight: 700;
+  }
+
+  .symbol {
+    width: 92%;
+    height: 92%;
+    border-radius: 28%;
+    background: var(--surface-raised);
+    border: 1px solid var(--border-strong);
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .accent {

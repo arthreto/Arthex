@@ -25,7 +25,10 @@
     "noResults": "No results for “{query}”.",
     "preview": "Preview",
     "copyPath": "Copy path",
-    "pathCopied": "Path copied: {path}"
+    "pathCopied": "Path copied: {path}",
+    "tools": "Tools",
+    "tool": "Tool",
+    "openTool": "Open"
   },
   "tabs": {
     "label": "Pinned pages",

@@ -3,7 +3,7 @@ import * as layout from './layout';
 import type { ModuleManifest, WidgetSlot } from './manifest';
 
 export { defineModule } from './manifest';
-export type { ModuleManifest, SettingsSection, Tint, WidgetSlot } from './manifest';
+export type { ModuleManifest, SettingsSection, Tint, ToolProps, WidgetSlot } from './manifest';
 export { ELEMENTS, HOME_ID, MAX_TAB_BAR, ZONES, elementsOf, switchElement, toggleFavorite } from './layout';
 export type { Element, Placement, Zone } from './layout';
 

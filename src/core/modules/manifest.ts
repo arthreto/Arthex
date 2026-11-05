@@ -6,6 +6,9 @@ export type WidgetSlot = 'top' | 'main' | 'side';
 
 type Lazy = () => Promise<{ default: Component }>;
 
+/** What a tool receives when it opens, such as the text a search result passed on. */
+export type ToolProps = { input?: string };
+
 /** A section of its own in Settings, after Modules, shown while the module is active. */
 export interface SettingsSection {
   component: Lazy;
@@ -41,7 +44,7 @@ export interface ModuleManifest {
   /** Results this module adds to the search, while it is enabled. */
   search?: SearchProvider;
   /** A mini-app found by its name or keywords in the search, opened over the overlay. */
-  tool?: Lazy;
+  tool?: () => Promise<{ default: Component<ToolProps> }>;
 }
 
 export function defineModule(manifest: ModuleManifest): ModuleManifest {

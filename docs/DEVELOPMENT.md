@@ -95,11 +95,12 @@ A module is a folder in `src/modules/<id>/`. Its manifest declares the **element
 manifest.ts          what the module is (id, icon, tint, order) and the elements it provides, below
 <Name>Page.svelte    its page, loaded on first open (pages only)
 <Name>Widget.svelte  its card on Home, if any (`widget: { slot: 'top' | 'main' | 'side', component }`)
+<Name>Tool.svelte    its tool, if any (`tool`), receiving an optional `input`
 <Action>.svelte      a control next to its first switch in Settings → Modules, if any (`settingsAction`)
 <Name>Settings.svelte  a section of its own in Settings, if any (`settingsSection: { component, action? }`)
 <Name>Pill.svelte    a small status at the top right of the overlay, if any (`badge`)
 search.ts            its search results, if any (`search`, see Search below)
-locales/<lang>.json  its text: at least "name" and "description"
+locales/<lang>.json  its text: at least "name" and "description", plus "keywords" that help find its tool
 i18n.ts              its typed translator
 api.ts               typed wrappers of its Rust commands (if any)
 *.test.ts            tests of its pure logic
@@ -121,11 +122,15 @@ api.ts               typed wrappers of its Rust commands (if any)
 A module adds results to the search bar with a `SearchProvider` (`src/core/search/types.ts`):
 
 - `search(query)` returns `SearchResult`s, synchronously or not. `query` carries the typed `text`, a `normalized` copy and `commandsOnly` (the query starts with `>`).
-- `order` places its group among the others: calculator 0, apps 10, sites 20, system commands 30, files 40.
+- `order` places its group among the others: calculator 0, tools 5, apps 10, sites 20, system commands 30, files 40.
 - `exclusive: true` hides every other group when it answers (the calculator).
 - A result names its `primary` action (Enter) and may add a `secondary` one (Ctrl + Enter), a `path` to copy, a `confirm` question for actions that cannot be undone, or a `panel` component that replaces the preview buttons.
 
 The shell asks every enabled provider at each keystroke and drops answers to older queries.
+
+### Tools
+
+A tool is a mini-app with its own interface, such as a colour picker. The shell finds it by its name and `keywords`, in a "Tools" group before the applications, without any search code in the module. Enter opens it over the overlay, in a sheet the size of "What's new"; Escape or a click outside goes back to the search. `tools.open(id, input)` from `src/app/tools.svelte.ts` opens a tool from elsewhere, and the tool receives `input`.
 
 ### Create a module
 

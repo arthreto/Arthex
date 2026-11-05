@@ -1,41 +1,41 @@
 import type { Component } from 'svelte';
-import { getModule } from '../core/modules';
+import { getModule, type ToolProps } from '../core/modules';
 
-type Loaded = { default: Component };
+type Loaded<Props extends Record<string, unknown> = Record<string, never>> = {
+  default: Component<Props>;
+};
 
-const loaded = new Map<string, Promise<Loaded>>();
-
-function once(key: string, load: (() => Promise<Loaded>) | undefined): Promise<Loaded> | null {
-  if (!load) return null;
-  let promise = loaded.get(key);
-  if (!promise) {
-    promise = load();
-    loaded.set(key, promise);
-  }
-  return promise;
+/** Loads each component of a module the first time it is needed, then reuses it. */
+function cache<T>() {
+  const promises = new Map<string, Promise<T>>();
+  return (id: string, load: (() => Promise<T>) | undefined): Promise<T> | null => {
+    if (!load) return null;
+    let promise = promises.get(id);
+    if (!promise) {
+      promise = load();
+      promises.set(id, promise);
+    }
+    return promise;
+  };
 }
 
-/** Loads a page component once and reuses it on later visits. */
-export function loadPage(id: string): Promise<Loaded> | null {
-  return once(`page:${id}`, getModule(id)?.page);
-}
+const pages = cache<Loaded>();
+const actions = cache<Loaded>();
+const sections = cache<Loaded>();
+const badges = cache<Loaded>();
+const widgets = cache<Loaded>();
+const tools = cache<Loaded<ToolProps>>();
 
-/** Loads the control a module shows next to its switch in Settings, once. */
-export function loadSettingsAction(id: string): Promise<Loaded> | null {
-  return once(`action:${id}`, getModule(id)?.settingsAction);
-}
+export const loadPage = (id: string) => pages(id, getModule(id)?.page);
 
-/** Loads the section a module adds to Settings, once. */
-export function loadSettingsSection(id: string): Promise<Loaded> | null {
-  return once(`section:${id}`, getModule(id)?.settingsSection?.component);
-}
+/** The control a module shows next to its first switch in Settings → Modules. */
+export const loadSettingsAction = (id: string) => actions(id, getModule(id)?.settingsAction);
 
-/** Loads the status a module shows at the top right of the overlay, once. */
-export function loadBadge(id: string): Promise<Loaded> | null {
-  return once(`badge:${id}`, getModule(id)?.badge);
-}
+export const loadSettingsSection = (id: string) => sections(id, getModule(id)?.settingsSection?.component);
 
-/** Loads the Home card of a module once. */
-export function loadWidget(id: string): Promise<Loaded> | null {
-  return once(`widget:${id}`, getModule(id)?.widget?.component);
-}
+/** The status a module shows at the top right of the overlay. */
+export const loadBadge = (id: string) => badges(id, getModule(id)?.badge);
+
+export const loadWidget = (id: string) => widgets(id, getModule(id)?.widget?.component);
+
+export const loadTool = (id: string) => tools(id, getModule(id)?.tool);

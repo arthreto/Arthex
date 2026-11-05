@@ -1,4 +1,5 @@
 import type { Component } from 'svelte';
+import type { Tint } from '../modules/manifest';
 
 export type ResultIcon =
   | { kind: 'image'; src: string }
@@ -6,7 +7,9 @@ export type ResultIcon =
   | { kind: 'folder' }
   | { kind: 'file' }
   | { kind: 'calc' }
-  | { kind: 'command'; danger?: boolean };
+  | { kind: 'command'; danger?: boolean }
+  /** A module's own pictogram, such as a tool's. */
+  | { kind: 'symbol'; path: string; tint: Tint };
 
 export interface ResultAction {
   label: string;

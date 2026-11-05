@@ -1,6 +1,6 @@
 import type en from '../locales/en.json';
 import { message, register } from './catalog';
-import { translate } from './i18n.svelte';
+import { FALLBACK_LOCALE, getLocale, translate } from './i18n.svelte';
 import type { MessageKey, MessageTree, MessageValues } from './types';
 
 export { availableLocales } from './catalog';
@@ -42,4 +42,10 @@ export function moduleTranslator<Messages>(id: string) {
 /** Name or description of any module, used by the shell (tab bar, hub, settings). */
 export function moduleText(id: string, field: 'name' | 'description'): string {
   return translate(`modules.${id}.${field}`);
+}
+
+/** The optional `keywords` of a module, which help the search find its tool. */
+export function moduleKeywords(id: string): string {
+  const key = `modules.${id}.keywords`;
+  return message(getLocale(), key) ?? message(FALLBACK_LOCALE, key) ?? '';
 }

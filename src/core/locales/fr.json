@@ -25,7 +25,10 @@
     "noResults": "Aucun résultat pour « {query} ».",
     "preview": "Aperçu",
     "copyPath": "Copier le chemin",
-    "pathCopied": "Chemin copié : {path}"
+    "pathCopied": "Chemin copié : {path}",
+    "tools": "Outils",
+    "tool": "Outil",
+    "openTool": "Ouvrir"
   },
   "tabs": {
     "label": "Pages épinglées",

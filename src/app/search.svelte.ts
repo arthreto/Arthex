@@ -5,6 +5,7 @@ import { mergeResults, parseQuery } from '../core/search/query';
 import type { SearchResult } from '../core/search/types';
 import { settings } from '../core/settings/settings.svelte';
 import { toast } from '../core/toast.svelte';
+import { toolSearch } from './toolSearch';
 
 /** Fewer letters bring too many results to be useful, except for commands and calculations. */
 const MIN_LENGTH = 2;
@@ -42,7 +43,7 @@ class SearchState {
       return;
     }
     const answers = await Promise.all(
-      searchProviders(settings.value).map(async (provider) => {
+      [toolSearch, ...searchProviders(settings.value)].map(async (provider) => {
         try {
           return {
             order: provider.order,

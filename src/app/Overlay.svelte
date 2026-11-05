@@ -3,7 +3,7 @@
   import logo from '../assets/logo.png';
   import { commands, events, on } from '../core/api';
   import { t } from '../core/i18n';
-  import { badgeModules, tabBarIds } from '../core/modules';
+  import { badgeModules, getModule, isEnabled, tabBarIds } from '../core/modules';
   import { settings } from '../core/settings/settings.svelte';
   import Hub from './Hub.svelte';
   import KeyHints from './KeyHints.svelte';
@@ -15,6 +15,8 @@
   import { search } from './search.svelte';
   import Settings from './settings/Settings.svelte';
   import TabBar from './TabBar.svelte';
+  import ToolSheet from './ToolSheet.svelte';
+  import { tools } from './tools.svelte';
   import UninstallDialog from './UninstallDialog.svelte';
   import { updates } from './updates.svelte';
   import WhatsNew from './WhatsNew.svelte';
@@ -22,6 +24,17 @@
 
   let shown = $state(0);
   let searchBar: SearchBar | undefined = $state();
+
+  const tool = $derived(
+    tools.current && isEnabled(settings.value, tools.current.id, 'tool')
+      ? { module: getModule(tools.current.id), input: tools.current.input }
+      : null,
+  );
+
+  function closeTool() {
+    tools.close();
+    searchBar?.focus();
+  }
 
   onMount(() => {
     void updates.loadWhatsNew();
@@ -103,6 +116,10 @@
     <KeyHints />
   </section>
 {/key}
+
+{#if tool?.module}
+  <ToolSheet module={tool.module} input={tool.input} onclose={closeTool} />
+{/if}
 
 {#if dialogs.uninstall}
   <UninstallDialog onclose={() => (dialogs.uninstall = false)} />
