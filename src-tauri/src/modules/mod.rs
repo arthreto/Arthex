@@ -44,6 +44,7 @@ fn sync(app: &AppHandle, settings: &Settings) {
         app,
         settings.is_module_active(clipboard::ID, &[Page, Widget]),
     );
+    clipboard::set_keep(app, settings.keep_clipboard);
     file_index::set_wanted(
         app,
         settings.is_module_active(file_search::ID, &[Search])

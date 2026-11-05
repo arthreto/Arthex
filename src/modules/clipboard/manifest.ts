@@ -7,4 +7,5 @@ export default defineModule({
   order: 12,
   page: () => import('./ClipboardPage.svelte'),
   widget: { slot: 'side', component: () => import('./LastCopiedWidget.svelte') },
+  settingsAction: () => import('./KeepHistorySetting.svelte'),
 });

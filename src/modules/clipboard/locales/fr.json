@@ -2,6 +2,7 @@
   "name": "Presse-papiers",
   "description": "Retrouve tes derniers textes copiés en un clic.",
   "count": "{count, plural, one {# élément} other {# éléments}}",
+  "keep": "Garder l’historique après un redémarrage",
   "pause": "Mettre en pause",
   "resume": "Reprendre",
   "clear": "Tout effacer",

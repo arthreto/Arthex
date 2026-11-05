@@ -21,6 +21,8 @@ export interface Settings {
   autoUpdate: boolean;
   /** Writes the detail of what Arthex does to its logs. */
   debugLog: boolean;
+  /** Saves the clipboard history, encrypted, instead of forgetting it when Arthex closes. */
+  keepClipboard: boolean;
 }
 
 export type SettingsPatch = Partial<Omit<Settings, 'version'>>;

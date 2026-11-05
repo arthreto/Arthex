@@ -89,7 +89,7 @@ These come from the owner's feedback on the mockup. Do not reintroduce what was 
 - No admin rights, no telemetry. The network is used only for favicons, update checks, the module catalog and, in the Discord RPC module, the images of its preview (Discord's list of an application's images, and the addresses the user types).
 - Logs never contain keystrokes, clipboard content or search queries.
 - File deletion always goes to the Recycle Bin, after confirmation.
-- Clipboard history stays in memory only and skips content excluded by password managers.
+- Clipboard history stays in memory, unless the user turns on keeping it, off by default, in a file encrypted for their account. It skips content excluded by password managers.
 
 ## Performance targets
 

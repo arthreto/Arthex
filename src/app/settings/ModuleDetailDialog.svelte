@@ -56,7 +56,7 @@
   {#if isActive(settings.value, module.id)}
     {#await loadSettingsAction(module.id) then loaded}
       {#if loaded}
-        <div class="action"><loaded.default /></div>
+        <div><loaded.default /></div>
       {/if}
     {/await}
   {/if}
@@ -120,9 +120,5 @@
 
   .element.off {
     opacity: 0.5;
-  }
-
-  .action {
-    display: flex;
   }
 </style>

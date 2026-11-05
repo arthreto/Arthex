@@ -1,10 +1,13 @@
-//! Clipboard history: text only, kept in memory and never written to disk or to the logs.
+//! Clipboard history: text only, never written to the logs. It stays in memory, unless the user
+//! asks to keep it across restarts.
 
 pub mod commands;
+mod saved;
 #[cfg(windows)]
 mod watch;
 
 use std::{
+    path::PathBuf,
     sync::{
         Mutex, MutexGuard, PoisonError,
         atomic::{AtomicBool, Ordering},
@@ -12,7 +15,7 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager};
 
 pub const ID: &str = "clipboard";
@@ -23,8 +26,9 @@ pub const CHANGED: &str = "clipboard://changed";
 const MAX: usize = 50;
 /// Larger copies (a whole document, a log) are not kept.
 const MAX_BYTES: usize = 100 * 1024;
+const SAVED_FILE: &str = "clipboard.bin";
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Clip {
     pub id: u64,
@@ -72,6 +76,12 @@ impl History {
         });
     }
 
+    /// Only into an empty history, at launch: ids go on from the saved ones.
+    fn restore(&mut self, clips: Vec<Clip>) {
+        self.next_id = clips.iter().map(|clip| clip.id).max().unwrap_or(0);
+        self.clips = clips;
+    }
+
     fn sorted(&self) -> Vec<Clip> {
         let mut clips = self.clips.clone();
         clips.sort_by_key(|clip| !clip.pinned);
@@ -83,6 +93,8 @@ pub struct Clipboard {
     history: Mutex<History>,
     enabled: AtomicBool,
     paused: AtomicBool,
+    keep: AtomicBool,
+    saved_file: Option<PathBuf>,
 }
 
 impl Clipboard {
@@ -101,6 +113,7 @@ impl Clipboard {
             return false;
         }
         self.history().add(text, now());
+        self.save();
         true
     }
 
@@ -119,15 +132,37 @@ impl Clipboard {
         if let Some(clip) = self.history().clips.iter_mut().find(|clip| clip.id == id) {
             clip.pinned = pinned;
         }
+        self.save();
     }
 
     pub fn remove(&self, id: u64) {
         self.history().clips.retain(|clip| clip.id != id);
+        self.save();
     }
 
     /// Clears the history but keeps what is pinned.
     pub fn clear(&self) {
         self.history().clips.retain(|clip| clip.pinned);
+        self.save();
+    }
+
+    fn save(&self) {
+        if !self.keep.load(Ordering::Relaxed) {
+            return;
+        }
+        let Some(file) = &self.saved_file else {
+            return;
+        };
+        let clips = self.history().clips.clone();
+        if let Err(error) = saved::save(file, &clips) {
+            tracing::warn!(%error, "could not save the clipboard history");
+        }
+    }
+
+    fn delete_saved(&self) {
+        if let Some(file) = &self.saved_file {
+            saved::delete(file);
+        }
     }
 }
 
@@ -136,6 +171,12 @@ pub fn setup(app: &AppHandle) {
         history: Mutex::default(),
         enabled: AtomicBool::new(false),
         paused: AtomicBool::new(false),
+        keep: AtomicBool::new(false),
+        saved_file: app
+            .path()
+            .app_data_dir()
+            .ok()
+            .map(|dir| dir.join(SAVED_FILE)),
     });
     #[cfg(windows)]
     {
@@ -160,7 +201,29 @@ pub fn set_enabled(app: &AppHandle, enabled: bool) {
     clipboard.enabled.store(enabled, Ordering::Relaxed);
     if !enabled {
         clipboard.history().clips.clear();
+        clipboard.delete_saved();
     }
+}
+
+/// Turning it on brings back what was saved, which is how the history survives a restart. Turning
+/// it off leaves nothing on disk.
+pub fn set_keep(app: &AppHandle, keep: bool) {
+    let clipboard = app.state::<Clipboard>();
+    if clipboard.keep.swap(keep, Ordering::Relaxed) == keep {
+        return;
+    }
+    if !keep {
+        clipboard.delete_saved();
+        return;
+    }
+    let saved = clipboard.saved_file.as_deref().and_then(saved::load);
+    if let Some(clips) = saved {
+        let mut history = clipboard.history();
+        if history.clips.is_empty() {
+            history.restore(clips);
+        }
+    }
+    clipboard.save();
 }
 
 fn now() -> u64 {
@@ -193,6 +256,20 @@ mod tests {
         assert_eq!(texts(&history), ["a", "b"]);
         assert!(history.clips[0].pinned);
         assert_eq!(history.clips[0].copied_at, 3);
+    }
+
+    #[test]
+    fn numbers_new_copies_after_the_restored_ones() {
+        let mut history = History::default();
+        history.restore(vec![Clip {
+            id: 7,
+            text: "saved".into(),
+            pinned: true,
+            copied_at: 1,
+        }]);
+        history.add("new".into(), 2);
+        assert_eq!(texts(&history), ["new", "saved"]);
+        assert_eq!(history.clips[0].id, 8);
     }
 
     #[test]

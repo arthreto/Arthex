@@ -30,7 +30,7 @@ It is built for Windows 11. macOS and Linux get a simplified version.
 | **Home**      | Shortcuts to websites, software, folders and commands, with your own name, pictogram and search keyword; recent apps, storage, notes and last copied item         |
 | **FileSize**  | Folder tree, treemap and largest files, with deletion to the Recycle Bin                                                                                          |
 | **Notes**     | Markdown notes (headings, bold, italic, checkboxes) with Preview and Edit modes                                                                                   |
-| **Clipboard** | Text history kept in memory only, never written to disk                                                                                                           |
+| **Clipboard** | Text history kept in memory, or saved encrypted if you choose                                                                                                     |
 | **System**    | Lock, sleep, restart, shut down, scheduled shutdown                                                                                                               |
 | **All pages** | Every page in one launcher. Pin your favourites to the top, choose the tab bar, turn pages off.                                                                   |
 | **Modules**   | Turn each page, Home card, search source and tool on or off. Install more modules from the catalog or from a file                                                 |

@@ -2,6 +2,7 @@
   "name": "Clipboard",
   "description": "Find the last texts you copied in one click.",
   "count": "{count, plural, one {# item} other {# items}}",
+  "keep": "Keep the history after a restart",
   "pause": "Pause",
   "resume": "Resume",
   "clear": "Clear all",

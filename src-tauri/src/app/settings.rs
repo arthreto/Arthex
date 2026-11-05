@@ -74,6 +74,8 @@ pub struct Settings {
     pub auto_update: bool,
     /// Writes the detail of what Arthex does to its logs, to diagnose a problem.
     pub debug_log: bool,
+    /// Saves the clipboard history, encrypted, instead of forgetting it when Arthex closes.
+    pub keep_clipboard: bool,
 }
 
 impl Settings {
@@ -109,6 +111,7 @@ impl Default for Settings {
             disabled_elements: Vec::new(),
             auto_update: true,
             debug_log: false,
+            keep_clipboard: false,
         }
     }
 }

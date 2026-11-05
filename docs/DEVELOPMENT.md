@@ -304,6 +304,7 @@ Modules keep their data in JSON files of the app data folder, read and written w
 | `shortcuts.json`    | data       | shortcuts: site, app, folder or file, or command line; name, icon or pictogram, keyword, on Home and/or in the search |
 | `recent.json`       | data       | recently used programs (path, name, time; never window titles)                                                        |
 | `notes.json`        | data       | notes (id, title, Markdown text, time)                                                                                |
+| `clipboard.bin`     | data       | the clipboard history, encrypted, only when the user asks to keep it                                                  |
 | `whats-new.json`    | data       | notes of an update being installed, shown once after it                                                               |
 | `file-search.json`  | config     | folders added to the file index and the exclusions                                                                    |
 | `index.bin`         | local data | the file index cache, rebuilt from the drives when missing                                                            |
@@ -367,7 +368,8 @@ The language appears in Settings and in the tray at the next build. No code chan
 - **Clipboard history** (`src-tauri/src/modules/clipboard/`):
   - A message-only window registered with `AddClipboardFormatListener` hears each copy, so nothing is polled.
   - Nothing is read while the module is off or paused. Copies marked `ExcludeClipboardContentFromMonitorProcessing`, `Clipboard Viewer Ignore` or `CanIncludeInClipboardHistory = 0` (password managers) are skipped.
-  - Text only, 100 KB at most, 50 entries besides pinned ones, in memory only. Turning the module off forgets everything.
+  - Text only, 100 KB at most, 50 entries besides pinned ones, in memory. Turning the module off forgets everything.
+  - The `keepClipboard` setting (off by default, in the module's dialog of Settings → Modules) also saves them to `clipboard.bin`, encrypted for the Windows account with DPAPI, and brings them back at launch. Turning it off deletes the file.
 - **File index** (`src-tauri/src/services/file_index/`), shared by file search and FileSize, runs while either is on:
   - It covers the fixed drives (the home folder on other systems) plus the folders the user adds, minus the exclusions.
   - Names live in two shared buffers (as typed and folded), with one compact entry per file pointing to its parent, so a million files take tens of megabytes.
