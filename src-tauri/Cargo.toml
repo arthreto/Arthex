@@ -1,6 +1,6 @@
 [package]
 name = "arthex"
-version = "0.2.7"
+version = "0.2.8"
 description = "A fast overlay for shortcuts, search and everyday tools."
 authors = ["arthreto"]
 license-file = "../LICENSE"
