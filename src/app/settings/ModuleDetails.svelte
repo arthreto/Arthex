@@ -7,6 +7,8 @@
   import type { Tint } from '../../core/modules/manifest';
   import Icon from '../../ui/Icon.svelte';
   import Keycap from '../../ui/Keycap.svelte';
+  import Skeleton from '../../ui/Skeleton.svelte';
+  import ModuleImageDialog from './ModuleImageDialog.svelte';
   import { dayName, languageName, rightClickEntries, systemNames } from './moduleDetails';
   import { pickTexts } from './moduleSummary';
   import { modulesView } from './modulesView.svelte';
@@ -62,6 +64,7 @@
   const examples = $derived(texts?.examples ?? []);
   const rightClick = $derived(offer ? rightClickEntries(offer.contextMenu, locale) : []);
   const preview = $derived(offer?.hasPreview ? modulesView.previews[offer.id] : null);
+  let enlarged = $state(false);
 
   onMount(() => {
     if (offer?.hasPreview) void modulesView.askPreview(offer.id);
@@ -71,7 +74,15 @@
 <div class="details fade-in">
   <div class="top">
     {#if preview}
-      <img class="image" src={preview} alt={t('settings.modules.details.image', { name })} />
+      <button
+        class="image enlarge fade-in"
+        aria-label={t('settings.modules.details.enlarge', { name })}
+        onclick={() => (enlarged = true)}
+      >
+        <img src={preview} alt="" />
+      </button>
+    {:else if preview === undefined}
+      <Skeleton width="400px" height="250px" radius="12px" />
     {:else}
       <span class="image placeholder" style:color="var(--tint-{tint})" aria-hidden="true">
         <Icon path={icon} size={48} stroke={1.4} />
@@ -133,6 +144,10 @@
   {/if}
 </div>
 
+{#if enlarged && preview}
+  <ModuleImageDialog {name} image={preview} onclose={() => (enlarged = false)} />
+{/if}
+
 <style>
   .details {
     padding: 2px 0 18px 54px;
@@ -148,12 +163,24 @@
   }
 
   .image {
-    width: 232px;
-    height: 145px;
+    width: 400px;
+    height: 250px;
     flex: none;
     box-sizing: border-box;
     border-radius: 12px;
     border: 1px solid var(--border-strong);
+  }
+
+  .enlarge {
+    padding: 0;
+    overflow: hidden;
+    cursor: zoom-in;
+  }
+
+  .enlarge img {
+    display: block;
+    width: 100%;
+    height: 100%;
     object-fit: cover;
   }
 

@@ -18,10 +18,11 @@ class ModulesView {
   refreshing = $state(false);
   /** Just after a refresh, when ↻ stays grey. */
   resting = $state(false);
-  /** Images of modules, by id, once asked for. */
-  previews = $state<Record<string, string | null>>({});
+  /** Images of modules, by id: nothing while one loads, `null` when it could not be read. */
+  previews = $state<Record<string, string | null | undefined>>({});
   /** True while the rows of the first answer are being added, so that they appear in turn. */
   arriving = false;
+  private readonly previewsAsked = new Set<string>();
 
   async showKept(): Promise<void> {
     const kept = await commands.modulesCatalogKept().catch(() => null);
@@ -62,9 +63,13 @@ class ModulesView {
   }
 
   async askPreview(id: string): Promise<void> {
-    if (id in this.previews) return;
-    this.previews[id] = null;
-    this.previews[id] = await commands.modulesPreview(id).catch(() => null);
+    if (this.previewsAsked.has(id)) return;
+    this.previewsAsked.add(id);
+    this.previews[id] = undefined;
+    const preview = await commands.modulesPreview(id).catch(() => null);
+    this.previews[id] = preview;
+    // Opening the details again tries once more, once the network is back.
+    if (preview === null) this.previewsAsked.delete(id);
   }
 }
 

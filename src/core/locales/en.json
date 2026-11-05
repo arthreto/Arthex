@@ -177,7 +177,8 @@
         "adds": "What it adds",
         "keywords": "Keywords",
         "examples": "Examples",
-        "image": "Reference image of {name}"
+        "image": "Reference image of {name}",
+        "enlarge": "Enlarge the image of {name}"
       },
       "dev": "In development",
       "loading": "Loading the catalog…",

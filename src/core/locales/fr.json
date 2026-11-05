@@ -177,7 +177,8 @@
         "adds": "Ce qu’il ajoute",
         "keywords": "Mots-clés",
         "examples": "Exemples",
-        "image": "Image de référence de {name}"
+        "image": "Image de référence de {name}",
+        "enlarge": "Agrandir l’image de {name}"
       },
       "dev": "En développement",
       "loading": "Chargement du catalogue…",
