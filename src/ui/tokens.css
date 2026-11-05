@@ -59,9 +59,9 @@
   --dialog-border: rgba(255, 255, 255, 0.12);
   --veil: radial-gradient(
     ellipse 78% 88% at 50% 46%,
-    rgba(12, 14, 20, 0.6) 0%,
-    rgba(12, 14, 20, 0.52) 55%,
-    rgba(12, 14, 20, 0.3) 100%
+    rgba(12, 14, 20, 0.48) 0%,
+    rgba(12, 14, 20, 0.42) 55%,
+    rgba(12, 14, 20, 0.24) 100%
   );
   --shadow-dialog: 0 24px 64px rgba(0, 0, 0, 0.5);
   --shadow-search: 0 10px 34px rgba(0, 0, 0, 0.28);
@@ -111,9 +111,9 @@
   --dialog-border: rgba(17, 24, 39, 0.12);
   --veil: radial-gradient(
     ellipse 78% 88% at 50% 46%,
-    rgba(246, 248, 251, 0.7) 0%,
-    rgba(246, 248, 251, 0.62) 55%,
-    rgba(246, 248, 251, 0.4) 100%
+    rgba(246, 248, 251, 0.58) 0%,
+    rgba(246, 248, 251, 0.5) 55%,
+    rgba(246, 248, 251, 0.32) 100%
   );
   --shadow-dialog: 0 24px 64px rgba(17, 24, 39, 0.18);
   --shadow-search: 0 10px 30px rgba(17, 24, 39, 0.1);
