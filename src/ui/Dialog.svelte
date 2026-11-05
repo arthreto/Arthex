@@ -48,8 +48,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--scrim);
-    backdrop-filter: blur(6px);
+    background: var(--dialog-scrim);
+    backdrop-filter: blur(22px) saturate(120%);
   }
 
   .backdrop {
@@ -61,10 +61,9 @@
   .dialog {
     position: relative;
     padding: 26px 28px 24px;
-    border-radius: 20px;
-    background: var(--surface-dialog);
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow-dialog);
+    border-radius: 24px;
+    background: var(--dialog-surface);
+    border: 1px solid var(--dialog-border);
     display: flex;
     flex-direction: column;
     gap: 20px;

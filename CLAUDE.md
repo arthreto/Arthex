@@ -35,8 +35,8 @@ These come from the owner's feedback on the mockup. Do not reintroduce what was 
 - Icons are sober: neutral translucent tile, thin border, a tinted stroked pictogram (`tint` of the module).
 - **Overlay:** full screen on the monitor under the cursor, blur plus a dark veil fading towards the edges (`--veil`). It must feel integrated with the desktop, not like a window.
 - **Modals** are simple:
-  - the whole screen is dimmed and slightly blurred;
-  - a plain 560 px panel holds a title, ✕, the fields, then Cancel / Confirm;
+  - the whole screen is dimmed and strongly blurred, as behind "What's new";
+  - a plain, slightly translucent 560 px panel holds a title, ✕, the fields, then Cancel / Confirm;
   - Escape or a click outside closes it.
   - "What's new" and tools are larger panels on the same layer (`ui/Dialog.svelte`): same dimming, blur and panel, never a look of their own.
 - **Pinning** a page means it appears **first in "All pages"**. It does **not** add the page to the tab bar. `settings.favorites` and `settings.tabBar` are independent.
