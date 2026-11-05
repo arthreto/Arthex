@@ -26,6 +26,7 @@
     "allow-modules-install-file",
     "allow-modules-uninstall",
     "allow-modules-call",
+    "allow-modules-pick-screen-color",
     "allow-modules-opened",
     "allow-modules-answer-opened",
     "allow-shortcuts-list",

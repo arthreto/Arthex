@@ -90,6 +90,7 @@ export const commands = {
     invoke<unknown>('modules_call', { id, method, params: params ?? null }),
   /** Fails once when the opened file cannot be installed. */
   modulesOpened: () => invoke<InstallRequest | null>('modules_opened'),
+  modulesPickScreenColor: () => invoke<string | null>('modules_pick_screen_color'),
   modulesAnswerOpened: (install: boolean) =>
     invoke<InstalledModule | null>('modules_answer_opened', { install }),
 };

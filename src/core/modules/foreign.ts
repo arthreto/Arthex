@@ -38,7 +38,7 @@ export interface ForeignManifest {
  * `src-tauri/src/services/module_host/package.rs`: only add to it, or raise that version.
  */
 export interface HostApi {
-  api: 1;
+  api: 2;
   locale(): string;
   onLocaleChange(listener: (locale: string) => void): () => void;
   /** A message by its full key: `modules.<id>.<key>` for a module, `common.close` for the shell. */
@@ -52,6 +52,8 @@ export interface HostApi {
   call(id: string, method: string, params?: unknown): Promise<unknown>;
   /** Hears an event of the module's program; returns what stops listening. */
   listen(id: string, event: string, handler: (payload: unknown) => void): () => void;
+  /** Hides the overlay while the user takes a colour from the screen: `#RRGGBB`, or `null`. */
+  pickScreenColor(): Promise<string | null>;
 }
 
 const SLOTS: readonly WidgetSlot[] = ['top', 'main', 'side'];

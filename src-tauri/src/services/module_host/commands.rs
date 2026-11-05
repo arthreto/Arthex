@@ -47,6 +47,12 @@ pub fn modules_uninstall(app: AppHandle, id: String, delete_data: bool) -> Resul
     super::uninstall(&app, &id, delete_data)
 }
 
+/// Hides the overlay while the user takes a colour from the screen, then brings it back.
+#[tauri::command]
+pub async fn modules_pick_screen_color(app: AppHandle) -> Result<Option<String>> {
+    blocking(move || crate::services::screen_color::pick(&app)).await
+}
+
 /// Relays a call of a module's interface to its program.
 #[tauri::command]
 pub async fn modules_call(

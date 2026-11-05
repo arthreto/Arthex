@@ -33,6 +33,12 @@ export const closeTool = () => host().closeTool();
 /** `hub`, `settings` or a page id. */
 export const navigate = (target: string) => host().navigate(target);
 
+/**
+ * Hides Arthex while the user takes a colour from the screen. Gives `#RRGGBB`, or `null` when
+ * they cancel or the system cannot do it.
+ */
+export const pickScreenColor = () => host().pickScreenColor();
+
 /** The program of a module, in its `native/` folder. Its events arrive as `<id>://<name>`. */
 export function moduleNative(id: string) {
   return {

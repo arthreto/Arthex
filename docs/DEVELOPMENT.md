@@ -351,6 +351,10 @@ The language appears in Settings and in the tray at the next build. No code chan
   - A neutral `vkE8` key press is injected so that releasing Win does not open the Start menu.
   - The hook can miss a key-up while the focus moves to the overlay. Before each modifier press, the machine takes the modifiers Windows says are down (`GetAsyncKeyState`) and starts over if they differ, so the next press is never lost.
   - The hook callback does O(1) work. Windows silently removes slow hooks.
+- **Screen colour picker** (`src-tauri/src/services/screen_color/`), offered to modules as `pickScreenColor` of `HostApi`:
+  - The overlay hides, then the screens are copied once, so the colour read is free of the fade. The copy stays in memory until the picker closes and is never saved or logged.
+  - Each screen gets a layered window with the fade. Its alpha is never zero, or clicks would go through to the programs below. A small window that lets clicks through follows the cursor with the colour.
+  - A click takes the colour; Escape, a right click or another program taking over cancels. The overlay then comes back.
 - **Taskbar icon** (`src-tauri/src/app/taskbar_search/`, setting `taskbarSearch`, off by default):
   - Windows has no API to add anything to its taskbar or search box. Its only search providers are web ones for the EEA, through an MSIX package and an HTTPS server, which queries must not reach.
   - The icon is a layered window of our own, with no webview, owned by `Shell_TrayWnd`, so it stays above the taskbar and goes with it.

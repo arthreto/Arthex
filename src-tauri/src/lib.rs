@@ -46,6 +46,7 @@ pub fn run() {
             services::module_host::commands::modules_install_file,
             services::module_host::commands::modules_uninstall,
             services::module_host::commands::modules_call,
+            services::module_host::commands::modules_pick_screen_color,
             services::module_host::commands::modules_opened,
             services::module_host::commands::modules_answer_opened,
             modules::shortcuts::commands::shortcuts_list,
