@@ -126,12 +126,18 @@ fn saved_name(name: &str) -> String {
 }
 
 pub fn setup(app: &AppHandle) -> Result<()> {
+    #[cfg(windows)]
+    use crate::services::module_host::is_module_program;
+
     let path = app.path().app_data_dir()?.join("recent.json");
     app.manage(RecentApps::load(path));
     #[cfg(windows)]
     {
         let handle = app.clone();
         watch::start(move |foreground| {
+            if is_module_program(&handle, &foreground.path) {
+                return;
+            }
             handle.state::<RecentApps>().record(
                 &foreground.path,
                 &foreground.name,

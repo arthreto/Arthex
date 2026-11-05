@@ -5,7 +5,7 @@ use tauri_plugin_opener::OpenerExt;
 use super::RecentApps;
 use crate::{
     app::{AppError, Result, dialogs::blocking, overlay},
-    services::icons,
+    services::{icons, module_host::is_module_program},
 };
 
 #[derive(Serialize)]
@@ -24,6 +24,7 @@ pub async fn recent_apps_list(app: AppHandle) -> Result<Vec<RecentApp>> {
     let entries: Vec<_> = recent
         .entries()
         .into_iter()
+        .filter(|entry| !is_module_program(&app, &entry.path))
         .map(|entry| {
             let window = recent.window_of(&entry.path);
             (entry, window)

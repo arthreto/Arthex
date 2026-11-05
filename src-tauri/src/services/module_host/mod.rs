@@ -119,6 +119,24 @@ pub fn setup(app: &AppHandle) -> Result<()> {
     Ok(())
 }
 
+fn is_inside(path: &str, dir: &Path) -> bool {
+    let dir = dir.display().to_string().to_lowercase();
+    let path = path.to_lowercase();
+    path.strip_prefix(&dir)
+        .is_some_and(|rest| rest.starts_with(['\\', '/']))
+}
+
+/// Whether a program belongs to a module: it is part of Arthex, not an app of the user.
+pub fn is_module_program(app: &AppHandle, path: &str) -> bool {
+    app.try_state::<ModuleHost>().is_some_and(|host| {
+        is_inside(path, &host.dir)
+            || host
+                .list()
+                .iter()
+                .any(|module| is_inside(path, &module.dir))
+    })
+}
+
 /// Reads what was unpacked earlier. Each package was verified before it was written.
 fn scan(dir: &Path, dev: bool) -> BTreeMap<String, Installed> {
     let Ok(entries) = fs::read_dir(dir) else {
@@ -239,5 +257,18 @@ fn remove_if_present(dir: &Path) -> Result<()> {
     match fs::remove_dir_all(dir) {
         Err(error) if error.kind() != std::io::ErrorKind::NotFound => Err(error.into()),
         _ => Ok(()),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn recognises_what_is_inside_a_folder() {
+        let dir = Path::new(r"C:\Data\modules");
+        assert!(is_inside(r"c:\data\MODULES\color\native\color.exe", dir));
+        assert!(!is_inside(r"C:\Data\modules-old\color.exe", dir));
+        assert!(!is_inside(r"C:\Program Files\App\app.exe", dir));
     }
 }
