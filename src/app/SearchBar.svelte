@@ -8,6 +8,18 @@
   import { search } from './search.svelte';
 
   let input: HTMLInputElement | undefined = $state();
+  /** Shown once a provider takes a moment, so instant answers never flash it. */
+  let loading = $state(false);
+  const LOADING_DELAY_MS = 150;
+
+  $effect(() => {
+    if (search.pending === 0 || !search.active) {
+      loading = false;
+      return;
+    }
+    const timer = setTimeout(() => (loading = true), LOADING_DELAY_MS);
+    return () => clearTimeout(timer);
+  });
 
   export function focus(): void {
     input?.focus();
@@ -51,10 +63,14 @@
       <Keycap>{keyLabel(key)}</Keycap>
     {/each}
   </span>
+  {#if loading}
+    <div class="loading" role="progressbar" aria-label={t('search.loading')}><span></span></div>
+  {/if}
 </div>
 
 <style>
   .search {
+    position: relative;
     align-self: center;
     width: min(760px, 100%);
     height: 56px;
@@ -79,6 +95,39 @@
     outline: none;
     font-size: 18px;
     color: var(--text);
+  }
+
+  .loading {
+    position: absolute;
+    left: 26px;
+    right: 26px;
+    bottom: -1px;
+    height: 2px;
+    border-radius: 1px;
+    overflow: hidden;
+  }
+
+  .loading span {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -30%;
+    width: 30%;
+    border-radius: 1px;
+    background: var(--accent);
+    animation: loading 1.1s ease-in-out infinite;
+  }
+
+  :global(:root[data-motion='reduced']) .loading span {
+    left: 0;
+    width: 100%;
+    opacity: 0.5;
+  }
+
+  @keyframes loading {
+    to {
+      left: 100%;
+    }
   }
 
   .hotkey {
