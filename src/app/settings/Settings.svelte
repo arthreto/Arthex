@@ -68,7 +68,7 @@
     },
   ]);
 
-  let currentId = $state(
+  const currentId = $derived(
     navigation.view.kind === 'settings' ? (navigation.view.section ?? 'general') : 'general',
   );
   const current = $derived(sections.find((s) => s.id === currentId) ?? sections[0]);
@@ -80,7 +80,7 @@
       <button
         class:on={section.id === current?.id}
         aria-current={section.id === current?.id ? 'page' : undefined}
-        onclick={() => (currentId = section.id)}
+        onclick={() => navigation.open({ kind: 'settings', section: section.id })}
       >
         <Icon {...section.icon} />
         {section.title}
