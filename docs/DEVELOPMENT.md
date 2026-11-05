@@ -45,7 +45,7 @@ src/
   app/            shell: App, Overlay, SearchBar, TabBar, Hub, KeyHints, settings/
   core/           api.ts (typed commands and events), i18n/, settings/, modules/ (registry), appearance, toast
   ui/             shared components + tokens.css (themes) + base.css
-  modules/<id>/   one folder per page or feature
+  modules/<id>/   one folder per module
 src-tauri/
   build.rs        declares the commands granted in capabilities/ + embeds the core locales for Rust
   capabilities/   what the window may call
@@ -82,13 +82,20 @@ Reuse these instead of writing your own.
 
 ## Modules
 
-A page (Home, FileSize, Notes…) or a feature without a page (calculator, system commands…) is a folder in `src/modules/<id>/`:
+A module is a folder in `src/modules/<id>/`. Its manifest declares the **elements** it provides, and each element has its own switch in Settings → Modules:
+
+| Element  | What it gives                                                   |
+| -------- | --------------------------------------------------------------- |
+| `page`   | a page in "All pages", and a tab if the user puts it in the bar |
+| `widget` | a card on Home                                                  |
+| `search` | results in the search bar                                       |
+| `tool`   | a mini-app found by name in the search, opened over the overlay |
 
 ```
-manifest.ts          what the module is (id, kind, icon, tint, order) and what it adds, below
+manifest.ts          what the module is (id, icon, tint, order) and the elements it provides, below
 <Name>Page.svelte    its page, loaded on first open (pages only)
 <Name>Widget.svelte  its card on Home, if any (`widget: { slot: 'top' | 'main' | 'side', component }`)
-<Action>.svelte      a control next to its switch in Settings → Features, if any (`settingsAction`)
+<Action>.svelte      a control next to its first switch in Settings → Modules, if any (`settingsAction`)
 <Name>Settings.svelte  a section of its own in Settings, if any (`settingsSection: { component, action? }`)
 <Name>Pill.svelte    a small status at the top right of the overlay, if any (`badge`)
 search.ts            its search results, if any (`search`, see Search below)
@@ -101,10 +108,13 @@ api.ts               typed wrappers of its Rust commands (if any)
 - The registry discovers manifests with `import.meta.glob`. **Adding a module means adding a folder**; the shell is not edited.
 - `id` is lowercase `[a-z0-9-]`, at most 32 characters. It never changes once released, because settings store it.
 - Layout rules are pure functions in `src/core/modules/layout.ts`:
-  - `tabBarIds`: home first, max 6, no disabled modules;
+  - `isEnabled` and `switchElement`: the switch of one element;
+  - `tabBarIds`: home first, max 6, no disabled pages;
   - `launcherIds`: pinned first, then enabled, then disabled;
   - `toggleFavorite`.
-- A disabled module disappears everywhere: tab bar, search results, home widgets, its Settings section and its badge. Its Rust service stops.
+- Switches live in `settings.disabledElements` as `<id>:<element>` (`notes:widget`). The "Turned off" zone of "All pages" drives the `page` switch.
+- A turned-off element disappears: the page from the tab bar and "All pages", the card from Home, the results from the search.
+- A module is **active** while at least one of its elements is on. Its Settings section, its control in Settings → Modules and its badge show only then, and its Rust service stops when it is not. `sync` in `src-tauri/src/modules/mod.rs` lists the elements of each module that runs in the background.
 
 ### Search
 
@@ -126,7 +136,6 @@ The shell asks every enabled provider at each keystroke and drops answers to old
 
    export default defineModule({
      id: 'timer',
-     kind: 'page',
      icon: 'M12 7v5l3 2M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z', // 24×24 stroked SVG path
      tint: 'green', // one of the --tint-* tokens
      order: 50,
@@ -150,7 +159,7 @@ The shell asks every enabled provider at each keystroke and drops answers to old
    ```
 
 4. Write `TimerPage.svelte` with components from `src/ui/` and text from `t('start')`.
-5. Run `npm run i18n:check`. The module appears in All pages.
+5. Run `npm run i18n:check`. The page appears in All pages and in Settings → Modules.
 
 ## Rust commands and events
 

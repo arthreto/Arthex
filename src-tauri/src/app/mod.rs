@@ -17,8 +17,8 @@ use serde_json::Value;
 use tauri::{AppHandle, Emitter, Manager};
 
 pub use error::{AppError, Result};
-pub use settings::Settings;
 use settings::SettingsStore;
+pub use settings::{Element, Settings};
 
 pub struct AppState {
     settings: SettingsStore,

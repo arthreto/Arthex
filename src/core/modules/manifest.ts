@@ -1,14 +1,12 @@
 import type { Component } from 'svelte';
 import type { SearchProvider } from '../search/types';
 
-export type ModuleKind = 'page' | 'feature';
-
 /** Where a card goes on Home: the full-width row on top, the main column or the side column. */
 export type WidgetSlot = 'top' | 'main' | 'side';
 
 type Lazy = () => Promise<{ default: Component }>;
 
-/** A section of its own in Settings, after Features, shown while the module is enabled. */
+/** A section of its own in Settings, after Modules, shown while the module is active. */
 export interface SettingsSection {
   component: Lazy;
   /** A button next to the section title ("Reindex"). */
@@ -18,9 +16,12 @@ export interface SettingsSection {
 /** Accent colours defined in `src/ui/tokens.css` (`--tint-<name>`), tuned for both themes. */
 export type Tint = 'blue' | 'amber' | 'green' | 'violet' | 'sky' | 'pink' | 'mint' | 'orange' | 'red';
 
+/**
+ * A module and the elements it provides: `page`, `widget`, `search` and `tool`.
+ * Each element has its own switch in Settings → Modules.
+ */
 export interface ModuleManifest {
   id: string;
-  kind: ModuleKind;
   /** SVG path data of a 24×24 stroked icon. */
   icon: string;
   tint: Tint;
@@ -39,6 +40,8 @@ export interface ModuleManifest {
   badge?: Lazy;
   /** Results this module adds to the search, while it is enabled. */
   search?: SearchProvider;
+  /** A mini-app found by its name or keywords in the search, opened over the overlay. */
+  tool?: Lazy;
 }
 
 export function defineModule(manifest: ModuleManifest): ModuleManifest {

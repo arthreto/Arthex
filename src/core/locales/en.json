@@ -68,7 +68,7 @@
     "sections": {
       "general": "General",
       "hotkey": "Keyboard shortcut",
-      "features": "Features",
+      "modules": "Modules",
       "updates": "Updates"
     },
     "general": {
@@ -116,10 +116,14 @@
         "clipboard": "clipboard history"
       }
     },
-    "features": {
-      "turnOn": "Turn on {name}",
-      "turnOff": "Turn off {name}",
-      "managePages": "Manage pages"
+    "modules": {
+      "elements": {
+        "page": "Pages",
+        "widget": "Home cards",
+        "search": "Search",
+        "tool": "Tools"
+      },
+      "switch": "{name}, {element}"
     },
     "updates": {
       "check": "Check",

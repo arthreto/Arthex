@@ -18,7 +18,7 @@
         ? [
             {
               module,
-              enabled: isEnabled(settings.value, id),
+              enabled: isEnabled(settings.value, id, 'page'),
               favorite: settings.value.favorites.includes(id),
             },
           ]

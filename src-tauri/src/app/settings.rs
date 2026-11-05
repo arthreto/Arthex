@@ -1,5 +1,4 @@
 use std::{
-    collections::BTreeMap,
     path::PathBuf,
     sync::{PoisonError, RwLock},
 };
@@ -9,9 +8,38 @@ use serde_json::Value;
 
 use super::{AppError, Result, hotkey::Hotkey, storage};
 
-const VERSION: u32 = 1;
+const VERSION: u32 = 2;
 const HOME: &str = "home";
 const MAX_TAB_BAR: usize = 6;
+
+/// What a module brings to the overlay. Each one has its own switch.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Element {
+    Page,
+    Widget,
+    Search,
+    Tool,
+}
+
+impl Element {
+    pub const ALL: [Self; 4] = [Self::Page, Self::Widget, Self::Search, Self::Tool];
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Page => "page",
+            Self::Widget => "widget",
+            Self::Search => "search",
+            Self::Tool => "tool",
+        }
+    }
+
+    fn parse(name: &str) -> Option<Self> {
+        Self::ALL
+            .into_iter()
+            .find(|element| element.as_str() == name)
+    }
+}
+
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Theme {
@@ -36,14 +64,23 @@ pub struct Settings {
     pub hotkey: Vec<String>,
     pub tab_bar: Vec<String>,
     pub favorites: Vec<String>,
-    pub modules: BTreeMap<String, bool>,
+    /// Turned-off elements, as `<module id>:<element>`.
+    pub disabled_elements: Vec<String>,
     /// Installs updates found at launch without asking.
     pub auto_update: bool,
 }
 
 impl Settings {
-    pub fn is_module_enabled(&self, id: &str) -> bool {
-        self.modules.get(id) != Some(&false)
+    pub fn is_element_enabled(&self, id: &str, element: Element) -> bool {
+        let key = format!("{id}:{}", element.as_str());
+        !self.disabled_elements.contains(&key)
+    }
+
+    /// A module runs while at least one of its elements is on.
+    pub fn is_module_active(&self, id: &str, elements: &[Element]) -> bool {
+        elements
+            .iter()
+            .any(|element| self.is_element_enabled(id, *element))
     }
 }
 
@@ -61,7 +98,7 @@ impl Default for Settings {
                 .map(String::from)
                 .to_vec(),
             favorites: Vec::new(),
-            modules: BTreeMap::new(),
+            disabled_elements: Vec::new(),
             auto_update: true,
         }
     }
@@ -86,7 +123,14 @@ impl Settings {
         self.tab_bar.truncate(MAX_TAB_BAR);
 
         dedupe_ids(&mut self.favorites);
-        self.modules.retain(|id, _| id != HOME && is_module_id(id));
+        let mut seen = Vec::with_capacity(self.disabled_elements.len());
+        self.disabled_elements.retain(|key| {
+            let keep = is_element_key(key) && !seen.contains(key);
+            if keep {
+                seen.push(key.clone());
+            }
+            keep
+        });
 
         self.hotkey = Hotkey::parse(&self.hotkey)
             .unwrap_or(Hotkey::DEFAULT)
@@ -112,6 +156,30 @@ fn is_module_id(id: &str) -> bool {
             .all(|byte| byte.is_ascii_lowercase() || byte.is_ascii_digit() || byte == b'-')
 }
 
+fn is_element_key(key: &str) -> bool {
+    key.split_once(':').is_some_and(|(id, element)| {
+        id != HOME && is_module_id(id) && Element::parse(element).is_some()
+    })
+}
+
+/// Version 1 had one switch per module: a module turned off gets all its elements off.
+fn migrate(mut raw: Value) -> Value {
+    let Value::Object(fields) = &mut raw else {
+        return raw;
+    };
+    if let Some(Value::Object(modules)) = fields.remove("modules") {
+        let disabled: Vec<Value> = modules
+            .iter()
+            .filter(|(_, enabled)| **enabled == Value::Bool(false))
+            .flat_map(|(id, _)| {
+                Element::ALL.map(|element| Value::String(format!("{id}:{}", element.as_str())))
+            })
+            .collect();
+        fields.insert("disabledElements".into(), Value::Array(disabled));
+    }
+    raw
+}
+
 fn is_language_code(code: &str) -> bool {
     (2..=12).contains(&code.len())
         && code
@@ -128,7 +196,13 @@ pub struct SettingsStore {
 impl SettingsStore {
     /// Never fails: a missing file gives the defaults, an unreadable one is set aside.
     pub fn load(path: PathBuf) -> Self {
-        let mut settings: Settings = storage::read_json(&path).unwrap_or_default();
+        let mut settings: Settings = storage::read_json::<Value>(&path)
+            .and_then(|raw| {
+                serde_json::from_value(migrate(raw))
+                    .inspect_err(|error| tracing::warn!(%error, "settings are unusable"))
+                    .ok()
+            })
+            .unwrap_or_default();
         settings.normalize();
         Self {
             path,
@@ -227,14 +301,35 @@ mod tests {
     }
 
     #[test]
-    fn home_cannot_be_disabled() {
+    fn keeps_valid_element_switches_only() {
         let (_dir, store) = store();
         let saved = store
-            .update(&json!({ "modules": { "home": false, "notes": false } }))
+            .update(&json!({ "disabledElements": [
+                "home:page", "notes:widget", "notes:widget", "notes:nope", "Bad Id:page", "clipboard"
+            ] }))
             .unwrap();
+        assert_eq!(saved.disabled_elements, ["notes:widget"]);
+        assert!(!saved.is_element_enabled("notes", Element::Widget));
+        assert!(saved.is_element_enabled("notes", Element::Page));
+        assert!(saved.is_module_active("notes", &[Element::Page, Element::Widget]));
+        assert!(!saved.is_module_active("notes", &[Element::Widget]));
+    }
+
+    #[test]
+    fn migrates_module_switches_to_elements() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("settings.json");
+        fs::write(
+            &path,
+            r#"{ "version": 1, "theme": "dark", "modules": { "notes": false, "clipboard": true } }"#,
+        )
+        .unwrap();
+        let settings = SettingsStore::load(path).get();
+        assert_eq!(settings.version, VERSION);
+        assert_eq!(settings.theme, Theme::Dark);
         assert_eq!(
-            saved.modules,
-            BTreeMap::from([("notes".to_string(), false)])
+            settings.disabled_elements,
+            ["notes:page", "notes:widget", "notes:search", "notes:tool"]
         );
     }
 

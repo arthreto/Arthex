@@ -12,7 +12,7 @@ pub mod system;
 use tauri::{AppHandle, Listener};
 
 use crate::{
-    app::{self, Result, Settings, events},
+    app::{self, Element, Result, Settings, events},
     services::file_index,
 };
 
@@ -34,12 +34,18 @@ pub fn setup(app: &AppHandle) -> Result<()> {
     Ok(())
 }
 
-/// Starts or stops the background work of each module to match its switch in Settings.
+/// Starts or stops the background work of each module to match its switches in Settings.
+/// The elements listed here are the ones each module's manifest declares.
 fn sync(app: &AppHandle, settings: &Settings) {
-    recent_apps::set_enabled(app, settings.is_module_enabled(recent_apps::ID));
-    clipboard::set_enabled(app, settings.is_module_enabled(clipboard::ID));
+    use Element::{Page, Search, Widget};
+    recent_apps::set_enabled(app, settings.is_module_active(recent_apps::ID, &[Widget]));
+    clipboard::set_enabled(
+        app,
+        settings.is_module_active(clipboard::ID, &[Page, Widget]),
+    );
     file_index::set_wanted(
         app,
-        settings.is_module_enabled(file_search::ID) || settings.is_module_enabled(filesize::ID),
+        settings.is_module_active(file_search::ID, &[Search])
+            || settings.is_module_active(filesize::ID, &[Page, Widget]),
     );
 }

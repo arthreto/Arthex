@@ -11,7 +11,8 @@ export interface Settings {
   hotkey: string[];
   tabBar: string[];
   favorites: string[];
-  modules: Record<string, boolean>;
+  /** Turned-off elements, as `<module id>:<element>`. */
+  disabledElements: string[];
   /** Installs updates found at launch without asking. */
   autoUpdate: boolean;
 }

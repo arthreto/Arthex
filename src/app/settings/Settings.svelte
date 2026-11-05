@@ -6,11 +6,10 @@
   import Button from '../../ui/Button.svelte';
   import Icon from '../../ui/Icon.svelte';
   import type { IconName } from '../../ui/icons';
-  import { navigation } from '../navigation.svelte';
   import { loadSettingsSection } from '../pages';
-  import FeaturesSettings from './FeaturesSettings.svelte';
   import GeneralSettings from './GeneralSettings.svelte';
   import HotkeySettings from './HotkeySettings.svelte';
+  import InstalledModules from './InstalledModules.svelte';
   import UpdatesSettings from './UpdatesSettings.svelte';
   import { updates } from '../updates.svelte';
 
@@ -40,11 +39,10 @@
       body: { component: HotkeySettings },
     },
     {
-      id: 'features',
-      title: t('settings.sections.features'),
-      icon: { name: 'toggle' },
-      body: { component: FeaturesSettings },
-      action: { label: t('settings.features.managePages'), run: () => navigation.open({ kind: 'hub' }) },
+      id: 'modules',
+      title: t('settings.sections.modules'),
+      icon: { name: 'modules' },
+      body: { component: InstalledModules },
     },
     ...settingsModules(settings.value).map((module) => {
       const action = module.settingsSection?.action;

@@ -44,7 +44,7 @@ These come from the owner's feedback on the mockup. Do not reintroduce what was 
   - a "Customize" mode with three drag zones: "In the bar" (max 6), "Other pages" and "Turned off";
   - Home is locked first in the bar.
   - **Settings is never a page.** It is the ⚙ icon next to ▦ "All pages".
-- Features without a page (calculator, system commands, app launcher, file search…) are toggled in **Settings → Features**, not in the hub.
+- A module provides **elements**: a page, a Home card, search results, a tool. Each element has its own switch in **Settings → Modules → Installed**, grouped by type (Pages, Home cards, Search, Tools). The hub's "Turned off" zone drives the same page switch.
 - Logo at the top left, next to the search bar. Layout from top to bottom: search bar, tab bar, page content, keyboard hints.
 - Animations are short (opacity and scale) and respect "Reduce motion".
 - **Nothing that looks generated:** no imitation Windows icons or fake system UI in the mockup or the screenshots. Sample sites and apps always show their real icon (or Arthex's own icon), never coloured letters or made-up icons. No meta text such as "validated design" or "mockup" in anything users read.

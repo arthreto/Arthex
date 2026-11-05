@@ -12,7 +12,7 @@ class Navigation {
   /** Target sent by Rust (tray menu): `hub`, `settings` or a page id. */
   openTarget(target: string): void {
     if (target === 'hub' || target === 'settings') this.open({ kind: target });
-    else if (getModule(target)?.kind === 'page') this.open({ kind: 'page', id: target });
+    else if (getModule(target)?.page) this.open({ kind: 'page', id: target });
   }
 
   isPage(id: string): boolean {

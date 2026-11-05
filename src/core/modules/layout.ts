@@ -4,15 +4,51 @@ import type { ModuleManifest } from './manifest';
 export const HOME_ID = 'home';
 export const MAX_TAB_BAR = 6;
 
-type Layout = Pick<Settings, 'modules' | 'tabBar' | 'favorites'>;
+/** What a module brings to the overlay, in the order Settings lists them. Each one has its own switch. */
+export const ELEMENTS = ['page', 'widget', 'search', 'tool'] as const;
+export type Element = (typeof ELEMENTS)[number];
 
-export function isEnabled(catalog: readonly ModuleManifest[], layout: Layout, id: string): boolean {
+type Layout = Pick<Settings, 'disabledElements' | 'tabBar' | 'favorites'>;
+
+export function elementsOf(module: ModuleManifest): Element[] {
+  return ELEMENTS.filter((element) => module[element] !== undefined);
+}
+
+const elementKey = (id: string, element: Element) => `${id}:${element}`;
+
+export function isEnabled(
+  catalog: readonly ModuleManifest[],
+  layout: Layout,
+  id: string,
+  element: Element,
+): boolean {
   const module = catalog.find((m) => m.id === id);
-  return module !== undefined && (module.locked === true || layout.modules[id] !== false);
+  if (module?.[element] === undefined) return false;
+  return module.locked === true || !layout.disabledElements.includes(elementKey(id, element));
+}
+
+/** A module runs while at least one of its elements is on. */
+export function isActive(catalog: readonly ModuleManifest[], layout: Layout, id: string): boolean {
+  const module = catalog.find((m) => m.id === id);
+  return (
+    module !== undefined && elementsOf(module).some((element) => isEnabled(catalog, layout, id, element))
+  );
+}
+
+/** The `disabledElements` setting once an element is turned on or off. */
+export function switchElement(
+  disabled: readonly string[],
+  id: string,
+  element: Element,
+  enabled: boolean,
+): string[] {
+  const key = elementKey(id, element);
+  const others = disabled.filter((other) => other !== key);
+  return enabled ? others : [...others, key];
 }
 
 function enabledPages(catalog: readonly ModuleManifest[], layout: Layout): string[] {
-  return catalog.filter((m) => m.kind === 'page' && isEnabled(catalog, layout, m.id)).map((m) => m.id);
+  return catalog.filter((m) => isEnabled(catalog, layout, m.id, 'page')).map((m) => m.id);
 }
 
 /** Tabs shown in the bar: home first, then the saved order, without unknown or disabled pages. */
@@ -26,7 +62,7 @@ export function tabBarIds(catalog: readonly ModuleManifest[], layout: Layout): s
 export function launcherIds(catalog: readonly ModuleManifest[], layout: Layout): string[] {
   const enabled = enabledPages(catalog, layout);
   const favorites = layout.favorites.filter((id) => enabled.includes(id));
-  const disabled = catalog.filter((m) => m.kind === 'page' && !enabled.includes(m.id)).map((m) => m.id);
+  const disabled = catalog.filter((m) => m.page && !enabled.includes(m.id)).map((m) => m.id);
   return [...new Set(favorites), ...enabled.filter((id) => !favorites.includes(id)), ...disabled];
 }
 
@@ -40,16 +76,19 @@ export const ZONES: readonly Zone[] = ['bar', 'other', 'off'];
 /** The three groups of the "Customize" view: in the tab bar, enabled elsewhere, turned off. */
 export function zoneIds(catalog: readonly ModuleManifest[], layout: Layout): Record<Zone, string[]> {
   const bar = tabBarIds(catalog, layout);
-  const pages = catalog.filter((m) => m.kind === 'page');
+  const pages = catalog.filter((m) => m.page);
   return {
     bar,
-    other: pages.filter((m) => isEnabled(catalog, layout, m.id) && !bar.includes(m.id)).map((m) => m.id),
-    off: pages.filter((m) => !isEnabled(catalog, layout, m.id)).map((m) => m.id),
+    other: pages
+      .filter((m) => isEnabled(catalog, layout, m.id, 'page') && !bar.includes(m.id))
+      .map((m) => m.id),
+    off: pages.filter((m) => !isEnabled(catalog, layout, m.id, 'page')).map((m) => m.id),
   };
 }
 
 export type Placement =
-  { ok: true; patch: Pick<Settings, 'tabBar' | 'modules'> } | { ok: false; reason: 'locked' | 'barFull' };
+  | { ok: true; patch: Pick<Settings, 'tabBar' | 'disabledElements'> }
+  | { ok: false; reason: 'locked' | 'barFull' };
 
 /** Moves a page into a zone, before `beforeId` in the bar or at its end. Home never leaves the bar. */
 export function placePage(
@@ -63,21 +102,19 @@ export function placePage(
   const module = catalog.find((m) => m.id === id);
   if (module?.locked) {
     return zone === 'bar'
-      ? { ok: true, patch: { tabBar: bar, modules: layout.modules } }
+      ? { ok: true, patch: { tabBar: bar, disabledElements: [...layout.disabledElements] } }
       : { ok: false, reason: 'locked' };
   }
   if (zone === 'bar' && !bar.includes(id) && bar.length >= MAX_TAB_BAR)
     return { ok: false, reason: 'barFull' };
 
-  const modules = Object.fromEntries(Object.entries(layout.modules).filter(([other]) => other !== id));
-  if (zone === 'off') modules[id] = false;
-
+  const disabledElements = switchElement(layout.disabledElements, id, 'page', zone !== 'off');
   const tabBar = bar.filter((other) => other !== id);
   if (zone === 'bar') {
     const at = beforeId === undefined ? -1 : tabBar.indexOf(beforeId);
     tabBar.splice(at === -1 ? tabBar.length : Math.max(1, at), 0, id);
   }
-  return { ok: true, patch: { tabBar, modules } };
+  return { ok: true, patch: { tabBar, disabledElements } };
 }
 
 /** Moves a tab one step left or right, never before Home. */

@@ -12,7 +12,7 @@ export const icons = {
   calculator:
     'M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2M8 7h8M8 12h.01M12 12h.01M16 12h.01M8 16h.01M12 16h.01M16 16h.01',
   power: 'M12 3v9M6.3 6.3a8 8 0 1 0 11.4 0',
-  toggle: 'M8 7h8a5 5 0 0 1 0 10H8A5 5 0 0 1 8 7M16 9.5a2.5 2.5 0 1 0 0 5a2.5 2.5 0 1 0 0-5',
+  modules: 'M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM16.5 13v7M13 16.5h7',
   plus: 'M12 5v14M5 12h14',
   arrowRight: 'M5 12h14M13 6l6 6-6 6',
   chevronLeft: 'm15 6-6 6 6 6',

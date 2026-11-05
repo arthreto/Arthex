@@ -68,7 +68,7 @@
     "sections": {
       "general": "Général",
       "hotkey": "Raccourci clavier",
-      "features": "Fonctions",
+      "modules": "Modules",
       "updates": "Mises à jour"
     },
     "general": {
@@ -116,10 +116,14 @@
         "clipboard": "son propre presse-papiers"
       }
     },
-    "features": {
-      "turnOn": "Activer {name}",
-      "turnOff": "Désactiver {name}",
-      "managePages": "Gérer les pages"
+    "modules": {
+      "elements": {
+        "page": "Pages",
+        "widget": "Cartes d’accueil",
+        "search": "Recherche",
+        "tool": "Outils"
+      },
+      "switch": "{name}, {element}"
     },
     "updates": {
       "check": "Rechercher",
