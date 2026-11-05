@@ -245,7 +245,7 @@ mod registry {
             assert!(root.open_subkey(r"*\shell\SomeoneElse").is_ok());
 
             apply(&root, &[]).unwrap();
-            assert!(written(&root).is_empty());
+            assert_eq!(written(&root), Vec::<String>::new());
             hkcu.delete_subkey_all(&name).unwrap();
         }
     }
@@ -479,7 +479,10 @@ mod tests {
     fn leaves_out_an_invalid_action() {
         let mut bad = action();
         bad.id = "not valid".into();
-        assert!(verbs_of("tools", Path::new("d"), &[bad], Path::new("a.exe"), "en").is_empty());
+        assert_eq!(
+            verbs_of("tools", Path::new("d"), &[bad], Path::new("a.exe"), "en"),
+            Vec::new()
+        );
     }
 
     #[test]
