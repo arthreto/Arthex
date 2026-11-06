@@ -4,13 +4,15 @@
   import type { IconName } from './icons';
 
   interface Props extends HTMLButtonAttributes {
-    icon: IconName;
+    /** A shell icon name, or raw path data with `path` (module icons). */
+    icon?: IconName;
+    path?: string;
     label: string;
     size?: number;
     active?: boolean;
   }
 
-  let { icon, label, size = 32, active = false, type = 'button', ...rest }: Props = $props();
+  let { icon, path, label, size = 32, active = false, type = 'button', ...rest }: Props = $props();
 </script>
 
 <button
@@ -23,7 +25,7 @@
   style:height="{size}px"
   {...rest}
 >
-  <Icon name={icon} size={Math.round(size * 0.52)} />
+  <Icon name={icon} {path} size={Math.round(size * 0.52)} />
 </button>
 
 <style>
