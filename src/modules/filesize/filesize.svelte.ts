@@ -1,7 +1,7 @@
 import { errorMessage } from '../../core/api';
 import { t as shellT } from '../../core/i18n';
 import { toast } from '../../core/toast.svelte';
-import { filesizeApi, type Drive, type Folder, type LargeFile } from './api';
+import { filesizeApi, type Building, type Drive, type Folder, type LargeFile } from './api';
 import { t } from './i18n';
 
 export type Mode = 'folders' | 'largest';
@@ -26,6 +26,8 @@ class FileSizeView {
   path = $state<string | null>(null);
   /** `null` until the folder is indexed. */
   folder = $state<Folder | null>(null);
+  /** How far the first scan is, while it runs. */
+  building = $state<Building | null>(null);
   largest = $state<LargeFile[]>([]);
   mode = $state<Mode>('folders');
   selection = $state<Selection | null>(null);
@@ -43,6 +45,16 @@ class FileSizeView {
     const first = this.drives[0];
     if (this.root) await this.refresh();
     else if (first) this.show(first.path);
+  }
+
+  /** Follows the first scan, and returns how to stop. */
+  watchScan(): () => void {
+    const listening = filesizeApi.onBuilding((building) => (this.building = building));
+    filesizeApi.building().then(
+      (building) => (this.building = building),
+      () => undefined,
+    );
+    return () => void listening.then((stop) => stop());
   }
 
   show(root: string): void {

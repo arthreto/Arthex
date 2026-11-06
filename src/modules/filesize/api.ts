@@ -41,12 +41,21 @@ export interface LargeFile {
   protected: boolean;
 }
 
+export interface Building {
+  items: number;
+  /** An estimate between 0 and 99, or `null` when the drives' usage is unknown. */
+  percent: number | null;
+}
+
 export const filesizeApi = {
   drives: () => invoke<Drive[]>('filesize_drives'),
   /** `null` until the folder is indexed. */
   folder: (path: string) => invoke<Folder | null>('filesize_folder', { path }),
   largest: (path: string) => invoke<LargeFile[]>('filesize_largest', { path }),
   rescan: () => invoke<null>('filesize_rescan'),
+  building: () => invoke<Building | null>('file_search_building'),
+  /** The last event of a first scan carries `null`. */
+  onBuilding: (handler: (building: Building | null) => void) => on('file-index://building', handler),
   reveal: (path: string) => invoke<null>('filesize_reveal', { path }),
   pickFolder: () => invoke<string | null>('filesize_pick_folder'),
   trash: (path: string) => invoke<null>('filesize_trash', { path }),

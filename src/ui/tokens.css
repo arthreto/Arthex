@@ -52,6 +52,7 @@
   --surface-raised: rgba(255, 255, 255, 0.08);
   --skeleton: rgba(255, 255, 255, 0.07);
   --skeleton-shine: rgba(255, 255, 255, 0.1);
+  --progress-shine: rgba(255, 255, 255, 0.55);
   --surface-hover: rgba(255, 255, 255, 0.1);
   --surface-selected: rgba(76, 194, 255, 0.18);
   --surface-sunken: rgba(0, 0, 0, 0.24);
@@ -110,6 +111,7 @@
   --surface-raised: rgba(255, 255, 255, 0.8);
   --skeleton: rgba(17, 24, 39, 0.07);
   --skeleton-shine: rgba(255, 255, 255, 0.6);
+  --progress-shine: rgba(255, 255, 255, 0.55);
   --surface-hover: rgba(17, 24, 39, 0.07);
   --surface-selected: rgba(0, 103, 192, 0.12);
   --surface-sunken: rgba(17, 24, 39, 0.06);

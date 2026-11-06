@@ -12,13 +12,18 @@
   import FolderList from './FolderList.svelte';
   import { t } from './i18n';
   import LargestList from './LargestList.svelte';
+  import ScanningView from './ScanningView.svelte';
   import Shares from './Shares.svelte';
   import Treemap from './Treemap.svelte';
 
   onMount(() => {
     void filesize.start();
     const listening = filesizeApi.onUpdated(() => void filesize.refresh());
-    return () => void listening.then((stop) => stop());
+    const stopWatching = filesize.watchScan();
+    return () => {
+      void listening.then((stop) => stop());
+      stopWatching();
+    };
   });
 
   const drive = $derived(filesize.drives.find((drive) => drive.path === filesize.root));
@@ -100,7 +105,7 @@
     </div>
     <ActionBar {folder} />
   {:else if filesize.answered}
-    <p class="preparing">{t('preparing')}</p>
+    <ScanningView />
   {/if}
 </div>
 
@@ -176,11 +181,5 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
-  }
-
-  .preparing {
-    margin: auto;
-    font-size: 14px;
-    color: var(--text-muted);
   }
 </style>
