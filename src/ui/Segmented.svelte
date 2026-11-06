@@ -2,6 +2,7 @@
   interface Option {
     value: Value;
     label: string;
+    disabled?: boolean;
   }
 
   interface Props {
@@ -21,6 +22,7 @@
       role="radio"
       aria-checked={option.value === value}
       class:on={option.value === value}
+      disabled={option.disabled}
       onclick={() => onchange(option.value)}>{option.label}</button
     >
   {/each}
@@ -45,8 +47,13 @@
     white-space: nowrap;
   }
 
-  button:hover {
+  button:hover:enabled {
     color: var(--text);
+  }
+
+  button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
   }
 
   .on {
