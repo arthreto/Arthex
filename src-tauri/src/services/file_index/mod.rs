@@ -128,6 +128,11 @@ impl FileIndex {
         }
     }
 
+    /// Whether the user's exclusions leave this folder out of the index.
+    pub fn excludes(&self, path: &Path) -> bool {
+        Exclusions::new(&self.config().exclusions).excludes(path)
+    }
+
     /// Whether a folder lies under one of the indexed roots.
     pub fn covers(&self, path: &Path) -> bool {
         config::roots(&self.config())

@@ -45,7 +45,8 @@ pub async fn filesize_reveal(app: AppHandle, path: String) -> Result<()> {
     .await?
 }
 
-/// Picks a folder to look at. One outside the index is added to it, and shows once scanned.
+/// Picks a folder to look at. One the index does not hold yet shows once scanned: the first scan
+/// may still be running, the folder may be new, or it may lie outside the indexed roots.
 #[tauri::command]
 pub async fn filesize_pick_folder(app: AppHandle) -> Result<Option<String>> {
     let Some(folder) = pick_folder(&app).await? else {
@@ -54,16 +55,20 @@ pub async fn filesize_pick_folder(app: AppHandle) -> Result<Option<String>> {
     let files = app.state::<FileIndex>();
     let path = folder.to_string_lossy().into_owned();
     if files.find(&folder).is_none() {
-        if files.covers(&folder) {
+        if files.excludes(&folder) {
             return Err(AppError::Invalid(
                 "this folder is left out of the index by an exclusion".into(),
             ));
         }
-        files.update_config(|config| {
-            if !config.folders.contains(&path) {
-                config.folders.push(path.clone());
-            }
-        })?;
+        if !files.covers(&folder) {
+            files.update_config(|config| {
+                if !config.folders.contains(&path) {
+                    config.folders.push(path.clone());
+                }
+            })?;
+        } else if files.building().is_none() {
+            files.rescan();
+        }
     }
     Ok(Some(path))
 }

@@ -142,6 +142,7 @@ mod tests {
         assert!(exclusions.excludes(Path::new(r"C:\Windows\WinSxS")));
         assert!(exclusions.excludes(Path::new(r"c:\windows\winsxs\amd64_x")));
         assert!(exclusions.excludes(Path::new(r"D:\code\app\node_modules")));
+        assert!(exclusions.excludes(Path::new(r"D:\code\app\node_modules\left-pad")));
         assert!(exclusions.excludes(Path::new(r"C:\Users\Léa\AppData\Local\Temp")));
         assert!(!exclusions.excludes(Path::new(r"C:\Windows")));
         assert!(!exclusions.excludes(Path::new(r"D:\code\node_modules_backup")));
