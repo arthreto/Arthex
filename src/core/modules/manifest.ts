@@ -36,6 +36,14 @@ export interface ContextMenuAction {
   submenu?: readonly { id: string; label: string }[];
 }
 
+/** A hint of the bar at the bottom of the overlay, in the language of the interface. */
+export interface KeyHint {
+  keys: readonly string[];
+  /** The keys are pressed together (Ctrl + wheel), not alternatives (← →). */
+  together?: boolean;
+  label: string;
+}
+
 /**
  * A module and the elements it provides: `page`, `widget`, `search`, `tool` and `contextMenu`.
  * Each element has its own switch in Settings → Modules.
@@ -55,6 +63,8 @@ export interface ModuleManifest {
   page?: Lazy;
   /** A card on Home, shown while the module is enabled. */
   widget?: { slot: WidgetSlot; component: Lazy };
+  /** Hints of the keys of its page, in place of those of the search results. */
+  hints?: () => readonly KeyHint[];
   /** A small control shown next to the module's switch in Settings ("Clear history"). */
   settingsAction?: Lazy;
   settingsSection?: SettingsSection;

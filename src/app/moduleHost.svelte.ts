@@ -78,7 +78,7 @@ export function installHostApi(): void {
     });
   });
   const api: HostApi = {
-    api: 5,
+    api: 7,
     locale: getLocale,
     onLocaleChange(listener) {
       listeners = [...listeners, listener];

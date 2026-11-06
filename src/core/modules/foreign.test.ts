@@ -10,6 +10,7 @@ const exported = {
   locales: { en: { name: 'Timer' } },
   tool: () => Promise.resolve(mount),
   widget: { slot: 'side', component: () => Promise.resolve(mount) },
+  hints: () => [{ keys: ['←', '→'], label: 'Move' }],
 };
 
 describe('adopt', () => {
@@ -18,6 +19,7 @@ describe('adopt', () => {
     expect(manifest?.id).toBe('timer');
     expect(manifest?.tint).toBe('green');
     expect(typeof manifest?.tool).toBe('function');
+    expect(manifest?.hints?.()).toEqual([{ keys: ['←', '→'], label: 'Move' }]);
     expect(manifest?.widget?.slot).toBe('side');
     expect(manifest?.page).toBeUndefined();
   });

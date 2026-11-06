@@ -1,7 +1,7 @@
 import { mount, unmount, type Component } from 'svelte';
 import type { MessageTree } from '../src/core/i18n/types';
 import type { ForeignManifest, Mount } from '../src/core/modules/foreign';
-import type { ContextMenuAction, Tint, ToolProps, WidgetSlot } from '../src/core/modules/manifest';
+import type { ContextMenuAction, KeyHint, Tint, ToolProps, WidgetSlot } from '../src/core/modules/manifest';
 import { TAGS, type Tag } from '../src/core/modules/tags';
 import type { SearchProvider } from '../src/core/search/types';
 
@@ -37,6 +37,8 @@ export interface InstallableModule {
   /** Its actions in the right-click menu of Explorer: needs `api: 4` and a program in `native/`. */
   contextMenu?: readonly ContextMenuAction[];
   badge?: Lazy;
+  /** Hints of the keys of its page. An Arthex older than `api: 7` leaves them out. */
+  hints?: () => readonly KeyHint[];
   settingsAction?: Lazy;
   settingsSection?: {
     component: Lazy;
@@ -91,6 +93,7 @@ export function defineModule(module: InstallableModule): DefinedModule {
     tool: lazy(module.tool),
     contextMenu: module.contextMenu,
     badge: lazy(module.badge),
+    hints: module.hints,
     settingsAction: lazy(module.settingsAction),
     settingsSection: module.settingsSection && {
       component: mounted(module.settingsSection.component),

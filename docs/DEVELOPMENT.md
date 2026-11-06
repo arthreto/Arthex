@@ -271,16 +271,17 @@ Installable modules live outside this repository, in [`arthreto/arthex-modules`]
    - A program can come with files: `native/bundle/` is copied next to it, and `native/prepare.mjs`, when present, runs first to fetch them. A package holds 64 MB at most.
    - Windows 11 shows these actions under "Show more options". Its first menu only takes commands of a signed, packaged app, which Arthex is not.
 
-5. The details shown in the Catalog tab come from the module itself:
+5. `hints: () => [{ keys: ['←', '→'], label: t('hints.move') }]` shows the keys of its page in the bar at the bottom of the overlay, in place of those of the search results. `together: true` joins keys that are pressed together with `+`. An Arthex older than `api: 7` leaves them out, so a module can use them without asking for it.
+6. The details shown in the Catalog tab come from the module itself:
    - version, languages, systems, size, categories, search keywords and right-click actions are read when it is packed, and the date from the last commit of its folder;
    - `catalog.examples` of its locales lists search examples separated by `|`, and `catalog.page` and `catalog.tool` say what its page and tool do;
    - an image named `preview.webp`, `preview.png` or `preview.jpg` next to `manifest.ts`, 2 MB at most, is published beside the package as `<id>-preview.<ext>`. It is shown at 400 × 250 and larger on a click, so make it 2560 × 1600. Without one, its icon is shown.
-6. Develop it without signing: `npx arthex build <module> --out dev-modules`, then `ARTHEX_DEV_MODULES=<full path of dev-modules> npm run tauri dev`.
-7. Release it, with `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` set as for app releases:
+7. Develop it without signing: `npx arthex build <module> --out dev-modules`, then `ARTHEX_DEV_MODULES=<full path of dev-modules> npm run tauri dev`.
+8. Release it, with `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` set as for app releases:
    - `npx arthex pack <module> --out dist` (add `--target <rust target>` for each platform when it has a program) writes `<id>-<version>-<platform>.arthex`, its preview and its catalog entry;
    - `npx arthex catalog dist` merges the entries into a signed `catalog.json`;
    - publish every `.arthex`, every preview, `catalog.json` and `catalog.json.sig` in the latest release of `arthreto/arthex-modules`.
-8. A change to `HostApi` or to what `@arthex/sdk` exports raises `HOST_API` in Rust and `API` in `sdk/cli.js` together. A module that uses it sets `api` to that version in its `manifest.ts`.
+9. A change to `HostApi` or to what `@arthex/sdk` exports raises `HOST_API` in Rust and `API` in `sdk/cli.js` together. A module that uses it sets `api` to that version in its `manifest.ts`.
 
 ## Rust commands and events
 
