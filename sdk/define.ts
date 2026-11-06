@@ -29,6 +29,8 @@ export interface InstallableModule {
   locales: Record<string, MessageTree>;
   /** Its program runs as long as the module is active, not only while it is called. */
   background?: boolean;
+  /** The shared parts its program needs, such as `ffmpeg`, installed once for all modules: needs `api: 9`. */
+  uses?: readonly string[];
   page?: Lazy;
   widget?: { slot: WidgetSlot; component: Lazy };
   /** Results in the search bar. `panel` is not available to installed modules. */
@@ -50,6 +52,7 @@ export type DefinedModule = ForeignManifest & {
   version: string;
   api: number;
   background: boolean;
+  uses: string[];
   tags: Tag[];
 };
 
@@ -86,6 +89,7 @@ export function defineModule(module: InstallableModule): DefinedModule {
     order: module.order,
     tags: [...(module.tags ?? [])],
     background: module.background ?? false,
+    uses: [...(module.uses ?? [])],
     locales: byLanguage(module.locales),
     page: lazy(module.page),
     widget: module.widget && { slot: module.widget.slot, component: mounted(module.widget.component) },

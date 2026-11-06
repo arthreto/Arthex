@@ -18,13 +18,14 @@ use crate::app::{AppError, Element, Result, is_module_id};
 
 /// Version of what the app offers modules (`window.__ARTHEX__`). A module built for a newer
 /// one is refused; older ones keep working.
-pub const HOST_API: u32 = 8;
+pub const HOST_API: u32 = 9;
 pub const MAX_PACKAGE_BYTES: u64 = 64 * 1024 * 1024;
 const MAX_UNPACKED_BYTES: u64 = 256 * 1024 * 1024;
 const MAX_FILES: usize = 2000;
 const INDEX: &str = "files.json";
 const SIGNATURE: &str = "files.json.sig";
 pub const INFO: &str = "module.json";
+pub const SHARED_INFO: &str = "shared.json";
 pub const ENTRY: &str = "index.js";
 
 /// The texts of a module in one language.
@@ -65,6 +66,9 @@ pub struct ModuleInfo {
     /// Its actions in the right-click menu of Explorer.
     #[serde(default)]
     pub context_menu: Vec<Action>,
+    /// The shared parts its program needs, such as `ffmpeg`.
+    #[serde(default)]
+    pub uses: Vec<String>,
     /// What the overlay shows before it installs an opened file.
     #[serde(default)]
     pub icon: String,
@@ -89,6 +93,19 @@ pub struct Package {
     pub files: BTreeMap<String, Vec<u8>>,
 }
 
+/// `shared.json`, written by `arthex pack-shared`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct SharedInfo {
+    pub id: String,
+    pub version: String,
+    pub platform: String,
+}
+
+pub struct SharedPackage {
+    pub info: SharedInfo,
+    pub files: BTreeMap<String, Vec<u8>>,
+}
+
 pub fn current_platform() -> String {
     format!("{}-{}", std::env::consts::OS, std::env::consts::ARCH)
 }
@@ -99,6 +116,33 @@ fn invalid(reason: impl std::fmt::Display) -> AppError {
 
 /// Opens a package and checks its signature, every file and its `module.json`.
 pub fn open(bytes: &[u8], public_key: &str) -> Result<Package> {
+    let files = verified_files(bytes, public_key)?;
+    let info: ModuleInfo = files
+        .get(INFO)
+        .ok_or_else(|| invalid("no module.json"))
+        .and_then(|raw| serde_json::from_slice(raw).map_err(invalid))?;
+    check_info(&info, &files)?;
+    Ok(Package { info, files })
+}
+
+/// The same checks for a shared part.
+pub fn open_shared(bytes: &[u8], public_key: &str) -> Result<SharedPackage> {
+    let files = verified_files(bytes, public_key)?;
+    let info: SharedInfo = files
+        .get(SHARED_INFO)
+        .ok_or_else(|| invalid("no shared.json"))
+        .and_then(|raw| serde_json::from_slice(raw).map_err(invalid))?;
+    if !is_module_id(&info.id) {
+        return Err(invalid("bad id"));
+    }
+    semver::Version::parse(&info.version).map_err(|_| invalid("bad version"))?;
+    if info.platform != "any" && info.platform != current_platform() {
+        return Err(AppError::Unsupported);
+    }
+    Ok(SharedPackage { info, files })
+}
+
+fn verified_files(bytes: &[u8], public_key: &str) -> Result<BTreeMap<String, Vec<u8>>> {
     let mut files = unzip(bytes)?;
     let index = files
         .remove(INDEX)
@@ -120,13 +164,7 @@ pub fn open(bytes: &[u8], public_key: &str) -> Result<Package> {
             return Err(invalid(format!("{path} was altered")));
         }
     }
-
-    let info: ModuleInfo = files
-        .get(INFO)
-        .ok_or_else(|| invalid("no module.json"))
-        .and_then(|raw| serde_json::from_slice(raw).map_err(invalid))?;
-    check_info(&info, &files)?;
-    Ok(Package { info, files })
+    Ok(files)
 }
 
 fn unzip(bytes: &[u8]) -> Result<BTreeMap<String, Vec<u8>>> {
@@ -199,6 +237,9 @@ fn check_info(info: &ModuleInfo, files: &BTreeMap<String, Vec<u8>>) -> Result<()
     }
     if !files.contains_key(ENTRY) {
         return Err(invalid("no index.js"));
+    }
+    if !info.uses.iter().all(|id| is_module_id(id)) {
+        return Err(invalid("bad shared part"));
     }
     if info.context_menu.len() > MAX_ACTIONS
         || !info.context_menu.iter().all(Action::is_valid)
@@ -330,6 +371,16 @@ mod tests {
         assert!(check_info(&native, &files).is_err());
         files.insert("native/sample".into(), Vec::new());
         assert!(check_info(&native, &files).is_ok());
+        let mut sharing = info(1, "any");
+        sharing.uses = vec!["ffmpeg".into()];
+        assert!(check_info(&sharing, &files).is_ok());
+        sharing.uses = vec!["../ffmpeg".into()];
+        assert!(check_info(&sharing, &files).is_err());
+    }
+
+    #[test]
+    fn a_module_package_is_not_a_shared_part() {
+        assert!(open_shared(&signed(&[], INDEX_JS), KEY).is_err());
     }
 
     #[test]

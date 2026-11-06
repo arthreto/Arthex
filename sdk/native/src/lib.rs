@@ -33,7 +33,12 @@ type Start = Box<dyn FnOnce(&Context)>;
 #[serde(tag = "type", rename_all = "lowercase")]
 enum Incoming {
     #[serde(rename_all = "camelCase")]
-    Init { data_dir: PathBuf, locale: String },
+    Init {
+        data_dir: PathBuf,
+        locale: String,
+        #[serde(default)]
+        shared: HashMap<String, PathBuf>,
+    },
     Call {
         id: u64,
         method: String,
@@ -70,10 +75,16 @@ impl Events {
 pub struct Context {
     data_dir: PathBuf,
     locale: String,
+    shared: HashMap<String, PathBuf>,
     events: Events,
 }
 
 impl Context {
+    /// The folder of a shared part the module's manifest names in `uses`, such as `ffmpeg`.
+    pub fn shared(&self, id: &str) -> Option<&Path> {
+        self.shared.get(id).map(PathBuf::as_path)
+    }
+
     /// The module's own folder, kept across updates. It is also the working directory.
     pub fn data_dir(&self) -> &Path {
         &self.data_dir
@@ -143,10 +154,15 @@ impl Module {
         let mut context = None;
         for line in input.lines() {
             match serde_json::from_str::<Incoming>(&line?) {
-                Ok(Incoming::Init { data_dir, locale }) => {
+                Ok(Incoming::Init {
+                    data_dir,
+                    locale,
+                    shared,
+                }) => {
                     let ready = context.insert(Context {
                         data_dir,
                         locale,
+                        shared,
                         events: Events {
                             output: Arc::clone(&output),
                         },

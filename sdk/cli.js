@@ -4,6 +4,8 @@
 //
 //   arthex build <module folder> --out <folder>     unsigned, for ARTHEX_DEV_MODULES=<folder>
 //   arthex pack <module folder> [--out <folder>] [--target <rust target>]
+//   arthex build-shared <shared folder> --out <folder>     unsigned, next to the modules being developed
+//   arthex pack-shared <shared folder> --out <folder> [--target <rust target>]
 //   arthex catalog <folder of packed modules>
 
 import { execFileSync } from 'node:child_process';
@@ -18,7 +20,7 @@ import { moduleConfig } from './vite.js';
 import { zip } from './zip.js';
 
 /** `HOST_API` of the app this SDK comes with. */
-const API = 8;
+const API = 9;
 const MAX_PREVIEW_BYTES = 2 * 1024 * 1024;
 const ELEMENTS = ['page', 'widget', 'search', 'tool', 'contextMenu'];
 const require = createRequire(import.meta.url);
@@ -119,6 +121,7 @@ async function stage(dir, target) {
     if (typeof module?.[field] !== 'string') fail(`manifest.ts must use defineModule (no ${field})`);
   }
   if (module.api > API) fail(`this module needs API ${module.api}, and this SDK offers ${API}`);
+  if (module.uses?.length && module.api < 9) fail('a shared part needs api: 9 in manifest.ts');
   const native = buildProgram(dir, staging, module.id, target);
   const platform = native ? platformOf(target) : 'any';
   const contextMenu = contextMenuOf(dir, staging, module, native);
@@ -129,6 +132,7 @@ async function stage(dir, target) {
     platform,
     ...(native && { native }),
     background: module.background,
+    uses: module.uses ?? [],
     elements: ELEMENTS.filter((element) => module[element] !== undefined),
     ...(contextMenu && { contextMenu }),
     tags: module.tags ?? [],
@@ -226,6 +230,55 @@ async function pack(args) {
   console.log(`${name}.arthex`);
 }
 
+/** A shared part: `shared.json` with its id and version, and `prepare.mjs` filling `bundle/`. */
+function stageShared(dir, target) {
+  const { id, name, version } = JSON.parse(fs.readFileSync(path.join(dir, 'shared.json'), 'utf8'));
+  if (!id || !name || !version) fail('shared.json needs an id, a name and a version');
+  execFileSync(process.execPath, [path.join(dir, 'prepare.mjs')], { stdio: 'inherit' });
+  const staging = fs.mkdtempSync(path.join(os.tmpdir(), 'arthex-shared-'));
+  fs.cpSync(path.join(dir, 'bundle'), staging, { recursive: true });
+  const info = { id, name, version, platform: platformOf(target) };
+  fs.writeFileSync(path.join(staging, 'shared.json'), JSON.stringify(info, null, 2));
+  return { staging, info };
+}
+
+function buildShared(args) {
+  const dir = path.resolve(args[0] ?? fail('which shared folder?'));
+  const out = path.resolve(option(args, '--out') ?? fail('--out <folder> is needed'));
+  const { staging, info } = stageShared(dir, undefined);
+  const target = path.join(out, 'shared', info.id);
+  fs.rmSync(target, { recursive: true, force: true });
+  fs.mkdirSync(path.dirname(target), { recursive: true });
+  fs.cpSync(staging, target, { recursive: true });
+  fs.rmSync(staging, { recursive: true, force: true });
+  console.log(target);
+}
+
+function packShared(args) {
+  const dir = path.resolve(args[0] ?? fail('which shared folder?'));
+  const out = path.resolve(option(args, '--out') ?? fail('--out <folder> is needed'));
+  const { staging, info } = stageShared(dir, option(args, '--target'));
+  const files = walk(staging).sort();
+  const hashes = Object.fromEntries(
+    files.map((file) => [file, sha256(fs.readFileSync(path.join(staging, file)))]),
+  );
+  fs.writeFileSync(path.join(staging, 'files.json'), JSON.stringify(hashes, null, 2));
+  sign(path.join(staging, 'files.json'));
+  const name = `shared-${info.id}-${info.version}-${info.platform}`;
+  const archive = zip(
+    [...files, 'files.json', 'files.json.sig'].map((file) => [
+      file,
+      fs.readFileSync(path.join(staging, file)),
+    ]),
+  );
+  fs.mkdirSync(out, { recursive: true });
+  fs.writeFileSync(path.join(out, `${name}.arthex`), archive);
+  const entry = { ...info, shared: true, file: `${name}.arthex`, size: archive.length };
+  fs.writeFileSync(path.join(out, `${name}.json`), JSON.stringify(entry, null, 2));
+  fs.rmSync(staging, { recursive: true, force: true });
+  console.log(`${name}.arthex`);
+}
+
 const newer = (a, b) => {
   const [x, y] = [a, b].map((version) => version.split(/[.-]/).map((part) => Number.parseInt(part, 10) || 0));
   for (let at = 0; at < 3; at += 1) if (x[at] !== y[at]) return x[at] > y[at];
@@ -236,15 +289,24 @@ const newer = (a, b) => {
 function catalog(args) {
   const dir = path.resolve(args[0] ?? fail('which folder of packed modules?'));
   const modules = new Map();
+  const parts = new Map();
   for (const file of fs
     .readdirSync(dir)
     .filter((name) => name.endsWith('.json') && !name.startsWith('catalog'))) {
     const entry = JSON.parse(fs.readFileSync(path.join(dir, file), 'utf8'));
+    if (entry.shared) {
+      const part = parts.get(entry.id);
+      if (part && newer(part.version, entry.version)) continue;
+      const packages = part?.version === entry.version ? part.packages : {};
+      packages[entry.platform] = { file: entry.file, size: entry.size };
+      parts.set(entry.id, { id: entry.id, name: entry.name, version: entry.version, packages });
+      continue;
+    }
     const known = modules.get(entry.id);
     if (known && newer(known.version, entry.version)) continue;
     const packages = known?.version === entry.version ? known.packages : {};
     packages[entry.platform] = { file: entry.file, size: entry.size };
-    const { id, version, api, icon, tint, elements, tags, texts, contextMenu, updated, preview } = entry;
+    const { id, version, api, icon, tint, elements, tags, texts, contextMenu, uses, updated, preview } = entry;
     modules.set(id, {
       id,
       version,
@@ -255,13 +317,15 @@ function catalog(args) {
       tags,
       texts,
       contextMenu,
+      uses,
       updated,
       preview,
       packages,
     });
   }
   const file = path.join(dir, 'catalog.json');
-  fs.writeFileSync(file, JSON.stringify({ modules: [...modules.values()] }, null, 2));
+  const content = { modules: [...modules.values()], shared: [...parts.values()] };
+  fs.writeFileSync(file, JSON.stringify(content, null, 2));
   sign(file);
   console.log(`catalog.json: ${modules.size} module(s)`);
 }
@@ -269,5 +333,7 @@ function catalog(args) {
 const [command, ...args] = process.argv.slice(2);
 if (command === 'build') await buildUnsigned(args);
 else if (command === 'pack') await pack(args);
+else if (command === 'build-shared') buildShared(args);
+else if (command === 'pack-shared') packShared(args);
 else if (command === 'catalog') catalog(args);
-else fail('usage: arthex build|pack <module folder> | arthex catalog <folder>');
+else fail('usage: arthex build|pack <module folder> | arthex build-shared|pack-shared <shared folder> | arthex catalog <folder>');

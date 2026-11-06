@@ -51,6 +51,8 @@ export interface ModuleOffer {
   /** The day it last changed, as `2026-11-05`. */
   updated: string | null;
   hasPreview: boolean;
+  /** What it needs that several modules share, installed once. */
+  shared: { name: string; size: number; installed: boolean }[];
 }
 
 export interface ModuleTexts {

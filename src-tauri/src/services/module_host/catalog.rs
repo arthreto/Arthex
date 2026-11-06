@@ -14,7 +14,7 @@ use super::{
     HOST_API, Installed, ModuleHost,
     context_menu::Action,
     package::{self, MAX_PACKAGE_BYTES, Texts, current_platform, is_safe_path},
-    public_key,
+    program, public_key, shared,
 };
 use crate::app::{self, AppError, Result, is_module_id};
 
@@ -23,6 +23,8 @@ const MAX_CATALOG_BYTES: u64 = 4 * 1024 * 1024;
 const MAX_PREVIEW_BYTES: u64 = 2 * 1024 * 1024;
 const CATALOG_FILE: &str = "catalog.json";
 const SIGNATURE_FILE: &str = "catalog.json.sig";
+/// A package is large, and a slow connection must not fail it.
+const PACKAGE_TIMEOUT: Duration = Duration::from_secs(1800);
 
 /// More would not be categories any more.
 const MAX_TAGS: usize = 8;
@@ -59,6 +61,9 @@ struct Entry {
     /// Its actions in the right-click menu, to show before it is installed.
     #[serde(default)]
     context_menu: Vec<Action>,
+    /// The shared parts it needs.
+    #[serde(default)]
+    uses: Vec<String>,
     /// The day it last changed, as `2026-11-05`.
     #[serde(default)]
     updated: Option<String>,
@@ -79,11 +84,8 @@ impl Entry {
             && self.icon.len() <= 2000
             && self.tags.len() <= MAX_TAGS
             && self.tags.iter().all(|tag| tag.len() <= 32)
-            && self.packages.values().all(|package| {
-                is_safe_path(&package.file)
-                    && !package.file.contains('/')
-                    && package.file.ends_with(".arthex")
-            })
+            && self.packages.values().all(is_package_file)
+            && self.uses.iter().all(|id| is_module_id(id))
             && self.preview.as_ref().is_none_or(|preview| {
                 is_safe_path(&preview.file)
                     && !preview.file.contains('/')
@@ -101,9 +103,49 @@ fn preview_type(file: &str) -> Option<&'static str> {
     }
 }
 
-#[derive(Debug, Deserialize)]
+/// A part several modules use, published next to them.
+#[derive(Debug, Clone, Deserialize)]
+struct SharedEntry {
+    id: String,
+    name: String,
+    version: String,
+    packages: BTreeMap<String, PackageFile>,
+}
+
+impl SharedEntry {
+    fn package(&self) -> Option<&PackageFile> {
+        self.packages
+            .get(&current_platform())
+            .or_else(|| self.packages.get("any"))
+    }
+
+    fn is_valid(&self) -> bool {
+        is_module_id(&self.id)
+            && Version::parse(&self.version).is_ok()
+            && self.name.len() <= 40
+            && self.packages.values().all(is_package_file)
+    }
+}
+
+fn is_package_file(package: &PackageFile) -> bool {
+    is_safe_path(&package.file) && !package.file.contains('/') && package.file.ends_with(".arthex")
+}
+
+#[derive(Debug, Default, Deserialize)]
 struct Catalog {
     modules: Vec<Entry>,
+    /// An older catalog has none.
+    #[serde(default)]
+    shared: Vec<SharedEntry>,
+}
+
+/// A shared part a module needs, for what the details say before it is installed.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SharedOffer {
+    name: String,
+    size: u64,
+    installed: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -134,11 +176,16 @@ pub struct Offer {
     context_menu: Vec<Action>,
     updated: Option<String>,
     has_preview: bool,
+    shared: Vec<SharedOffer>,
 }
 
 fn agent() -> ureq::Agent {
+    agent_with_timeout(Duration::from_secs(60))
+}
+
+fn agent_with_timeout(timeout: Duration) -> ureq::Agent {
     ureq::Agent::config_builder()
-        .timeout_global(Some(Duration::from_secs(60)))
+        .timeout_global(Some(timeout))
         .max_redirects(5)
         .user_agent(concat!("Arthex/", env!("CARGO_PKG_VERSION")))
         .build()
@@ -160,7 +207,7 @@ fn download(agent: &ureq::Agent, file: &str, limit: u64) -> Result<Option<Vec<u8
     }
 }
 
-fn fetch(app: &AppHandle, agent: &ureq::Agent) -> Result<Vec<Entry>> {
+fn fetch(app: &AppHandle, agent: &ureq::Agent) -> Result<Catalog> {
     let key = public_key(app)?;
     let (catalog, signature) = thread::scope(|scope| {
         let signature = scope.spawn(|| download(agent, SIGNATURE_FILE, 4096));
@@ -170,24 +217,22 @@ fn fetch(app: &AppHandle, agent: &ureq::Agent) -> Result<Vec<Entry>> {
         )
     });
     let Some(catalog) = catalog? else {
-        return Ok(Vec::new());
+        return Ok(Catalog::default());
     };
     let signature = signature
         .map_err(|_| AppError::Failed("the download of the signature stopped".into()))??
         .ok_or_else(|| AppError::Invalid("the catalog is not signed".into()))?;
-    let entries = read_signed(&catalog, &signature, &key)?;
+    let read = read_signed(&catalog, &signature, &key)?;
     keep(app, &catalog, &signature);
-    Ok(entries)
+    Ok(read)
 }
 
-fn read_signed(catalog: &[u8], signature: &[u8], key: &str) -> Result<Vec<Entry>> {
+fn read_signed(catalog: &[u8], signature: &[u8], key: &str) -> Result<Catalog> {
     package::verify_signature(catalog, signature, key)?;
-    let catalog: Catalog = serde_json::from_slice(catalog)?;
-    Ok(catalog
-        .modules
-        .into_iter()
-        .filter(Entry::is_valid)
-        .collect())
+    let mut catalog: Catalog = serde_json::from_slice(catalog)?;
+    catalog.modules.retain(Entry::is_valid);
+    catalog.shared.retain(SharedEntry::is_valid);
+    Ok(catalog)
 }
 
 fn kept_dir(app: &AppHandle) -> Result<PathBuf> {
@@ -216,7 +261,7 @@ pub fn kept_offers(app: &AppHandle) -> Result<Option<Vec<Offer>>> {
         return Ok(None);
     };
     match read_signed(&catalog, &signature, &public_key(app)?) {
-        Ok(entries) => Ok(Some(to_offers(app, entries))),
+        Ok(catalog) => Ok(Some(to_offers(app, catalog))),
         Err(error) => {
             tracing::warn!(%error, "the kept module catalog is unusable");
             Ok(None)
@@ -244,13 +289,28 @@ pub fn offers(app: &AppHandle) -> Result<Vec<Offer>> {
     Ok(to_offers(app, fetch(app, &agent())?))
 }
 
-fn to_offers(app: &AppHandle, entries: Vec<Entry>) -> Vec<Offer> {
+fn to_offers(app: &AppHandle, catalog: Catalog) -> Vec<Offer> {
     let host = app.state::<ModuleHost>();
-    entries
+    let parts = catalog.shared;
+    catalog
+        .modules
         .into_iter()
         .filter_map(|entry| {
             let size = entry.package()?.size;
+            let needed = entry
+                .uses
+                .iter()
+                .filter_map(|id| {
+                    let part = parts.iter().find(|part| part.id == *id)?;
+                    Some(SharedOffer {
+                        name: part.name.clone(),
+                        size: part.package()?.size,
+                        installed: shared::folder_of(&host, id).is_some(),
+                    })
+                })
+                .collect();
             Some(Offer {
+                shared: needed,
                 state: state(&entry, host.get(&entry.id).as_ref()),
                 id: entry.id,
                 version: entry.version,
@@ -281,6 +341,7 @@ pub fn preview(app: &AppHandle, id: &str) -> Result<Option<String>> {
         fs::read(dir.join(SIGNATURE_FILE))?,
     );
     let Some(preview) = read_signed(&catalog, &signature, &public_key(app)?)?
+        .modules
         .into_iter()
         .find(|entry| entry.id == id)
         .and_then(|entry| entry.preview)
@@ -296,16 +357,72 @@ pub fn preview(app: &AppHandle, id: &str) -> Result<Option<String>> {
         .map(|kind| format!("data:{kind};base64,{}", STANDARD.encode(bytes))))
 }
 
+fn install_shared(app: &AppHandle, part: &SharedEntry) -> Result<()> {
+    let file = part.package().ok_or(AppError::Unsupported)?;
+    let bytes = download(
+        &agent_with_timeout(PACKAGE_TIMEOUT),
+        &file.file,
+        MAX_PACKAGE_BYTES,
+    )?
+    .ok_or_else(|| AppError::Failed(format!("{} is missing", file.file)))?;
+    shared::install(
+        &app.state::<ModuleHost>(),
+        &bytes,
+        &part.id,
+        &public_key(app)?,
+    )
+}
+
+/// What is wanted and not there, or older than what the catalog holds.
+fn to_fetch<'a>(host: &ModuleHost, catalog: &'a Catalog, uses: &[String]) -> Vec<&'a SharedEntry> {
+    catalog
+        .shared
+        .iter()
+        .filter(|part| uses.contains(&part.id))
+        .filter(|part| match shared::folder_of(host, &part.id) {
+            None => true,
+            Some(_) => shared::version_of(host, &part.id)
+                .is_some_and(|version| is_newer(&part.version, &version)),
+        })
+        .collect()
+}
+
+/// Fetches what a module needs and is not there yet, for one that is about to be installed. The
+/// parts already there stay as they are, so this needs no network then.
+pub fn ensure_shared(app: &AppHandle, uses: &[String]) -> Result<()> {
+    let host = app.state::<ModuleHost>();
+    if uses.iter().all(|id| shared::folder_of(&host, id).is_some()) {
+        return Ok(());
+    }
+    let catalog = fetch(app, &agent())?;
+    for id in uses {
+        if shared::folder_of(&host, id).is_some() {
+            continue;
+        }
+        let part = catalog
+            .shared
+            .iter()
+            .find(|part| part.id == *id)
+            .ok_or_else(|| AppError::Invalid(format!("{id} is not in the catalog")))?;
+        install_shared(app, part)?;
+    }
+    Ok(())
+}
+
 /// Installs or updates a module from the catalog. The package is checked like any other.
 pub fn install(app: &AppHandle, id: &str) -> Result<Installed> {
-    let agent = agent();
-    let entries = fetch(app, &agent)?;
-    let entry = entries
+    let agent = agent_with_timeout(PACKAGE_TIMEOUT);
+    let catalog = fetch(app, &agent)?;
+    let entry = catalog
+        .modules
         .iter()
         .find(|entry| entry.id == id)
         .ok_or_else(|| AppError::Invalid(format!("{id} is not in the catalog")))?;
     if entry.api > HOST_API {
         return Err(AppError::Outdated);
+    }
+    for part in to_fetch(&app.state::<ModuleHost>(), &catalog, &entry.uses) {
+        install_shared(app, part)?;
     }
     let file = entry.package().ok_or(AppError::Unsupported)?;
     let bytes = download(&agent, &file.file, MAX_PACKAGE_BYTES)?
@@ -323,15 +440,15 @@ pub fn update_at_launch(app: &AppHandle) {
     if installed.is_empty() || !app::settings(app).auto_update {
         return;
     }
-    let entries = match fetch(app, &agent()) {
-        Ok(entries) => entries,
+    let catalog = match fetch(app, &agent()) {
+        Ok(catalog) => catalog,
         Err(error) => {
             tracing::warn!(%error, "could not read the module catalog");
             return;
         }
     };
     for module in installed {
-        let Some(entry) = entries.iter().find(|entry| entry.id == module.id) else {
+        let Some(entry) = catalog.modules.iter().find(|entry| entry.id == module.id) else {
             continue;
         };
         if state(entry, Some(&module)) == OfferState::Update
@@ -340,6 +457,27 @@ pub fn update_at_launch(app: &AppHandle) {
             tracing::warn!(module = %module.id, %error, "could not update a module");
         }
     }
+    update_shared(app, &catalog);
+}
+
+/// A part updates once for all the modules using it, whose programs start again afterwards.
+fn update_shared(app: &AppHandle, catalog: &Catalog) {
+    let host = app.state::<ModuleHost>();
+    let uses: Vec<String> = host
+        .list()
+        .iter()
+        .flat_map(|module| module.info.uses.clone())
+        .collect();
+    let outdated = to_fetch(&host, catalog, &uses);
+    if outdated.is_empty() {
+        return;
+    }
+    for part in outdated {
+        if let Err(error) = install_shared(app, part) {
+            tracing::warn!(shared = %part.id, %error, "could not update a shared part");
+        }
+    }
+    program::sync(app, &app::settings(app));
 }
 
 #[cfg(test)]
@@ -364,6 +502,7 @@ mod tests {
                 },
             )]),
             context_menu: Vec::new(),
+            uses: Vec::new(),
             updated: None,
             preview: None,
         }
@@ -420,5 +559,34 @@ mod tests {
         let mut tagged = entry("1.2.0", 1);
         tagged.tags = vec!["time".into(); MAX_TAGS + 1];
         assert!(!tagged.is_valid());
+        let mut sharing = entry("1.2.0", 1);
+        sharing.uses = vec!["../ffmpeg".into()];
+        assert!(!sharing.is_valid());
+    }
+
+    #[test]
+    fn keeps_valid_shared_parts_only() {
+        let part = |id: &str, file: &str| SharedEntry {
+            id: id.into(),
+            name: "FFmpeg".into(),
+            version: "8.1.3".into(),
+            packages: BTreeMap::from([(
+                "any".into(),
+                PackageFile {
+                    file: file.into(),
+                    size: 1,
+                },
+            )]),
+        };
+        assert!(part("ffmpeg", "ffmpeg-8.1.3.arthex").is_valid());
+        assert!(!part("../ffmpeg", "ffmpeg-8.1.3.arthex").is_valid());
+        assert!(!part("ffmpeg", "../ffmpeg.arthex").is_valid());
+        assert!(!part("ffmpeg", "ffmpeg.exe").is_valid());
+    }
+
+    #[test]
+    fn an_older_catalog_has_no_shared_parts() {
+        let catalog: Catalog = serde_json::from_str(r#"{"modules":[]}"#).unwrap();
+        assert_eq!(catalog.shared.len(), 0);
     }
 }

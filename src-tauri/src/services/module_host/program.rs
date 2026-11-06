@@ -1,7 +1,7 @@
 //! The program of an installed module: its system side. It runs apart from the app, which only
 //! relays JSON lines on its standard input and output:
 //!
-//! - to it: `{"type":"init","dataDir","locale"}` first, then `{"type":"call","id","method","params"}`;
+//! - to it: `{"type":"init","dataDir","locale","shared"}` first, then `{"type":"call","id","method","params"}`;
 //! - from it: `{"type":"result","id","value"}`, `{"type":"error","id","message"}`,
 //!   `{"type":"event","name","payload"}`, emitted to the interface as `<module id>://<name>`, and
 //!   `{"type":"overlay","visible"}`, which shows or hides the overlay.
@@ -26,7 +26,7 @@ use serde::Deserialize;
 use serde_json::{Value, json};
 use tauri::{AppHandle, Emitter, Manager};
 
-use super::{Installed, ModuleHost};
+use super::{Installed, ModuleHost, shared};
 use crate::app::{self, AppError, Result, overlay};
 
 const CALL_TIMEOUT: Duration = Duration::from_secs(30);
@@ -159,7 +159,9 @@ fn start(app: &AppHandle, module: &Installed) -> Result<Arc<Program>> {
         .language
         .or_else(app::i18n::system_locale)
         .unwrap_or_else(|| "en".into());
-    program.send(&json!({ "type": "init", "dataDir": data_dir, "locale": locale }))?;
+    let parts = shared::folders(&host, &module.info.uses);
+    program
+        .send(&json!({ "type": "init", "dataDir": data_dir, "locale": locale, "shared": parts }))?;
 
     host.programs
         .running

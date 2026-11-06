@@ -57,6 +57,16 @@
         value: systemNames(offer.platforms) ?? t('settings.modules.details.allSystems'),
       },
       size !== undefined && { label: t('settings.modules.details.size'), value: formatBytes(size) },
+      offer?.shared.length && {
+        label: t('settings.modules.details.shared'),
+        value: offer.shared
+          .map((part) =>
+            part.installed
+              ? t('settings.modules.details.sharedInstalled', { name: part.name })
+              : t('settings.modules.details.sharedSize', { name: part.name, size: formatBytes(part.size) }),
+          )
+          .join(', '),
+      },
     ].filter((fact) => !!fact),
   );
 
