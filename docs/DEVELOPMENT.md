@@ -196,7 +196,7 @@ A `.arthex` file can be installed three ways: from the catalog, with "Install fr
   - `module.json` gives the `id`, `version`, `api`, `platform` (`any` or `windows-x86_64`…), the path of its program (`native`), `background`, its `elements` and `tags`, and the `icon`, `tint` and `texts` (name and description per language) shown before installing an opened file.
   - `index.js` is its interface (its default export comes from `defineModule` of the SDK), `style.css` its styles.
 - **Files:** unpacked in `<local data>/modules/<id>/`, replacing the previous version in one rename. What a module keeps lives in `<data>/module-data/<id>/`, which survives updates; uninstalling deletes it only when the user ticks "Also delete its data".
-- **Serving** (`protocol.rs`): interface files only (`js`, `css`, `json`, `png`, `svg`, `woff2`), at `arthex-module://localhost/<id>/` (`http://arthex-module.localhost/<id>/` on Windows). The CSP allows scripts and styles from there and nowhere else besides the app.
+- **Serving** (`protocol.rs`): interface files only (`js`, `css`, `json`, `png`, `svg`, `woff2`), at `arthex-module://localhost/<id>/` (`http://arthex-module.localhost/<id>/` on Windows). The CSP allows scripts and styles from there and nowhere else besides the app. With `api: 8`, images and videos (`png`, `jpg`, `gif`, `webp`, `mp4`, `mov`, `webm`) a module's program put in `<data>/module-data/<id>/media/` are served at `<base>user-media/<file>`, with ranges so that a video is read as it plays.
 - **Catalog** (`catalog.rs`): `catalog.json` and `catalog.json.sig` from the latest release of `arthreto/arthex-modules`. They are read when the Catalog tab opens or ↻ is pressed, and 40 s after launch only when modules are installed and updates install automatically. The last pair read is kept in `module-catalog/` and shown at once, signature checked, while the network answers. Each entry gives the module's texts, icon, tint, elements, tags (at most 8), right-click actions, the date of its last change, its preview image and one package per platform (or `any`). The image is downloaded only when its details are opened (`modules_preview`), and checked against the hash of the signed catalog.
 - **Categories:** the Catalog tab filters by type of element and by category. The categories are the closed list `TAGS` of `src/core/modules/tags.ts`: a module picks among them in `tags` and can never add one.
   - Each one has an English id in code (`math`, `games`…) and its name in every language under `settings.modules.tags.<id>` of `src/core/locales/`.
@@ -281,7 +281,8 @@ Installable modules live outside this repository, in [`arthreto/arthex-modules`]
    - `npx arthex pack <module> --out dist` (add `--target <rust target>` for each platform when it has a program) writes `<id>-<version>-<platform>.arthex`, its preview and its catalog entry;
    - `npx arthex catalog dist` merges the entries into a signed `catalog.json`;
    - publish every `.arthex`, every preview, `catalog.json` and `catalog.json.sig` in the latest release of `arthreto/arthex-modules`.
-9. A change to `HostApi` or to what `@arthex/sdk` exports raises `HOST_API` in Rust and `API` in `sdk/cli.js` together. A module that uses it sets `api` to that version in its `manifest.ts`.
+9. To show a file the user picked, the program copies it into `<dataDir>/media/` and the interface loads `user-media/<file>` next to its own files (`api: 8`). It never reaches the rest of the disk.
+10. A change to `HostApi` or to what `@arthex/sdk` exports raises `HOST_API` in Rust and `API` in `sdk/cli.js` together. A module that uses it sets `api` to that version in its `manifest.ts`.
 
 ## Rust commands and events
 

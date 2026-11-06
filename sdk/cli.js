@@ -18,7 +18,7 @@ import { moduleConfig } from './vite.js';
 import { zip } from './zip.js';
 
 /** `HOST_API` of the app this SDK comes with. */
-const API = 7;
+const API = 8;
 const MAX_PREVIEW_BYTES = 2 * 1024 * 1024;
 const ELEMENTS = ['page', 'widget', 'search', 'tool', 'contextMenu'];
 const require = createRequire(import.meta.url);
