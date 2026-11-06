@@ -3,12 +3,29 @@
   import { homeWidgets, type ModuleManifest } from '../../core/modules';
   import { settings } from '../../core/settings/settings.svelte';
   import { loadWidget } from '../../app/pages';
+  import { fitScale } from './fit';
   import { t } from './i18n';
 
   const top = $derived(homeWidgets(settings.value, 'top'));
   const main = $derived(homeWidgets(settings.value, 'main'));
   const side = $derived(homeWidgets(settings.value, 'side'));
   const empty = $derived(top.length + main.length + side.length === 0);
+
+  let sideScale = $state(1);
+
+  function fitSide(aside: HTMLElement) {
+    const stack = aside.firstElementChild;
+    if (!stack) return;
+    const measure = () => {
+      // Rounded: a zoomed height comes back a fraction off, which must not start another measure.
+      const content = Math.round(stack.getBoundingClientRect().height / sideScale);
+      sideScale = fitScale(aside.clientHeight, content);
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(aside);
+    observer.observe(stack);
+    return { destroy: () => observer.disconnect() };
+  }
 </script>
 
 {#snippet widgets(list: ModuleManifest[])}
@@ -35,7 +52,9 @@
     <div class="columns">
       <div class="main">{@render widgets(main)}</div>
       {#if side.length > 0}
-        <aside>{@render widgets(side)}</aside>
+        <aside class="scroll" use:fitSide>
+          <div class="stack" style:zoom={sideScale}>{@render widgets(side)}</div>
+        </aside>
       {/if}
     </div>
   </div>
@@ -72,11 +91,13 @@
   aside {
     width: 420px;
     flex: none;
+    min-height: 0;
+  }
+
+  .stack {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    min-height: 0;
-    overflow: hidden;
   }
 
   .welcome {

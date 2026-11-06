@@ -103,7 +103,7 @@ A module is a folder in `src/modules/<id>/`. Its manifest declares the **element
 | Element       | What it gives                                                                                           |
 | ------------- | ------------------------------------------------------------------------------------------------------- |
 | `page`        | a page in "All pages", and a tab if the user puts it in the bar                                         |
-| `widget`      | a card on Home                                                                                          |
+| `widget`      | a card on Home; the side column shrinks slightly to fit its cards, then scrolls                         |
 | `search`      | results in the search bar                                                                               |
 | `tool`        | a mini-app found by name in the search, opened over the overlay                                         |
 | `contextMenu` | actions in the right-click menu of Explorer, run by the module's program (installable modules, Windows) |
