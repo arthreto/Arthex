@@ -306,7 +306,8 @@ function catalog(args) {
     if (known && newer(known.version, entry.version)) continue;
     const packages = known?.version === entry.version ? known.packages : {};
     packages[entry.platform] = { file: entry.file, size: entry.size };
-    const { id, version, api, icon, tint, elements, tags, texts, contextMenu, uses, updated, preview } = entry;
+    const { id, version, api, icon, tint, elements, tags, texts, contextMenu, uses, updated, preview } =
+      entry;
     modules.set(id, {
       id,
       version,
@@ -336,4 +337,7 @@ else if (command === 'pack') await pack(args);
 else if (command === 'build-shared') buildShared(args);
 else if (command === 'pack-shared') packShared(args);
 else if (command === 'catalog') catalog(args);
-else fail('usage: arthex build|pack <module folder> | arthex build-shared|pack-shared <shared folder> | arthex catalog <folder>');
+else
+  fail(
+    'usage: arthex build|pack <module folder> | arthex build-shared|pack-shared <shared folder> | arthex catalog <folder>',
+  );
