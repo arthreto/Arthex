@@ -112,6 +112,26 @@ function contextMenuOf(dir, staging, module, native) {
   });
 }
 
+const examplesOf = (messages) =>
+  (messages.catalog?.examples ?? '')
+    .split('|')
+    .map((example) => example.trim())
+    .filter(Boolean);
+
+/** The catalog lists keywords and examples keyed by their text: a repeated one breaks its details. */
+function checkRepeats(locales) {
+  for (const [language, messages] of Object.entries(locales)) {
+    const lists = {
+      keywords: (messages.keywords ?? '').split(/\s+/).filter(Boolean),
+      'catalog.examples': examplesOf(messages),
+    };
+    for (const [field, entries] of Object.entries(lists)) {
+      const repeated = entries.find((entry, at) => entries.indexOf(entry) !== at);
+      if (repeated) fail(`"${repeated}" appears twice in "${field}" of locales/${language}.json`);
+    }
+  }
+}
+
 /** Builds the interface and the program of a module, and writes its `module.json`. */
 async function stage(dir, target) {
   const staging = fs.mkdtempSync(path.join(os.tmpdir(), 'arthex-module-'));
@@ -122,6 +142,7 @@ async function stage(dir, target) {
   }
   if (module.api > API) fail(`this module needs API ${module.api}, and this SDK offers ${API}`);
   if (module.uses?.length && module.api < 9) fail('a shared part needs api: 9 in manifest.ts');
+  checkRepeats(module.locales);
   const native = buildProgram(dir, staging, module.id, target);
   const platform = native ? platformOf(target) : 'any';
   const contextMenu = contextMenuOf(dir, staging, module, native);
@@ -145,10 +166,7 @@ async function stage(dir, target) {
           name: messages.name ?? module.id,
           description: messages.description ?? '',
           keywords: messages.keywords ?? '',
-          examples: (messages.catalog?.examples ?? '')
-            .split('|')
-            .map((example) => example.trim())
-            .filter(Boolean),
+          examples: examplesOf(messages),
           page: messages.catalog?.page ?? '',
           tool: messages.catalog?.tool ?? '',
         },

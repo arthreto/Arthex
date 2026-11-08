@@ -276,6 +276,7 @@ Installable modules live outside this repository, in [`arthreto/arthex-modules`]
 6. The details shown in the Catalog tab come from the module itself:
    - version, languages, systems, size, categories, search keywords and right-click actions are read when it is packed, and the date from the last commit of its folder;
    - `catalog.examples` of its locales lists search examples separated by `|`, and `catalog.page` and `catalog.tool` say what its page and tool do;
+   - a keyword or an example given twice in a locale stops `build` and `pack`;
    - an image named `preview.webp`, `preview.png` or `preview.jpg` next to `manifest.ts`, 2 MB at most, is published beside the package as `<id>-preview.<ext>`. It is shown at 400 × 250 and larger on a click, so make it 2560 × 1600. Without one, its icon is shown.
 7. Develop it without signing: `npx arthex build <module> --out dev-modules`, then `ARTHEX_DEV_MODULES=<full path of dev-modules> npm run tauri dev`.
 8. Release it, with `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` set as for app releases:
