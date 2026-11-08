@@ -46,7 +46,7 @@ export interface ForeignManifest {
  * `src-tauri/src/services/module_host/package.rs`: only add to it, or raise that version.
  */
 export interface HostApi {
-  api: 9;
+  api: 10;
   locale(): string;
   onLocaleChange(listener: (locale: string) => void): () => void;
   /** A message by its full key: `modules.<id>.<key>` for a module, `common.close` for the shell. */

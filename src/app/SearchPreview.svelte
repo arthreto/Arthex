@@ -15,6 +15,9 @@
     <span class="kind">{result.kind}</span>
     <span class="title">{result.title}</span>
   </div>
+  {#if result.picture}
+    <img class="picture" src={result.picture.src} alt={result.picture.alt} width="200" height="200" />
+  {/if}
   {#if result.panel}
     {@const Panel = result.panel}
     <div class="body"><Panel /></div>
@@ -75,6 +78,12 @@
     font-weight: 600;
     line-height: 1.3;
     overflow-wrap: anywhere;
+  }
+
+  .picture {
+    align-self: center;
+    object-fit: contain;
+    border-radius: var(--radius-m);
   }
 
   .body {

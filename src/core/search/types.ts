@@ -32,6 +32,8 @@ export interface SearchResult {
   primary: ResultAction;
   /** Ctrl + Enter, such as "Open folder". */
   secondary?: ResultAction;
+  /** A larger image under the title of the preview, such as a QR code. */
+  picture?: { src: string; alt: string };
   /** Text offered by a "Copy path" button. */
   path?: string;
   /** Asked before `primary` runs, for actions that cannot be undone. */

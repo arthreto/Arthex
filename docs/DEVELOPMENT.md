@@ -143,7 +143,7 @@ A module adds results to the search bar with a `SearchProvider` (`src/core/searc
 - A module may give several providers as an array (shortcuts: its results, then "Create a shortcut" last).
 - `exclusive: true` hides every other group when it answers (the calculator).
 - `status` is a component shown above the results while the provider cannot answer fully yet. File search shows the progress of the first indexing there (`file-index://building`): until it ends, no file can be found.
-- A result names its `primary` action (Enter) and may add a `secondary` one (Ctrl + Enter), a `path` to copy, a `confirm` question for actions that cannot be undone, or a `panel` component that replaces the preview buttons.
+- A result names its `primary` action (Enter) and may add a `secondary` one (Ctrl + Enter), a `path` to copy, a `confirm` question for actions that cannot be undone, a `picture` (`{ src, alt }`) shown at 200 px under the title of the preview, such as a QR code, or a `panel` component that replaces the preview buttons.
 
 The shell asks every enabled provider at each keystroke and shows each answer as it arrives, so a slow provider never holds back the others; answers to older queries are dropped. A thin line under the search bar shows that a provider is still answering, once it takes more than 150 ms. Below 2 characters (except commands and calculations), it asks for more instead of searching.
 
@@ -236,7 +236,7 @@ Installable modules live outside this repository, in [`arthreto/arthex-modules`]
    });
    ```
 
-2. Its views use what `@arthex/sdk` exports: the UI kit of `src/ui/`, `moduleTranslator` for its texts (as in a built-in module), `toast`, `openTool`, `closeTool`, `navigate` and the formatting helpers. A search provider works as in a built-in module, without `panel`.
+2. Its views use what `@arthex/sdk` exports: the UI kit of `src/ui/`, `moduleTranslator` for its texts (as in a built-in module), `toast`, `openTool`, `closeTool`, `navigate` and the formatting helpers. A search provider works as in a built-in module, without `panel`; a `picture` needs `api: 10`.
 3. A system side is a Cargo project in `native/` that depends on `arthex-module` (`sdk/native/`). The interface calls it with `moduleNative('timer').call(method, params)` and hears it with `.on(event, handler)`:
 
    ```rust
