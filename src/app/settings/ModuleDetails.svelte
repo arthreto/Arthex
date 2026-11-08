@@ -9,7 +9,7 @@
   import Keycap from '../../ui/Keycap.svelte';
   import Skeleton from '../../ui/Skeleton.svelte';
   import ModuleImageDialog from './ModuleImageDialog.svelte';
-  import { dayName, languageName, rightClickEntries, systemNames } from './moduleDetails';
+  import { dayName, keywordList, languageName, rightClickEntries, systemNames } from './moduleDetails';
   import { pickTexts } from './moduleSummary';
   import { modulesView } from './modulesView.svelte';
 
@@ -70,8 +70,8 @@
     ].filter((fact) => !!fact),
   );
 
-  const keywords = $derived((texts?.keywords ?? '').split(' ').filter(Boolean));
-  const examples = $derived(texts?.examples ?? []);
+  const keywords = $derived(keywordList(texts?.keywords ?? ''));
+  const examples = $derived([...new Set(texts?.examples)]);
   const rightClick = $derived(offer ? rightClickEntries(offer.contextMenu, locale) : []);
   const preview = $derived(offer?.hasPreview ? modulesView.previews[offer.id] : null);
   let enlarged = $state(false);

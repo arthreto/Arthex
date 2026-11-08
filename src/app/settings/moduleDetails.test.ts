@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dayName, languageName, rightClickEntries, systemNames } from './moduleDetails';
+import { dayName, keywordList, languageName, rightClickEntries, systemNames } from './moduleDetails';
 
 describe('module details', () => {
   it('names languages in the language of the interface', () => {
@@ -18,6 +18,17 @@ describe('module details', () => {
     expect(dayName('soon', 'fr')).toBe('soon');
   });
 
+  it('lists each keyword once', () => {
+    expect(keywordList('somme de controle  mot de passe')).toEqual([
+      'somme',
+      'de',
+      'controle',
+      'mot',
+      'passe',
+    ]);
+    expect(keywordList('')).toEqual([]);
+  });
+
   it('shows a label once with all its choices', () => {
     const entries = rightClickEntries(
       [
@@ -33,6 +44,7 @@ describe('module details', () => {
           submenu: [
             { id: 'mp4', label: 'MP4' },
             { id: 'png', label: 'PNG' },
+            { id: 'png-copy', label: 'PNG' },
           ],
         },
       ],

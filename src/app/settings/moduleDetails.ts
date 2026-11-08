@@ -24,6 +24,11 @@ export function dayName(day: string, locale: string): string {
   return Number.isNaN(date.getTime()) ? day : date.toLocaleDateString(locale, { dateStyle: 'long' });
 }
 
+/** Each search keyword once: a module may repeat a word, and the list is keyed by it. */
+export const keywordList = (keywords: string): string[] => [
+  ...new Set(keywords.split(/\s+/).filter(Boolean)),
+];
+
 const labelOf = (labels: Record<string, string>, locale: string) =>
   labels[locale] ?? labels['en'] ?? Object.values(labels)[0] ?? '';
 
